@@ -5,7 +5,8 @@ CHROOT_DEB_MIRROR ?= http://ftp.de.debian.org/debian
 CCU_PREDIST_PATH  ?= $(shell pwd)/ccu_pkg
 DIST_PATH         ?= $(shell pwd)/dist
 CCU_PKG_PATH      ?= $(DIST_PATH)/ccu
-CCU_HOST          ?= ccu
+CCU_HOST          ?= ccu3-webui
+PYTHON_PATH       ?= /usr/local/python-2.7.15
 
 # On OS X with macports coverage has no "coverage" link
 COVERAGE2 := $(shell if which coverage2 >/dev/null 2>&1; then echo coverage2; \
@@ -15,7 +16,16 @@ COVERAGE2 := $(shell if which coverage2 >/dev/null 2>&1; then echo coverage2; \
 COVERAGE3 := $(shell if which coverage3 >/dev/null 2>&1; then echo coverage3; \
 		   elif which coverage-3.4 >/dev/null 2>&1; then echo coverage-3.4; fi)
 
+LD_LIBRARY_PATH2 :=/usr/local/python-2.7.15
+LD_LIBRARY_PATH3 :=/usr/local/python3-3.6.3
+PYTHONPATH2      := $(LD_LIBRARY_PATH2)
+PYTHONPATH3      := $(LD_LIBRARY_PATH3)
+
+ENV_P2 := env PATH=/usr/local/python-2.7.15:$(PATH) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH2) PYTHONPATH=$(PYTHONPATH2)
+ENV_P3 := env PATH=/usr/local/python-3-3.6.3:$(PATH) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH3) PYTHONPATH=$(PYTHONPATH3)
+
 .PHONY: chroot dist
+
 
 help:
 	@echo
@@ -57,9 +67,9 @@ setup:
 			python3-pip python-sphinx snakefood python-lxml \
 			python-six
 	sudo pip install --upgrade pytest_flakes pytest_runner coverage beautifulsoup4 \
-			sphinxcontrib-images twine requests
+			twine requests
 	sudo pip3 install --upgrade pytest_flakes pytest_runner coverage beautifulsoup4 \
-			requests
+			 sphinxcontrib-images requests
 	# port install py-coverage py34-coverage \
 	# 	       py-setuptools py34-setuptools \
 	# 	       py-pytest py34-pytest
@@ -75,20 +85,22 @@ dist: dist-os dist-ccu
 
 dist-os:
 	[ ! -d $(DIST_PATH) ] && mkdir $(DIST_PATH) || true
-	python setup.py sdist
+	$(ENV_P3) python setup.py sdist
 	@echo "Created dist/pmatic-$(VERSION).tar.gz"
 
 chroot:
 	[ ! -d $(CHROOT_PATH) ] && mkdir $(CHROOT_PATH) || true
-	sudo debootstrap --foreign --arch=armel \
+	sudo debootstrap --foreign --arch=armel  --no-check-gpg\
 	    --include=python,python-pip \
-	    wheezy $(CHROOT_PATH) $(CHROOT_DEB_MIRROR)
+	    buster $(CHROOT_PATH) $(CHROOT_DEB_MIRROR)
 	sudo cp /usr/bin/qemu-arm-static $(CHROOT_PATH)/usr/bin
 	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c "/debootstrap/debootstrap --second-stage"
 	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
-	    "pip install --install-option=\"--prefix=/usr\" simpleTR64"
+	    "pip install simpleTR64"
 	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
-	    "pip install --install-option=\"--prefix=/usr\" pytz"
+	    "pip install pytz"
+	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
+	    "pip install six"
 
 dist-ccu:
 	sudo $(MAKE) dist-ccu-step1
@@ -107,10 +119,17 @@ dist-ccu-step1:
 	    $(CCU_PREDIST_PATH)/python 2>/dev/null || true
 	rsync -av --no-g $(CHROOT_PATH)/lib/arm-linux-gnueabi/libexpat.so.1.* \
 	    $(CCU_PREDIST_PATH)/libs/
+	sudo cp $(PYTHON_PATH)/libpython2.7* \
+            $(CCU_PREDIST_PATH)/python/bin
+	sudo cp $(PYTHON_PATH)/python \
+           $(CCU_PREDIST_PATH)/python/bin 
+	sudo [ -d $(CCU_PREDIST_PATH)/python/bin/build ] || mkdir $(CCU_PREDIST_PATH)/python/bin/build  
+	sudo cp -r $(PYTHON_PATH)/build/lib.linux2-arm-2.7 \
+            $(CCU_PREDIST_PATH)/python/bin/build
 	# Cleanup site-packages to dist-packages
-	rsync -av $(CCU_PREDIST_PATH)/python/lib/python2.7/site-packages/* \
-	    $(CCU_PREDIST_PATH)/python/lib/python2.7/dist-packages/
-	rm -rf $(CCU_PREDIST_PATH)/python/lib/python2.7/site-packages
+#	rsync -av $(CCU_PREDIST_PATH)/python/lib/python2.7/site-packages/* \
+#	    $(CCU_PREDIST_PATH)/python/lib/python2.7/dist-packages/
+#	rm -rf $(CCU_PREDIST_PATH)/python/lib/python2.7/site-packages
 
 dist-ccu-step2:
 	[ ! -d $(DIST_PATH) ] && mkdir $(DIST_PATH) || true
@@ -121,7 +140,7 @@ dist-ccu-step2:
 	    --exclude=__pycache__ \
 	    pmatic examples pmatic-manager manager_static \
 	    $(CCU_PKG_PATH)
-	cd $(CCU_PKG_PATH) ; python -m compileall .
+	cd $(CCU_PKG_PATH) ; $(ENV_P2) python -m compileall .
 	tar -cv -C $(CCU_PKG_PATH) -f $(DIST_PATH)/pmatic-$(VERSION)_ccu.tar .
 	[ -d $(CCU_PKG_PATH) ] && rm -rf $(CCU_PKG_PATH) || true
 	tar -rv -C ccu_pkg -f $(DIST_PATH)/pmatic-$(VERSION)_ccu.tar \
@@ -150,7 +169,7 @@ test:
 	$(MAKE) coverage coverage-html
 
 test-python3:
-	python3 setup.py test
+	$(ENV_P3) python setup.py test
 
 test-with-ccu:
 	TEST_WITH_CCU=1 $(MAKE) test
@@ -170,6 +189,8 @@ install:
 install-ccu: install-ccu-python install-ccu-pmatic install-ccu-scripts
 
 install-ccu-python:
+	ssh root@$(CCU_HOST) "[ -d /usr/local/etc/config/addons/pmatic ] || mkdir /usr/local/etc/config/addons/pmatic"
+	ssh root@$(CCU_HOST) "[ -d /usr/local/etc/config/addons/pmatic/python ] || mkdir /usr/local/etc/config/addons/pmatic/python"
 	rsync -av --no-g \
 	    --exclude=\*.pyc \
 	    --exclude=.\*.swp \
@@ -178,6 +199,7 @@ install-ccu-python:
 	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic/python/
 
 install-ccu-pmatic:
+	ssh root@$(CCU_HOST) "[ -d /usr/local/etc/config/addons/pmatic/etc ] || mkdir /usr/local/etc/config/addons/pmatic/etc"
 	rsync -aRv --no-g \
 	    --exclude=\*.pyc \
 	    --exclude=.\*.swp \
@@ -190,6 +212,12 @@ install-ccu-pmatic:
 	    --exclude=__pycache__ \
 	    examples \
 	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic/scripts/
+	rsync -aRv --no-g \
+	    --exclude=\*.pyc \
+	    --exclude=.\*.swp \
+	    --exclude=__pycache__ \
+	    manager_static \
+	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic
 	rsync -aRv --no-g \
 	    pmatic-manager \
 	    root@$(CCU_HOST):/usr/local/bin/pmatic-manager
@@ -256,3 +284,6 @@ travis-doc:
 	git commit -m "Travis doc $$TRAVIS_BUILD_NUMBER pushed to gh-pages" ; \
 	git push -fq origin gh-pages > /dev/null ; \
 	echo "Finished adding current docs"
+
+run:
+	python pmatic-manager -g -o ../ccu3/etc -e . -r ../ccu3/scripts -t ./manager_static -f ../pmatic.log
