@@ -60,7 +60,7 @@ from logging.handlers import RotatingFileHandler
 import pmatic.manager
 from pmatic.exceptions import SignalReceived
 
-pmatic.manager.Config.load()
+# pmatic.manager.Config.load()
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -137,10 +137,18 @@ def parse_args():
              "testing/using the pmatic Manager without a CCU.",
         default=pmatic.manager.Config.ccu_enabled)
 
+    parser.add_argument('-x',
+        dest="cfg_password",
+        help="Define password to protect config file. "
+             "The default password is \"default\".",
+        default=pmatic.manager.Config.cfg_password)
+
     args = parser.parse_args()
     return args
 
 args = parse_args()
+pmatic.manager.Config.cfg_password = args.cfg_password
+pmatic.manager.Config.load()
 
 # If the config_path changed, load the new config. Then load the args
 # again because the new config might have changed the arg defaults
