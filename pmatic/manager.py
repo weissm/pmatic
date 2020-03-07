@@ -122,6 +122,12 @@ class Config(utils.LogMixin):
     fritzbox_username = ""
     fritzbox_password = ""
 
+    email_enabled  = False
+    email_address  = "gmail.com"
+    email_port     = 587
+    email_username = ""
+    email_password = ""
+
     cfg_password = "default"
 
     @classmethod
@@ -1462,6 +1468,7 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         self._save_ccu_config()
         self._save_fritzbox_config()
         self._save_pushover_config()
+        self._save_email_config()
 
         event_history_length = self._vars.getvalue("event_history_length")
         try:
@@ -1534,7 +1541,45 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
             # FIXME: Move this to a method.
             PersonalDeviceFritzBoxHost.connection = None
 
+    def _save_email_config(self):
+        email_config_changed = False
 
+        email_enabled = self.is_checked("email_enabled")
+        if email_enabled != Config.email_enabled:
+            email_config_changed = True
+        Config.email_enabled = email_enabled
+
+        email_address = self._vars.getvalue("email_address")
+        if not email_address:
+            raise PMUserError("You need to configure the fritz!Box address to be able to "
+                              "communicate with your fritz!Box.")
+
+        if email_address != Config.email_address:
+            email_config_changed = True
+        Config.email_address = email_address
+
+        email_port = self._vars.getvalue("email_port")
+        if not email_port:
+            raise PMUserError("You need to configure the email port to be able to "
+                              "communicate with your email.")
+        else:
+            email_port = int(email_port)
+
+        if email_port != Config.email_port:
+            email_config_changed = True
+        Config.email_port = email_port
+
+        email_username = self._vars.getvalue("email_username").strip()
+        if email_username != Config.email_username:
+            email_config_changed = True
+        Config.email_username = email_username
+
+        email_password = self._vars.getvalue("email_password")
+        if email_password != "":
+            if email_password != Config.email_password:
+                email_config_changed = True
+            Config.email_password = email_password
+			
     def _save_ccu_config(self):
         ccu_config_changed = False
 
@@ -1718,6 +1763,37 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         self.write("<tr><th>Password</th>")
         self.write("<td>")
         self.password("fritzbox_password")
+        self.write("</td>")
+        self.write("</tr>")
+        self.write("</table>")
+
+        self.h3("Email Connection")
+        self.p("If you like to connect with your Email you will have to "
+               "configure the address and credentials here.")
+        self.write("<table>")
+        self.write("<tr><th>Connect with Email</th>")
+        self.write("<td>")
+        self.checkbox("email_enabled", Config.email_enabled)
+        self.write("</td>")
+        self.write("</tr>")
+        self.write("<tr><th>Address</th>")
+        self.write("<td>")
+        self.input("email_address", Config.email_address)
+        self.write("</td>")
+        self.write("</tr>")
+        self.write("<tr><th>API Port</th>")
+        self.write("<td>")
+        self.input("email_port", Config.email_port)
+        self.write("</td>")
+        self.write("</tr>")
+        self.write("<tr><th>Username</th>")
+        self.write("<td>")
+        self.input("email_username", Config.email_username)
+        self.write("</td>")
+        self.write("</tr>")
+        self.write("<tr><th>Password</th>")
+        self.write("<td>")
+        self.password("email_password")
         self.write("</td>")
         self.write("</tr>")
         self.write("</table>")
