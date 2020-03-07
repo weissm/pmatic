@@ -1472,6 +1472,10 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         self._save_pushover_config()
         self._save_email_config()
 
+        cfg_password = self._vars.getvalue("cfg_password")
+        if cfg_password != "":
+			Config.cfg_password = cfg_password
+
         event_history_length = self._vars.getvalue("event_history_length")
         try:
             event_history_length = int(event_history_length)
@@ -1485,6 +1489,9 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         if timezone not in self._available_timezones():
             raise PMUserError("Invalid timezone")
         Config.timezone = timezone
+
+        script_path = self._vars.getvalue("script_path")
+        Config.script_path = script_path
 
         presence_update_interval = self._vars.getvalue("presence_update_interval")
         try:
@@ -1707,6 +1714,14 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         self.write("</tr>")
 
         self.write("</table>")
+
+        self.write("<tr><th>Script Path"
+                   "<p>You can configure where to store your script information. Note: no ending slash</p>"
+                   "</th>")
+        self.write("<td>")
+        self.input("script_path", str(Config.script_path))
+        self.write("</td>")
+        self.write("</tr>")
 
         self.h3("Connect to remote CCU")
         self.p("You can start the pmatic Manager on another device than the CCU. In this case you "
