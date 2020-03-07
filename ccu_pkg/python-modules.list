@@ -106,3 +106,6 @@ lib/python2.7/mimetypes.py
 lib/python2.7/gzip.py
 lib/python2.7/*-packages/six.py
 lib/python2.7/pkgutil.py
+lib/python2.7/zipfile.py
+lib/python2.7/shutil.py
+
