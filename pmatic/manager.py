@@ -2266,8 +2266,11 @@ class PageState(HtmlPageHandler, utils.LogMixin):
         self.write("<td>%s</td></tr>" % self._manager.event_history.num_events_total)
 
         self.write("<tr><th>Time of Last Event</th>")
-        self.write("<td>%s</td></tr>" % time.strftime("%Y-%m-%d %H:%M:%S",
-                               utils.localtime(self._manager.event_history.last_event_time, Config.timezone)))
+        # fixed issue, when last_time_event is empty
+        # FIXME: more original formating into fixed solution
+        self.write("<td>%s</td></tr>" % self._manager.event_history.last_event_time)
+        #  time.strftime("%Y-%m-%d %H:%M:%S",
+        #      utils.localtime(self._manager.event_history.last_event_time, Config.timezone)))
 
         self.write("</table>")
 
