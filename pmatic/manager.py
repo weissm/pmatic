@@ -176,12 +176,9 @@ class Config(utils.LogMixin):
         json_config_enc = cipher_suite.encrypt((json_config+ "\n").encode())			
         open(cls._config_path(), "w").write(json_config_enc )
 
-
     @classmethod
     def _config_path(cls):
         return cls.config_path + "/manager.config"
-
-
 
 class Html(object):
     html_escape_table = {
@@ -1004,7 +1001,7 @@ class PageRun(HtmlPageHandler, AbstractScriptProgressPage, utils.LogMixin):
         if action == "run":
             self._handle_run(self.is_checked("run_inline"))
         if action == "run_inline":
-			self._handle_run(run_inline=True)
+            self._handle_run(run_inline=True)
         elif action == "abort":
             self._set_runner(g_runner)
             self._handle_abort()
@@ -1474,7 +1471,7 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
 
         cfg_password = self._vars.getvalue("cfg_password")
         if cfg_password != "":
-			Config.cfg_password = cfg_password
+            Config.cfg_password = cfg_password
 
         event_history_length = self._vars.getvalue("event_history_length")
         try:
