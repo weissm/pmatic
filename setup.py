@@ -102,6 +102,7 @@ setup(name='pmatic',
     tests_require=test_requirements(),
     install_requires=[
         "requests",
+	"cryptography",
         "simpleTR64",
     ],
 )
