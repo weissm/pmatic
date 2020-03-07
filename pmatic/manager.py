@@ -160,7 +160,7 @@ class Config(utils.LogMixin):
         config = {}
 
         for key, val in cls.__dict__.items():
-            if key[0] != "_" and key not in [ "config_path", "script_path",
+            if key[0] != "_" and key not in [ "config_path",
                                               "static_path", "log_file" ] \
                and not inspect.isroutine(val):
                 config[key] = val
@@ -973,6 +973,8 @@ class PageMain(HtmlPageHandler, utils.LogMixin):
                               "Delete this script")
             self.icon_button("bolt", self.action_url("/run?script=%s&action=run" % filename),
                               "Execute this script now")
+            self.icon_button("umbrella", self.action_url("/run?script=%s&action=run_inline" % filename),
+                              "Execute this script inline now")
             self.icon_button("download", "/scripts/%s" % filename,
                               "Download this script")
             self.write("</td>")
@@ -1000,21 +1002,21 @@ class PageRun(HtmlPageHandler, AbstractScriptProgressPage, utils.LogMixin):
         self.ensure_password_is_set()
         action = self._vars.getvalue("action")
         if action == "run":
-            self._handle_run()
+            self._handle_run(self.is_checked("run_inline"))
+        if action == "run_inline":
+			self._handle_run(run_inline=True)
         elif action == "abort":
             self._set_runner(g_runner)
             self._handle_abort()
 
 
-    def _handle_run(self):
+    def _handle_run(self, run_inline=False):
         script = self._vars.getvalue("script")
         if not script:
             raise PMUserError("You have to select a script.")
 
         if script not in self._manager.get_scripts():
             raise PMUserError("You have to select a valid script.")
-
-        run_inline = self.is_checked("run_inline")
 
         if self._is_running():
             raise PMUserError("There is another script running. Wait for it to complete "
