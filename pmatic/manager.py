@@ -55,6 +55,9 @@ import subprocess
 import wsgiref.simple_server
 from hashlib import sha256
 import pytz
+from cryptography.fernet import Fernet
+import hashlib
+import base64
 
 try:
     from grp import getgrnam
@@ -119,11 +122,19 @@ class Config(utils.LogMixin):
     fritzbox_username = ""
     fritzbox_password = ""
 
+    cfg_password = "default"
+
     @classmethod
     def load(cls):
         try:
             try:
-                config = json.load(open(cls._config_path()))
+                # load encrypted data
+                key_base = hashlib.sha256(cls.cfg_password.encode())
+                key = base64.urlsafe_b64encode(key_base.digest())
+                cipher_suite = Fernet(key)
+                config_enc = open(cls._config_path()).read().encode()
+                config_str = cipher_suite.decrypt(config_enc)	
+                config = json.loads(config_str)
             except IOError as e:
                 # a non existing file is allowed.
                 if e.errno == 2:
@@ -152,7 +163,12 @@ class Config(utils.LogMixin):
             os.makedirs(os.path.dirname(cls._config_path()))
 
         json_config = json.dumps(config)
-        open(cls._config_path(), "w").write(json_config + "\n")
+        # store encrypted data
+        key_base = hashlib.sha256(cls.cfg_password.encode())
+        key = base64.urlsafe_b64encode(key_base.digest())
+        cipher_suite = Fernet(key)
+        json_config_enc = cipher_suite.encrypt((json_config+ "\n").encode())			
+        open(cls._config_path(), "w").write(json_config_enc )
 
 
     @classmethod
@@ -1721,6 +1737,19 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         self.write("</td>")
         self.write("</tr>")
         self.write("</table>")
+
+        self.h3("Config Password")
+        self.p("Set a new password for the config file information. "
+			   "Keep information in mind, no recovery possible.")
+        self.write("<table>")
+        self.write("</tr>")
+        self.write("<tr><th>User/Password</th>")
+        self.write("<td>")
+        self.password("cfg_password")
+        self.write("</td>")
+        self.write("</tr>")
+        self.write("</table>")
+		
         self.submit("Save configuration", "save_config")
         self.end_form()
         self.write("</div>\n")
