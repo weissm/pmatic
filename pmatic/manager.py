@@ -134,13 +134,23 @@ class Config(utils.LogMixin):
     def load(cls):
         try:
             try:
+                config = json.load(open(cls._config_path()))
                 # load encrypted data
                 key_base = hashlib.sha256(cls.cfg_password.encode())
                 key = base64.urlsafe_b64encode(key_base.digest())
                 cipher_suite = Fernet(key)
-                config_enc = open(cls._config_path()).read().encode()
-                config_str = cipher_suite.decrypt(config_enc)	
-                config = json.loads(config_str)
+                for key, val in config.items():
+                    if key[0] != "_" and key not in [ "config_path",
+                                                        "static_path", "log_file" ] \
+                    and not inspect.isroutine(val):
+                        if utils.is_byte_string(val):
+                            val_dec = cipher_suite.decrypt((val).encode())			
+                            config[key] = val_dec
+                        else:
+                            config[key] = val
+                 # treat ccu password special           
+                if 'ccu_credentials' in config:
+                    config['ccu_credentials'] = config['ccu_credentials'][0].encode(), cipher_suite.decrypt((config['ccu_credentials'][1]).encode())
             except IOError as e:
                 # a non existing file is allowed.
                 if e.errno == 2:
@@ -158,23 +168,29 @@ class Config(utils.LogMixin):
     @classmethod
     def save(cls):
         config = {}
+        key_base = hashlib.sha256(cls.cfg_password.encode())
+        key = base64.urlsafe_b64encode(key_base.digest())
+        cipher_suite = Fernet(key)
 
         for key, val in cls.__dict__.items():
             if key[0] != "_" and key not in [ "config_path",
                                               "static_path", "log_file" ] \
                and not inspect.isroutine(val):
-                config[key] = val
+                # store encrypted data
+                if utils.is_byte_string(val):
+                    val_enc = cipher_suite.encrypt((val).encode())
+                    config[key] = val_enc
+                else:    
+                    config[key] = val
 
+        # treat ccu password special  
+        if 'ccu_credentials' in config:
+            config['ccu_credentials'] = config['ccu_credentials'][0].encode(), cipher_suite.encrypt((config['ccu_credentials'][1]).encode())
         if not os.path.exists(os.path.dirname(cls._config_path())):
             os.makedirs(os.path.dirname(cls._config_path()))
 
         json_config = json.dumps(config)
-        # store encrypted data
-        key_base = hashlib.sha256(cls.cfg_password.encode())
-        key = base64.urlsafe_b64encode(key_base.digest())
-        cipher_suite = Fernet(key)
-        json_config_enc = cipher_suite.encrypt((json_config+ "\n").encode())			
-        open(cls._config_path(), "w").write(json_config_enc )
+        open(cls._config_path(), "w").write(json_config + "\n")
 
     @classmethod
     def _config_path(cls):

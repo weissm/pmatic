@@ -324,25 +324,25 @@ class TestConfig(object):
                 return "%s" % p.realpath()
 
         # Save empty config
-        # TestConfig.save()
-        # assert p.read() == "{}\n"
+        TestConfig.save()
+        assert p.read() == "{}\n"
 
         # don't save empty attributes
         TestConfig._hidden_attr = 1
-        # TestConfig.save()
-        # assert p.read() == "{}\n"
+        TestConfig.save()
+        assert p.read() == "{}\n"
 
         # don't save internal attributes
         TestConfig.config_path = "xy"
         TestConfig.static_path = "xy"
         TestConfig.log_file    = "xy"
-        # TestConfig.save()
-        # assert p.read() == "{}\n"
+        TestConfig.save()
+        assert p.read() == "{}\n"
 
         # don't try to save internal attributes
-        # TestConfig.test_config_val = "xy"
-        # TestConfig.save()
-        # assert p.read() == "{\"test_config_val\": \"xy\"}\n"
+        TestConfig.test_config_val = "xy"
+        TestConfig.save()
+        assert p.read() == "{\"test_config_val\": \"xy\"}\n"
 
 
     def test_config_path(self):
