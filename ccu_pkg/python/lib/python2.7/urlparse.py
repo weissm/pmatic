@@ -28,6 +28,8 @@ test_urlparse.py provides a good indicator of parsing behavior.
 
 """
 
+import re
+
 __all__ = ["urlparse", "urlunparse", "urljoin", "urldefrag",
            "urlsplit", "urlunsplit", "parse_qs", "parse_qsl"]
 
@@ -42,7 +44,7 @@ uses_netloc = ['ftp', 'http', 'gopher', 'nntp', 'telnet',
                'svn', 'svn+ssh', 'sftp','nfs','git', 'git+ssh']
 uses_params = ['ftp', 'hdl', 'prospero', 'http', 'imap',
                'https', 'shttp', 'rtsp', 'rtspu', 'sip', 'sips',
-               'mms', '', 'sftp']
+               'mms', '', 'sftp', 'tel']
 
 # These are not actually used anymore, but should stay for backwards
 # compatibility.  (They are undocumented, but have a public-looking name.)
@@ -107,10 +109,11 @@ class ResultMixin(object):
         netloc = self.netloc.split('@')[-1].split(']')[-1]
         if ':' in netloc:
             port = netloc.split(':')[1]
-            port = int(port, 10)
-            # verify legal port
-            if (0 <= port <= 65535):
-                return port
+            if port:
+                port = int(port, 10)
+                # verify legal port
+                if (0 <= port <= 65535):
+                    return port
         return None
 
 from collections import namedtuple
@@ -162,6 +165,25 @@ def _splitnetloc(url, start=0):
             delim = min(delim, wdelim)     # use earliest delim position
     return url[start:delim], url[delim:]   # return (domain, rest)
 
+def _checknetloc(netloc):
+    if not netloc or not isinstance(netloc, unicode):
+        return
+    # looking for characters like \u2100 that expand to 'a/c'
+    # IDNA uses NFKC equivalence, so normalize for this check
+    import unicodedata
+    n = netloc.replace(u'@', u'') # ignore characters already included
+    n = n.replace(u':', u'')      # but not the surrounding text
+    n = n.replace(u'#', u'')
+    n = n.replace(u'?', u'')
+    netloc2 = unicodedata.normalize('NFKC', n)
+    if n == netloc2:
+        return
+    for c in '/?#@:':
+        if c in netloc2:
+            raise ValueError("netloc %r contains invalid characters "
+                             "under NFKC normalization"
+                             % netloc)
+
 def urlsplit(url, scheme='', allow_fragments=True):
     """Parse a URL into 5 components:
     <scheme>://<netloc>/<path>?<query>#<fragment>
@@ -190,6 +212,7 @@ def urlsplit(url, scheme='', allow_fragments=True):
                 url, fragment = url.split('#', 1)
             if '?' in url:
                 url, query = url.split('?', 1)
+            _checknetloc(netloc)
             v = SplitResult(scheme, netloc, url, query, fragment)
             _parse_cache[key] = v
             return v
@@ -213,6 +236,7 @@ def urlsplit(url, scheme='', allow_fragments=True):
         url, fragment = url.split('#', 1)
     if '?' in url:
         url, query = url.split('?', 1)
+    _checknetloc(netloc)
     v = SplitResult(scheme, netloc, url, query, fragment)
     _parse_cache[key] = v
     return v
@@ -311,6 +335,15 @@ def urldefrag(url):
     else:
         return url, ''
 
+try:
+    unicode
+except NameError:
+    def _is_unicode(x):
+        return 0
+else:
+    def _is_unicode(x):
+        return isinstance(x, unicode)
+
 # unquote method for parse_qs and parse_qsl
 # Cannot use directly from urllib as it would create a circular reference
 # because urllib uses urlparse methods (urljoin).  If you update this function,
@@ -319,24 +352,37 @@ def urldefrag(url):
 _hexdig = '0123456789ABCDEFabcdef'
 _hextochr = dict((a+b, chr(int(a+b,16)))
                  for a in _hexdig for b in _hexdig)
+_asciire = re.compile('([\x00-\x7f]+)')
 
 def unquote(s):
     """unquote('abc%20def') -> 'abc def'."""
-    res = s.split('%')
-    # fastpath
-    if len(res) == 1:
-        return s
-    s = res[0]
-    for item in res[1:]:
-        try:
-            s += _hextochr[item[:2]] + item[2:]
-        except KeyError:
-            s += '%' + item
-        except UnicodeDecodeError:
-            s += unichr(int(item[:2], 16)) + item[2:]
-    return s
+    if _is_unicode(s):
+        if '%' not in s:
+            return s
+        bits = _asciire.split(s)
+        res = [bits[0]]
+        append = res.append
+        for i in range(1, len(bits), 2):
+            append(unquote(str(bits[i])).decode('latin1'))
+            append(bits[i + 1])
+        return ''.join(res)
 
-def parse_qs(qs, keep_blank_values=0, strict_parsing=0):
+    bits = s.split('%')
+    # fastpath
+    if len(bits) == 1:
+        return s
+    res = [bits[0]]
+    append = res.append
+    for item in bits[1:]:
+        try:
+            append(_hextochr[item[:2]])
+            append(item[2:])
+        except KeyError:
+            append('%')
+            append(item)
+    return ''.join(res)
+
+def parse_qs(qs, keep_blank_values=0, strict_parsing=0, max_num_fields=None):
     """Parse a query given as a string argument.
 
         Arguments:
@@ -353,16 +399,20 @@ def parse_qs(qs, keep_blank_values=0, strict_parsing=0):
         strict_parsing: flag indicating what to do with parsing errors.
             If false (the default), errors are silently ignored.
             If true, errors raise a ValueError exception.
+
+        max_num_fields: int. If set, then throws a ValueError if there
+            are more than n fields read by parse_qsl().
     """
     dict = {}
-    for name, value in parse_qsl(qs, keep_blank_values, strict_parsing):
+    for name, value in parse_qsl(qs, keep_blank_values, strict_parsing,
+                                 max_num_fields):
         if name in dict:
             dict[name].append(value)
         else:
             dict[name] = [value]
     return dict
 
-def parse_qsl(qs, keep_blank_values=0, strict_parsing=0):
+def parse_qsl(qs, keep_blank_values=0, strict_parsing=0, max_num_fields=None):
     """Parse a query given as a string argument.
 
     Arguments:
@@ -379,8 +429,19 @@ def parse_qsl(qs, keep_blank_values=0, strict_parsing=0):
         false (the default), errors are silently ignored. If true,
         errors raise a ValueError exception.
 
+    max_num_fields: int. If set, then throws a ValueError if there
+        are more than n fields read by parse_qsl().
+
     Returns a list, as G-d intended.
     """
+    # If max_num_fields is defined then check that the number of fields
+    # is less than max_num_fields. This prevents a memory exhaustion DOS
+    # attack via post bodies with many fields.
+    if max_num_fields is not None:
+        num_fields = 1 + qs.count('&') + qs.count(';')
+        if max_num_fields < num_fields:
+            raise ValueError('Max number of fields exceeded')
+
     pairs = [s2 for s1 in qs.split('&') for s2 in s1.split(';')]
     r = []
     for name_value in pairs:

@@ -36,8 +36,12 @@ def getlines(filename, module_globals=None):
 
     if filename in cache:
         return cache[filename][2]
-    else:
+
+    try:
         return updatecache(filename, module_globals)
+    except MemoryError:
+        clearcache()
+        return []
 
 
 def checkcache(filename=None):
@@ -107,11 +111,6 @@ def updatecache(filename, module_globals=None):
         # when handling a relative filename.
         if os.path.isabs(filename):
             return []
-
-        # Take care to handle packages
-        if basename == '__init__.py':
-            # filename referes to a package
-            basename = filename
 
         for dirname in sys.path:
             # When using imputil, sys.path may contain things other than

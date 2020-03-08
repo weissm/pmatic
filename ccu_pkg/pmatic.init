@@ -1,9 +1,11 @@
 #!/bin/sh
 
-VERSION=0.6
+VERSION=0.6.1
 CONFIG_DIR=/etc/config
 ADDON_DIR=$CONFIG_DIR/addons/pmatic
 INIT_TARGET=/etc/init.d/S55pmatic
+iPYTHON_DIR=$ADDON_DIR
+#PYTHON_DIR=/usr/local/python3-3.6.3
 
 PM_PID=$(ps -o pid,args | awk '{if($3=="/usr/local/bin/pmatic-manager"){print $1}}')
 
@@ -26,7 +28,12 @@ start() {
   
   if [ -z "$PM_PID" ]; then
       echo -n "Starting pmatic manager..."
-      /usr/local/bin/python /usr/local/bin/pmatic-manager 2>&1 | logger -t homematic -p user.info
+      env PATH=$PYTHON_DIR/python/bin \
+               LD_LIBRARY_PATH=$PYTHON_DIR/python/bin \
+               PYTHONPATH=$PYTHON_DIR/python/lib/python2.7/dist-packages:$ADDON_DIR/python/lib/python2.7:$ADDON_DIR/python/bin/build/lib.linux2-arm-2.7:$LD_LIBRARY_PATH \
+               PYTHONENCODING=utf-8 python \
+               /usr/local/bin/pmatic-manager  2>&1 | logger -t homematic -p user.info
+#      /usr/local/bin/python /usr/local/bin/pmatic-manager 2>&1 | logger -t homematic -p user.info
       logger -t homematic -p user.info "started pmatic manger"
       echo "OK"
   fi

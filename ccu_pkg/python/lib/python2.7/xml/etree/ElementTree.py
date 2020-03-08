@@ -574,7 +574,7 @@ PI = ProcessingInstruction
 # @param text A string containing the QName value, in the form {uri}local,
 #     or, if the tag argument is given, the URI part of a QName.
 # @param tag Optional tag.  If given, the first argument is interpreted as
-#     an URI, and this argument is interpreted as a local name.
+#     a URI, and this argument is interpreted as a local name.
 # @return An opaque object, representing the QName.
 
 class QName(object):
@@ -683,8 +683,8 @@ class ElementTree(object):
         return list(self.iter(tag))
 
     ##
-    # Finds the first toplevel element with given tag.
-    # Same as getroot().find(path).
+    # Same as getroot().find(path), starting at the root of the
+    # tree.
     #
     # @param path What element to look for.
     # @keyparam namespaces Optional namespace prefix map.
@@ -704,10 +704,9 @@ class ElementTree(object):
         return self._root.find(path, namespaces)
 
     ##
-    # Finds the element text for the first toplevel element with given
-    # tag.  Same as getroot().findtext(path).
+    # Same as getroot().findtext(path), starting at the root of the tree.
     #
-    # @param path What toplevel element to look for.
+    # @param path What element to look for.
     # @param default What to return if the element was not found.
     # @keyparam namespaces Optional namespace prefix map.
     # @return The text content of the first matching element, or the
@@ -729,8 +728,7 @@ class ElementTree(object):
         return self._root.findtext(path, default, namespaces)
 
     ##
-    # Finds all toplevel elements with the given tag.
-    # Same as getroot().findall(path).
+    # Same as getroot().findall(path), starting at the root of the tree.
     #
     # @param path What element to look for.
     # @keyparam namespaces Optional namespace prefix map.
@@ -779,11 +777,12 @@ class ElementTree(object):
     # @param file A file name, or a file object opened for writing.
     # @param **options Options, given as keyword arguments.
     # @keyparam encoding Optional output encoding (default is US-ASCII).
-    # @keyparam method Optional output method ("xml", "html", "text" or
-    #     "c14n"; default is "xml").
     # @keyparam xml_declaration Controls if an XML declaration should
     #     be added to the file.  Use False for never, True for always,
     #     None for only if not US-ASCII or UTF-8.  None is default.
+    # @keyparam default_namespace Sets the default XML namespace (for "xmlns").
+    # @keyparam method Optional output method ("xml", "html", "text" or
+    #     "c14n"; default is "xml").
 
     def write(self, file_or_filename,
               # keyword arguments
@@ -945,7 +944,7 @@ def _serialize_xml(write, elem, encoding, qnames, namespaces):
         write(_escape_cdata(elem.tail, encoding))
 
 HTML_EMPTY = ("area", "base", "basefont", "br", "col", "frame", "hr",
-              "img", "input", "isindex", "link", "meta" "param")
+              "img", "input", "isindex", "link", "meta", "param")
 
 try:
     HTML_EMPTY = set(HTML_EMPTY)
@@ -989,15 +988,15 @@ def _serialize_html(write, elem, encoding, qnames, namespaces):
                     # FIXME: handle boolean attributes
                     write(" %s=\"%s\"" % (qnames[k], v))
             write(">")
-            tag = tag.lower()
+            ltag = tag.lower()
             if text:
-                if tag == "script" or tag == "style":
+                if ltag == "script" or ltag == "style":
                     write(_encode(text, encoding))
                 else:
                     write(_escape_cdata(text, encoding))
             for e in elem:
                 _serialize_html(write, e, encoding, qnames, None)
-            if tag not in HTML_EMPTY:
+            if ltag not in HTML_EMPTY:
                 write("</" + tag + ">")
     if elem.tail:
         write(_escape_cdata(elem.tail, encoding))
@@ -1199,9 +1198,14 @@ def iterparse(source, events=None, parser=None):
     if not hasattr(source, "read"):
         source = open(source, "rb")
         close_source = True
-    if not parser:
-        parser = XMLParser(target=TreeBuilder())
-    return _IterParseIterator(source, events, parser, close_source)
+    try:
+        if not parser:
+            parser = XMLParser(target=TreeBuilder())
+        return _IterParseIterator(source, events, parser, close_source)
+    except:
+        if close_source:
+            source.close()
+        raise
 
 class _IterParseIterator(object):
 
@@ -1253,34 +1257,40 @@ class _IterParseIterator(object):
                 raise ValueError("unknown event %r" % event)
 
     def next(self):
-        while 1:
-            try:
-                item = self._events[self._index]
-                self._index += 1
-                return item
-            except IndexError:
-                pass
-            if self._error:
-                e = self._error
-                self._error = None
-                raise e
-            if self._parser is None:
-                self.root = self._root
-                if self._close_file:
-                    self._file.close()
-                raise StopIteration
-            # load event buffer
-            del self._events[:]
-            self._index = 0
-            data = self._file.read(16384)
-            if data:
+        try:
+            while 1:
                 try:
-                    self._parser.feed(data)
-                except SyntaxError as exc:
-                    self._error = exc
-            else:
-                self._root = self._parser.close()
-                self._parser = None
+                    item = self._events[self._index]
+                    self._index += 1
+                    return item
+                except IndexError:
+                    pass
+                if self._error:
+                    e = self._error
+                    self._error = None
+                    raise e
+                if self._parser is None:
+                    self.root = self._root
+                    break
+                # load event buffer
+                del self._events[:]
+                self._index = 0
+                data = self._file.read(16384)
+                if data:
+                    try:
+                        self._parser.feed(data)
+                    except SyntaxError as exc:
+                        self._error = exc
+                else:
+                    self._root = self._parser.close()
+                    self._parser = None
+        except:
+            if self._close_file:
+                self._file.close()
+            raise
+        if self._close_file:
+            self._file.close()
+        raise StopIteration
 
     def __iter__(self):
         return self
@@ -1440,6 +1450,8 @@ class TreeBuilder(object):
         self._tail = 1
         return self._last
 
+_sentinel = ['sentinel']
+
 ##
 # Element structure builder for XML source data, based on the
 # <b>expat</b> parser.
@@ -1455,7 +1467,11 @@ class TreeBuilder(object):
 
 class XMLParser(object):
 
-    def __init__(self, html=0, target=None, encoding=None):
+    def __init__(self, html=_sentinel, target=None, encoding=None):
+        if html is not _sentinel:
+            warnings.warnpy3k(
+                "The html argument of XMLParser() is deprecated",
+                DeprecationWarning, stacklevel=2)
         try:
             from xml.parsers import expat
         except ImportError:
@@ -1607,7 +1623,7 @@ class XMLParser(object):
                     pubid = pubid[1:-1]
                 if hasattr(self.target, "doctype"):
                     self.target.doctype(name, pubid, system[1:-1])
-                elif self.doctype is not self._XMLParser__doctype:
+                elif self.doctype != self._XMLParser__doctype:
                     # warn about deprecated call
                     self._XMLParser__doctype(name, pubid, system[1:-1])
                     self.doctype(name, pubid, system[1:-1])
