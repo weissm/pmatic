@@ -96,6 +96,20 @@ chroot:
 	sudo cp /usr/bin/qemu-arm-static $(CHROOT_PATH)/usr/bin
 	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c "/debootstrap/debootstrap --second-stage"
 	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
+	    "pip install setuptools "
+	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
+	    "pip install wheel "
+	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
+	    "apt install python-dev "
+	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
+	    "apt install libffi-dev  "
+	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
+	    "apt install libssl-dev  "
+	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
+	    "apt-get install build-essential" 
+	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
+	    "pip install cryptography "
+	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
 	    "pip install simpleTR64"
 	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
 	    "pip install pytz"
@@ -119,17 +133,17 @@ dist-ccu-step1:
 	    $(CCU_PREDIST_PATH)/python 2>/dev/null || true
 	rsync -av --no-g $(CHROOT_PATH)/lib/arm-linux-gnueabi/libexpat.so.1.* \
 	    $(CCU_PREDIST_PATH)/libs/
-	sudo cp $(PYTHON_PATH)/libpython2.7* \
-            $(CCU_PREDIST_PATH)/python/bin
-	sudo cp $(PYTHON_PATH)/python \
-           $(CCU_PREDIST_PATH)/python/bin 
-	sudo [ -d $(CCU_PREDIST_PATH)/python/bin/build ] || mkdir $(CCU_PREDIST_PATH)/python/bin/build  
-	sudo cp -r $(PYTHON_PATH)/build/lib.linux2-arm-2.7 \
-            $(CCU_PREDIST_PATH)/python/bin/build
+#	sudo cp $(PYTHON_PATH)/libpython2.7* \
+#            $(CCU_PREDIST_PATH)/python/bin
+#	sudo cp $(PYTHON_PATH)/python \
+#           $(CCU_PREDIST_PATH)/python/bin 
+#	sudo [ -d $(CCU_PREDIST_PATH)/python/bin/build ] || mkdir $(CCU_PREDIST_PATH)/python/bin/build  
+#	sudo cp -r $(PYTHON_PATH)/build/lib.linux2-arm-2.7 \
+#            $(CCU_PREDIST_PATH)/python/bin/build
 	# Cleanup site-packages to dist-packages
-#	rsync -av $(CCU_PREDIST_PATH)/python/lib/python2.7/site-packages/* \
-#	    $(CCU_PREDIST_PATH)/python/lib/python2.7/dist-packages/
-#	rm -rf $(CCU_PREDIST_PATH)/python/lib/python2.7/site-packages
+	rsync -av $(CCU_PREDIST_PATH)/python/lib/python2.7/site-packages/* \
+	    $(CCU_PREDIST_PATH)/python/lib/python2.7/dist-packages/
+	rm -rf $(CCU_PREDIST_PATH)/python/lib/python2.7/site-packages
 
 dist-ccu-step2:
 	[ ! -d $(DIST_PATH) ] && mkdir $(DIST_PATH) || true
