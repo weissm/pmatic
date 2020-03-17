@@ -6,6 +6,12 @@ lib/python2.7/_sysconfigdata_nd.py
 lib/python2.7/plat-x86_64-linux-gnu/_sysconfigdata_nd.py
 lib/python2.7/lib-dynload/datetime.so
 lib/python2.7/lib-dynload/_io.so
+lib/python2.7/lib-dynload/_socket.so
+lib/python2.7/lib-dynload/_functools.so
+lib/python2.7/lib-dynload/time.so
+lib/python2.7/lib-dynload/cStringIO.so
+lib/python2.7/lib-dynload/_collections.so
+lib/python2.7/lib-dynload/*.so
 # travis+chroot path
 lib/python2.7/site-packages/simpletr64/*.py
 lib/python2.7/site-packages/simpletr64/actions/*.py
@@ -36,3 +42,23 @@ lib/python2.7/*-packages/urllib3/util/*.py
 lib/python2.7/*-packages/urllib3/packages/*.py
 lib/python2.7/*-packages/urllib3/packages/*/*.py
 lib/python2.7/*-packages/urllib3/packages/*/*/*.py
+lib/python2.7/*-packages/cryptography/*.py
+lib/python2.7/*-packages/cryptography/hazmat/*.py
+lib/python2.7/*-packages/cryptography/hazmat/*/*.py
+lib/python2.7/*-packages/cryptography/hazmat/*/*/*.py
+lib/python2.7/*-packages/cryptography/x509/*.py
+lib/python2.7/*-packages/cffi/*.py
+lib/python2.7/*-packages/certifi/*.py
+lib/python2.7/*-packages/idna/*.py
+lib/python2.7/*-packages/enum/*.py
+lib/python2.7/*-packages/pkg_resources/*.py
+lib/python2.7/*-packages/pkg_resources/*/*.py
+lib/python2.7/*-packages/pkg_resources/*/*/*.py
+lib/python2.7/*-packages/pkg_resources/*/*/*/*.py
+lib/python2.7/*-packages/six.py
+lib/python2.7/*-packages/ipaddress.py
+lib/python2.7/*-packages/asn1crypto/*.py
+lib/python2.7/*-packages/asn1crypto/*/*.py
+lib/python2.7/*-packages/pyasn1/*.py
+lib/python2.7/*-packages/pyasn1/*/*.py
+lib/python2.7/*-packages/pyasn1/*/*/*.py

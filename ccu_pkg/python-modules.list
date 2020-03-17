@@ -108,4 +108,10 @@ lib/python2.7/*-packages/six.py
 lib/python2.7/pkgutil.py
 lib/python2.7/zipfile.py
 lib/python2.7/shutil.py
+lib/python2.7/plistlib.py
+lib/python2.7/pprint.py
+lib/python2.7/fractions.py
+lib/python2.7/decimal.py
+lib/python2.7/numbers.py
+lib/python2.7/ipaddress.py
 

@@ -117,7 +117,7 @@ class EventListener(utils.LogMixin, utils.CallbackMixin):
 
     The optional argument *listen_address* can be set to exactly tell
     the CCU to which host address and TCP port to send it's XML-RPC calls. This
-    defaults to the host address of your local system and TCP port ``9123``. You
+    defaults to the host address of your local system and TCP port ``9124``. You
     are free to set another port of your choice by specifying it as tuple of two
     elements like e.g. ``("", 1337)``. The first element needs to contain the host
     address of the system pmatic is running on and is normally automatically gathered.
@@ -154,8 +154,8 @@ class EventListener(utils.LogMixin, utils.CallbackMixin):
     def _init_listen_address(self, listen_address):
         """Parses the listen_address provided by the user."""
         if listen_address is None:
-            # listen on all interfaces. Use port 9123 by default.
-            self._listen_address = ('', 9123)
+            # listen on all interfaces. Use port 9124 by default.
+            self._listen_address = ('', 9124)
 
         elif isinstance(listen_address, tuple) and len(listen_address) == 2:
             self._listen_address = listen_address

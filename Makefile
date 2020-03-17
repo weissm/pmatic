@@ -1,6 +1,6 @@
 VERSION            = 0.6.1
 REPO_PATH         ?= $(shell pwd)
-CHROOT_PATH       ?= $(shell pwd)/chroot
+CHROOT_PATH       ?= $(shell pwd)/buildroot
 CHROOT_DEB_MIRROR ?= http://ftp.de.debian.org/debian
 CCU_PREDIST_PATH  ?= $(shell pwd)/ccu_pkg
 DIST_PATH         ?= $(shell pwd)/dist

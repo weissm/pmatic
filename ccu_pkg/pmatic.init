@@ -4,7 +4,7 @@ VERSION=0.6.1
 CONFIG_DIR=/etc/config
 ADDON_DIR=$CONFIG_DIR/addons/pmatic
 INIT_TARGET=/etc/init.d/S55pmatic
-iPYTHON_DIR=$ADDON_DIR
+PYTHON_DIR=$ADDON_DIR
 #PYTHON_DIR=/usr/local/python3-3.6.3
 
 PM_PID=$(ps -o pid,args | awk '{if($3=="/usr/local/bin/pmatic-manager"){print $1}}')
