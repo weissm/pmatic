@@ -88,9 +88,9 @@ class TestEventListener(lib.TestCCUClassWide):
 
 
     def test_addresses(self, ccu):
-        # listen all interfaces, 9123
+        # listen all interfaces, 9124
         listener = pmatic.events.EventListener(ccu)
-        assert listener._listen_address == ('', 9123)
+        assert listener._listen_address == ('', 9124)
 
         # Invalid listen address
         with pytest.raises(PMException) as e:
@@ -113,7 +113,7 @@ class TestEventListener(lib.TestCCUClassWide):
         listener.init()
 
         # with pytest.raises(HTTPError) as e:
-        #     urlopen("http://127.0.0.1:9124")
+        #     urlopen("http://127.0.0.1:9125")
         # assert "501: Unsupported method" in str(e)
 
         assert listener.initialized == True
@@ -124,7 +124,7 @@ class TestEventListener(lib.TestCCUClassWide):
         socket.setdefaulttimeout(1)
         with pytest.raises(URLError):
             with pytest.raises(socket.timeout):
-                urlopen("http://127.0.0.1:9124")
+                urlopen("http://127.0.0.1:9125")
 
 
     def test_double_close(self, listener):
