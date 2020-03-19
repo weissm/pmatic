@@ -39,6 +39,7 @@ lib/python2.7/*-packages/requests/packages/*/*/*/*.py
 lib/python2.7/*-packages/chardet/*.py
 lib/python2.7/*-packages/urllib3/*.py
 lib/python2.7/*-packages/urllib3/util/*.py
+lib/python2.7/*-packages/urllib3/contrib/*.py
 lib/python2.7/*-packages/urllib3/packages/*.py
 lib/python2.7/*-packages/urllib3/packages/*/*.py
 lib/python2.7/*-packages/urllib3/packages/*/*/*.py
