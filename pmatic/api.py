@@ -801,8 +801,11 @@ class DeviceLogic(CachedAPICall):
                 d[utils.decamel(k)] = value
             return d
 
-        for spec in self._api.device_list_all_detail():
-            dict.__setitem__(self, spec["address"], decamel_dict_keys(spec))
+        alldevices = self._api.device_list_all_detail()
+        for spec in alldevices:
+            specaddress=spec["address"]
+            specdecamel=decamel_dict_keys(spec)
+            dict.__setitem__(self,specaddress , specdecamel)
 
 
 
@@ -825,14 +828,66 @@ class DeviceSpecs(CachedAPICall):
             return d
 
         devices = {}
-        for spec in self._api.interface_list_devices(interface="BidCos-RF"):
-            spec = decamel_dict_keys(spec)
-            if "parent" not in spec:
-                devices[spec["address"]] = spec
-            else:
-                device = devices[spec["parent"]]
-                channels = device.setdefault("channels", [])
-                channels.append(spec)
+
+        # collect all interface names. 
+        interface_names = [interface['name'] for interface in self._api.interface_list_interfaces()]
+        # now start and walk through all interface names
+        for interface_name in interface_names:
+            # get actual interface object
+            try:
+                interfaces = self._api.interface_list_devices(interface=interface_name)
+            except:
+                # fixme: add meaningfull debug output
+                # print("Cannot list devices via interface: ", interface_name)
+                continue
+            # parentaddress,childindex used currently only for HmIP-RF 
+            parentaddress = ""        
+            childindex = 0
+            # walk trough all spec devices
+            for spec in interfaces:
+                spec = decamel_dict_keys(spec)            
+                spec.update(interface=interface_name)
+                # the follwing shall help to create a unified device object filling the empty vars
+                if interface_name == "BidCos-RF":
+                    pass
+                elif interface_name == "CUxD":
+                    spec.update(roaming="")
+                    spec.update(updatable="")
+                elif interface_name == "VirtualDevices":
+                    addr = spec["address"]
+                    if ":" not in addr:
+                        devices[addr] = spec
+                        continue
+                    else:
+                        device = devices[addr[:addr.find(":")]]
+                        channels = device.setdefault("channels", [])
+                        channels.append(spec)
+                elif interface_name == "HmIP-RF":
+                    spec.update(direction="")
+                    spec.update(link_source_roles="")
+                    spec.update(link_target_roles="")
+                    spec.update(interface="HmIP-RF")
+                    if spec["children"]:
+                        devices[spec["address"]] = spec
+                        parentaddress = spec["address"]
+                        parenttype = spec["type"]
+                        childindex = 0
+                    else:
+                        spec["parent"] = parentaddress
+                        spec.update(index=childindex)
+                        childindex = childindex + 1
+                        spec.update(parent=parentaddress)
+                        spec.update(parent_type=parenttype)
+                else:
+                    self.logger.debug("  Interface for %s not supported yet", interface_name)
+                                
+                # common handling of parent/channel creation
+                if "parent" not in spec:
+                    devices[spec["address"]] = spec
+                else:
+                    device = devices[spec["parent"]]
+                    channels = device.setdefault("channels", [])
+                    channels.append(spec)
 
         for key, val in devices.items():
             dict.__setitem__(self, key, val)

@@ -56,6 +56,7 @@ import wsgiref.simple_server
 from hashlib import sha256
 import pytz
 from cryptography.fernet import Fernet
+from cryptography.fernet import InvalidToken
 import hashlib
 import base64
 
@@ -150,7 +151,12 @@ class Config(utils.LogMixin):
                             config[key] = val
                  # treat ccu password special           
                 if 'ccu_credentials' in config:
-                    config['ccu_credentials'] = config['ccu_credentials'][0].encode(), cipher_suite.decrypt((config['ccu_credentials'][1]).encode())
+                    try:
+                        config['ccu_credentials'] = config['ccu_credentials'][0].encode(), cipher_suite.decrypt((config['ccu_credentials'][1]).encode())
+                    except InvalidToken:
+                        config['ccu_credentials'] = config['ccu_credentials'][0].encode(), "default"
+                        cls.cls_logger().warning("No valid credential, please use -x <passwd> option or define in setup section.", exc_info=False)
+ 
             except IOError as e:
                 # a non existing file is allowed.
                 if e.errno == 2:
@@ -1480,14 +1486,14 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
             Config.log_level = log_level_name
         pmatic.logging(Config.log_level)
 
+        cfg_password = self._vars.getvalue("cfg_password")
+        if cfg_password != "":
+            Config.cfg_password = cfg_password
+
         self._save_ccu_config()
         self._save_fritzbox_config()
         self._save_pushover_config()
         self._save_email_config()
-
-        cfg_password = self._vars.getvalue("cfg_password")
-        if cfg_password != "":
-            Config.cfg_password = cfg_password
 
         event_history_length = self._vars.getvalue("event_history_length")
         try:
@@ -1728,8 +1734,8 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
 
         self.write("</table>")
 
-        self.write("<tr><th>Script Path"
-                   "<p>You can configure where to store your script information. Note: no ending slash</p>"
+        self.h3("Script Path")
+        self.write("<p>You can configure where to store your script information. Note: no ending slash</p>"
                    "</th>")
         self.write("<td>")
         self.input("script_path", str(Config.script_path))
@@ -1845,7 +1851,8 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         self.write("</table>")
 
         self.h3("Config Password")
-        self.p("Set a new password for the config file information. "
+        self.p("Retype password for the config file information. "
+			   "If you want proper decoding at start, use -x <passwd> option."
 			   "Keep information in mind, no recovery possible.")
         self.write("<table>")
         self.write("</tr>")
