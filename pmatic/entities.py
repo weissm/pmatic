@@ -200,6 +200,13 @@ class Channel(utils.LogMixin, Entity):
             if channel_class == Channel:
                 cls.cls_logger().debug("Using generic Channel class (Type: %s): %r" %
                                                     (channel_dict["type"], channel_dict))
+            if channel_dict["address"].startswith("INT"):
+                # Need to patch missing mandatory attributes for the channel because channels
+                # in virtual devices are missing those
+                channel_dict["direction"] = 0
+                channel_dict["index"] = int(channel_dict["address"][channel_dict["address"].find(":")+1:])
+                channel_dict["link_source_roles"] = []
+                channel_dict["link_target_roles"] = []
 
             channel_objects[channel_dict["index"]] = channel_class(device, channel_dict)
         return channel_objects
@@ -231,7 +238,14 @@ class Channel(utils.LogMixin, Entity):
         This method is called on the first access to the values.
         """
         self._values.clear()
-        for value_spec in self._ccu.api.interface_get_paramset_description(interface="BidCos-RF",
+# org
+#        for value_spec in self._ccu.api.interface_get_paramset_description(interface="BidCos-RF",
+#                                                    address=self.address, paramsetType="VALUES"):
+# new
+#        value_specs =  self._ccu.api.interface_get_paramset_description(interface=self.interface,
+#                                                  address=self.address, paramsetKey="VALUES")
+
+        for value_spec in self._ccu.api.interface_get_paramset_description(interface=self.interface,
                                                     address=self.address, paramsetType="VALUES"):
             self._init_value_spec(value_spec)
 
@@ -338,7 +352,7 @@ class Channel(utils.LogMixin, Entity):
     def _get_values_bulk(self):
         """Fetches all values of this channel at once. This is the default method to
         fetch the values."""
-        return self._ccu.api.interface_get_paramset(interface="BidCos-RF",
+        return self._ccu.api.interface_get_paramset(interface=self.interface,
                                          address=self.address, paramsetKey="VALUES")
 
 
@@ -354,7 +368,7 @@ class Channel(utils.LogMixin, Entity):
             if value.readable:
                 try:
                     values[value.id] = self._ccu.api.interface_get_value(
-                                                        interface="BidCos-RF",
+                                                        interface=self.interface,
                                                         address=self.address,
                                                         valueKey=value.internal_name)
                 except PMException as e:
@@ -386,7 +400,10 @@ class Channel(utils.LogMixin, Entity):
             formated.append("%s: %s" % (title, value))
         return ", ".join(formated)
 
-
+    @property
+    def is_virtual_channel(self):
+        return self.address.startswith("INT")
+        
     def set_logic_attributes(self, attrs):
         """Used to update the logic attributes of this channel.
 
@@ -529,13 +546,18 @@ class ChannelSwitch(Channel):
     @property
     def is_on(self):
         """``True`` when the power is on, otherwise ``False``."""
-        return self.values["STATE"].value
-
+        if "STATE" in self.values:
+            return self.values["STATE"].value
+        else:
+            return True
 
     @property
     def summary_state(self):
         """Provides the current state as well formated string."""
-        return "%s: %s" % (self.values["STATE"].name, self.is_on and "on" or "off")
+        if hasattr(self.values, 'STATE'):
+            return "%s: %s" % (self.values["STATE"].name, self.is_on and "on" or "off")
+        else:
+            return "UNKNONW: %s" % (self.is_on and "on" or "off")
 
 
     def toggle(self):
@@ -681,7 +703,7 @@ class ChannelClimaRTTransceiver(Channel):
         return "Temperature: %s (Target: %s, Valve: %s)" % \
                 (self.values["ACTUAL_TEMPERATURE"],
                  self.values["SET_TEMPERATURE"],
-                 self.values["VALVE_STATE"])
+                 self.values["VALVE_STATE"] if "VALVE_STATE" in self.values else "NA")
 
 
     def _get_class_name_of_param_spec(self, param_spec):
@@ -1014,7 +1036,10 @@ class Device(Entity):
         if self.type == "HM-RCV-50":
             return False
         else:
-            return self.maintenance.values["CONFIG_PENDING"].value
+            if "CONFIG_PENDING" in self.maintenance.values:
+                return self.maintenance.values["CONFIG_PENDING"].value
+            else:
+                return False
 
 
     @property
@@ -1313,6 +1338,60 @@ class HM_CC_RT_DN(Device):
         if self.control_mode == "BOOST":
             return self.channels[4].values["BOOST_STATE"]
 
+# Funk-Wandthermostat
+class HM_TC_IT_WM_W_EU(Device):
+    type_name = "HM-TC-IT-WM-W-EU"
+
+    @property
+    def temperature(self):
+        """Provides the current temperature.
+
+        Returns an instance of :class:`ParameterFLOAT`.
+        """
+        return self.channels[2].values["ACTUAL_TEMPERATURE"]
+
+
+    #{u'CONTROL': u'NONE', u'OPERATIONS': u'5', u'NAME': u'VALVE_STATE', u'MIN': u'0',
+    # u'DEFAULT': u'0', u'MAX': u'99', u'TAB_ORDER': u'3', u'FLAGS': u'1', u'TYPE': u'INTEGER',
+    # u'ID': u'VALVE_STATE', u'UNIT': u'%'}
+    @property
+    def humidity(self):
+        """Provides the current valve state in percentage.
+
+        Returns an instance of :class:`ParameterINTEGER`.
+        """
+        return self.channels[2].values["ACTUAL_HUMIDITY"]
+
+
+    @property
+    def set_temperature(self):
+        """The actual set temperature of the device.
+
+        :getter: Provides the actual target temperature as :class:`ParameterFLOAT`.
+        :setter: Specify the new set temperature as float. Please note that the CCU rounds
+                 this values to
+                 .0 or .5 after the comma. So if you provide .e.g 22.1 as new set temperature,
+                 the CCU will convert this to 22.0. This is totally equal to the control on the
+                 device.
+        :type: ParameterFloat/float
+        """
+        return self.channels[2].values["SET_TEMPERATURE"]
+
+
+    @set_temperature.setter
+    def set_temperature(self, target):
+        self.channels[2].values["SET_TEMPERATURE"].value = target
+
+
+    @property
+    def is_off(self):
+        """Is set to `True` when the device is not enabled to heat."""
+        return self.set_temperature.value == 4.5
+
+
+    def turn_off(self):
+        """Call this method to tell the thermostat that it should not heat."""
+        self.set_temperature = 4.5
 
 
 # Funk-Temperatur-/Luftfeuchtesensor OTH
