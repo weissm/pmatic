@@ -74,7 +74,13 @@ class Parameter(utils.CallbackMixin):
             # for the specific object type
             trans_func = self._transform_attributes.get(key)
             if trans_func:
-                val = trans_func(val)
+                try:
+                    val = trans_func(val)
+                except ValueError as e:
+                    if self.channel.is_virtual_channel:
+                        # Need to fall back to a default value for parameters in
+                        # virtual groups because they are sometimes totally wrong
+                        val = trans_func(0)
 
             # Change the CCU internal "name" to internal_name
             if key.lower() == "name":
@@ -273,11 +279,12 @@ class Parameter(utils.CallbackMixin):
         if not self.readable:
             return "[NOT READABLE]"
 
-        if self.unit:
-            if self.unit == "%":
-                return (value_format+"%%") % self.value
-            else:
-                return (value_format+" %s") % (self.value, self.unit)
+        if hasattr(self, 'unit'):
+            if self.unit:
+                if self.unit == "%":
+                    return (value_format+"%%") % self.value
+                else:
+                    return (value_format+" %s") % (self.value, self.unit)
         return value_format % self.value
 
 
@@ -350,6 +357,8 @@ class ParameterINTEGER(ParameterNUMERIC):
     )
 
     def _from_api_value(self, value):
+        if value == '':
+            value = 0
         return int(value)
 
 
@@ -389,6 +398,8 @@ class ParameterFLOAT(ParameterNUMERIC):
 
 
     def _from_api_value(self, value):
+        if value == '':
+            value = 0.0
         return float(value)
 
 
@@ -413,6 +424,8 @@ class ParameterFLOAT(ParameterNUMERIC):
     def _set_value(self, value):
         """Setter to update the internal data structures. Allows integer, converts
         them to float."""
+        if value == '':
+            value = 0.0
         return super(ParameterFLOAT, self)._set_value(float(value))
 
 
