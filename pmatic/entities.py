@@ -238,15 +238,15 @@ class Channel(utils.LogMixin, Entity):
         This method is called on the first access to the values.
         """
         self._values.clear()
-# org
-#        for value_spec in self._ccu.api.interface_get_paramset_description(interface="BidCos-RF",
-#                                                    address=self.address, paramsetType="VALUES"):
-# new
-#        value_specs =  self._ccu.api.interface_get_paramset_description(interface=self.interface,
-#                                                  address=self.address, paramsetKey="VALUES")
+        if self._ccu.api._get_target() != "ccu2" :
+            value_specs =  self._ccu.api.interface_get_paramset_description(interface=self.interface,
+                                                    address=self.address, paramsetKey="VALUES")
+        else:
+            # org defintion
+            value_specs = self._ccu.api.interface_get_paramset_description(interface="BidCos-RF",
+                                                    address=self.address, paramsetType="VALUES")
 
-        for value_spec in self._ccu.api.interface_get_paramset_description(interface=self.interface,
-                                                    address=self.address, paramsetType="VALUES"):
+        for value_spec in value_specs:
             self._init_value_spec(value_spec)
 
         self._register_saved_callbacks()

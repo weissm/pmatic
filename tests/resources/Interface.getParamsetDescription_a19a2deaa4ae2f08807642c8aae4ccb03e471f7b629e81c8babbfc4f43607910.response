@@ -1,0 +1,1 @@
+{"error": null, "result": [{"CONTROL": "DOOR_SENSOR.STATE", "DEFAULT": "CLOSED", "FLAGS": "1", "ID": "STATE", "MAX": "OPEN", "MIN": "CLOSED", "NAME": "STATE", "OPERATIONS": "5", "TAB_ORDER": "0", "TYPE": "ENUM", "UNIT": "\"\"", "VALUE_LIST": "CLOSED OPEN"}], "version": "1.1"}

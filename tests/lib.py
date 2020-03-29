@@ -71,19 +71,22 @@ def request_id(data):
     return "%s_%s" % (method, data_hash)
 
 
-def response_file_path(request_id):
-    return "%s/%s.response" % (resources_path, request_id)
+def response_file_path(request_id, __target__ = ""):
+    return "%s/%s/%s.response" % (resources_path, __target__, request_id)
 
 
-def status_file_path(request_id):
-    return "%s/%s.status" % (resources_path, request_id)
+def status_file_path(request_id, __target__ = ""):
+    return "%s/%s/%s.status" % (resources_path, __target__, request_id)
 
 
-def data_file_path(request_id):
-    return "%s/%s.data" % (resources_path, request_id)
+def data_file_path(request_id, __target__ = ""):
+    return "%s/%s/%s.data" % (resources_path, __target__, request_id)
 
 
-def fake_urlopen(url_or_request, data=None, timeout=None):
+def fake_urlopen_ccu2(url_or_request, data=None, timeout=None):
+    return fake_urlopen(url_or_request, data=None, timeout=None, __target__="ccu2")
+
+def fake_urlopen(url_or_request, data=None, timeout=None, __target__=""):
     """A stub urlopen() implementation that loads json responses from the filesystem.
 
     It first strips off the host part of the url and then uses the path info
@@ -92,6 +95,7 @@ def fake_urlopen(url_or_request, data=None, timeout=None):
     """
     if isinstance(url_or_request, Request):
         data = url_or_request.data
+        print("fake_urlopen_ccu2 with url ", url_or_request.data)
 
     fake_data = fake_session_id(data, data)
 
@@ -104,14 +108,13 @@ def fake_urlopen(url_or_request, data=None, timeout=None):
         pass
 
     rid = request_id(fake_data)
-    response = open(response_file_path(rid), "rb").read()
-    http_status = int(open(status_file_path(rid), "rb").read())
+    response = open(response_file_path(rid, __target__ = __target__), "rb").read()
+    http_status = int(open(status_file_path(rid, __target__ = __target__), "rb").read())
 
     obj = StringIO(response)
     obj.getcode = lambda: http_status
 
     return obj
-
 
 def fake_session_id(data_byte_str, byte_str):
     new_str = re.sub(b'"_session_id_": "[0-9A-Za-z]{10}"',
@@ -123,8 +126,11 @@ def fake_session_id(data_byte_str, byte_str):
         return new_str
 
 
-def wrap_urlopen(url, data=None, timeout=None):
+def wrap_urlopen(url_or_request, data=None, timeout=None):
     """Wraps urlopen to record the response when communicating with a real CCU."""
+    if isinstance(url_or_request, Request):
+        data = url_or_request.data
+        url = url_or_request.get_full_url()
     assert utils.is_byte_string(data)
 
     try:
@@ -189,16 +195,33 @@ class TestRemoteAPI(object):
             self._monkeypatch.setattr(pmatic.api, 'urlopen', wrap_urlopen)
 
         API = pmatic.api.RemoteAPI(
-            address="http://192.168.1.26",
-            credentials=("Admin", "EPIC-SECRET-PW"),
+            address="http://192.168.178.20",
+            credentials=("PmaticAdmin", "EPIC-SECRET-PW"),
             connect_timeout=5,
-            #log_level=pmatic.DEBUG,
+            # log_level=pmatic.DEBUG,
         )
 
         request.addfinalizer(API.close)
 
         return API
 
+    @pytest.fixture(scope="module")
+    def APICCU2(self, request):
+        self._monkeypatch = monkeypatch()
+        # For exisiting ccu2 responses force read from file
+        self._monkeypatch.setattr(pmatic.api, 'urlopen', fake_urlopen_ccu2)
+      
+        APICCU2 = pmatic.api.RemoteAPI(
+            address="http://192.168.1.26",
+            credentials=("Admin", "EPIC-SECRET-PW"),
+            connect_timeout=5,
+            target="ccu2"
+            #log_level=pmatic.DEBUG,
+        )
+
+        request.addfinalizer(APICCU2.close)
+
+        return APICCU2
 
 
 class TestCCU(TestRemoteAPI):
@@ -214,6 +237,24 @@ class TestCCU(TestRemoteAPI):
     def ccu(self, API):
         return self._get_test_ccu(API)
 
+class TestCCU2(TestRemoteAPI):
+    def _get_test_ccu2(self, APICCU2):
+        self._monkeypatch = monkeypatch()
+        self._monkeypatch.setattr(pmatic.api, 'init', lambda: None)
+
+        ccu2 = pmatic.CCU()
+        ccu2.api = APICCU2
+        return ccu2
+
+    @pytest.fixture(scope="function")
+    def ccu2(self, APICCU2):
+        return self._get_test_ccu2(APICCU2)
+
+
+class TestCCUClassWideCCU2(TestCCU2):
+    @pytest.fixture(scope="class")
+    def ccu2(self, APICCU2):
+        return self._get_test_ccu2(APICCU2)
 
 class TestCCUClassWide(TestCCU):
     @pytest.fixture(scope="class")

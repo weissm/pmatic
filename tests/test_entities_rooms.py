@@ -95,7 +95,7 @@ class TestCCURooms(lib.TestCCUClassWide):
         assert isinstance(rooms._room_dict, dict)
         assert len(rooms._room_dict) > 0
 
-        result1 = ccu.rooms.query(room_name="Balkon")
+        result1 = ccu.rooms.query(room_name="Wohnzimmer")
         room = list(result1)[0]
         assert isinstance(room, Room)
 
@@ -104,14 +104,14 @@ class TestCCURooms(lib.TestCCUClassWide):
 
 
     def test_query(self, ccu):
-        rooms1 = ccu.rooms.query(room_name="Balkon")
+        rooms1 = ccu.rooms.query(room_name="Wohnzimmer")
         assert isinstance(rooms1, Rooms)
         assert len(list(rooms1)) == 1
 
         rooms2 = ccu.rooms.query(room_name="xxx")
         assert len(list(rooms2)) == 0
 
-        rooms3 = ccu.rooms.query(room_name_regex="^Balkon$")
+        rooms3 = ccu.rooms.query(room_name_regex="^Wohnzimmer$")
         assert len(list(rooms3)) == 1
 
         rooms4 = ccu.rooms.query(room_name_regex="^.*$")

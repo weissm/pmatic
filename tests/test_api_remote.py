@@ -184,16 +184,23 @@ class TestRemoteAPILowLevel(lib.TestRemoteAPI):
         serial = API.ccu_get_serial()
         assert utils.is_text(serial)
         assert len(serial) == 10
-        assert serial.startswith("KEQ")
+        assert serial.startswith("QEQ")
 
+    def test_ccu_get_serial_ccu2(self, APICCU2):
+        serial = APICCU2.ccu_get_serial()
+        assert utils.is_text(serial)
+        assert len(serial) == 10
+        assert serial.startswith("KEQ")
 
     def test_interface_list_interfaces(self, API):
         interfaces = API.interface_list_interfaces()
-        assert len(interfaces) == 2
+        assert len(interfaces) > 0
         for interface in interfaces:
             assert utils.is_text(interface["info"])
             assert utils.is_text(interface["name"])
             assert isinstance(interface["port"], int)
+
+
 
 # FIXME: Write tests for untested methods.
 #API.bidcos__wired_get_configuration_wired()

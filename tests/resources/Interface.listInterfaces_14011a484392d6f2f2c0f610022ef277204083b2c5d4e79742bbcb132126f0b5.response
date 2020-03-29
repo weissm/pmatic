@@ -1,1 +1,1 @@
-{"error": null, "result": [{"info": "BidCos-RF", "name": "BidCos-RF", "port": 2001}, {"info": "Virtual Devices", "name": "VirtualDevices", "port": 9292}], "version": "1.1"}
+{"error": null, "result": [{"info": "CUxD", "name": "CUxD", "port": 8701}, {"info": "BidCos-RF", "name": "BidCos-RF", "port": 32001}, {"info": "Virtual Devices", "name": "VirtualDevices", "port": 39292}, {"info": "HmIP-RF", "name": "HmIP-RF", "port": 32010}], "version": "1.1"}

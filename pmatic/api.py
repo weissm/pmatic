@@ -51,12 +51,12 @@ import subprocess
 # Specific for the RemoteAPI()
 try:
     from urllib.request import urlopen, Request
-    from urllib.error import URLError
-    from http.client import BadStatusLine
+#    from urllib.error import URLError
+#    from http.client import BadStatusLine
 except ImportError:
     from urllib2 import urlopen, Request
-    from urllib2 import URLError
-    from httplib import BadStatusLine
+#    from urllib2 import URLError
+#    from httplib import BadStatusLine
 
 from pmatic.exceptions import PMException, PMConnectionError
 import pmatic.utils as utils
@@ -346,7 +346,7 @@ class AbstractAPI(utils.LogMixin):
 
 class RemoteAPI(AbstractAPI):
     """Provides API access via HTTP to the CCU."""
-    def __init__(self, address, credentials, connect_timeout=10, http_auth=None):
+    def __init__(self, address, credentials, connect_timeout=10, http_auth=None, target="ccu3"):
         self._session_id      = None
         self._address         = None
         self._credentials     = None
@@ -360,6 +360,7 @@ class RemoteAPI(AbstractAPI):
         self._set_http_auth(http_auth)
         self._set_connect_timeout(connect_timeout)
         self._constructed = True
+        self._target      = target
 
 
     def _set_address(self, address):
@@ -447,7 +448,7 @@ class RemoteAPI(AbstractAPI):
     def _login(self):
         if self._session_id is not None:
             raise PMException("Already logged in.")
-
+	
         response = self._call("session_login", username=self._credentials[0],
                                               password=self._credentials[1])
         if response is None:
@@ -476,10 +477,10 @@ class RemoteAPI(AbstractAPI):
         args   = self._get_arguments(method, kwargs)
 
         self.logger.debug("CALL: %s ARGS: %r", method["NAME"], args)
-        #import traceback
-        #stack = "" #("".join(traceback.format_stack()[:-1])).encode("utf-8")
-        #print(b"".join(traceback.format_stack()[:-1]))
-        #self.logger.debug("  Callstack: %s\n" % stack)
+        # import traceback
+        # stack = "" #("".join(traceback.format_stack()[:-1])).encode("utf-8")
+        # print(b"".join(traceback.format_stack()[:-1]))
+        # self.logger.debug("  Callstack: %s\n" % stack)
 
         json_data = json.dumps({
             "method": method["NAME"],
@@ -487,23 +488,13 @@ class RemoteAPI(AbstractAPI):
         })
         url = "%s/api/homematic.cgi" % self._address
 
-        try:
-            self.logger.debug("  URL: %s DATA: %s", url, json_data)
-            request = Request(url, data=json_data.encode("utf-8"))
+        self.logger.debug("  URL: %s DATA: %s", url, json_data)
+        request = Request(url, data=json_data.encode("utf-8"))
 
-            if self._http_auth:
-                base64string = base64.encodestring('%s:%s' % self._http_auth).replace('\n', '')
-                request.add_header("Authorization", "Basic %s" % base64string)
-
-            handle = urlopen(request, timeout=self._connect_timeout)
-        except Exception as e:
-            if isinstance(e, URLError):
-                msg = e.reason
-            elif isinstance(e, BadStatusLine):
-                msg = "Request terminated. Is the device rebooting?"
-            else:
-                msg = e
-            raise PMConnectionError("Unable to open \"%s\" [%s]: %s" % (url, type(e).__name__, msg))
+        if self._http_auth:
+            base64string = base64.encodestring('%s:%s' % self._http_auth).replace('\n', '')
+            request.add_header("Authorization", "Basic %s" % base64string)
+        handle = urlopen(request, timeout=self._connect_timeout)
 
         response_txt = ""
         for line in handle.readlines():
@@ -561,6 +552,9 @@ class RemoteAPI(AbstractAPI):
             args["_session_id_"] = self._session_id
         return args
 
+    # for backward compability
+    def _get_target(self):
+        return self._target
 
 
 class LocalAPI(AbstractAPI):
