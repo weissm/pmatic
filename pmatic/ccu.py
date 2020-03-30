@@ -68,6 +68,7 @@ class CCU(object):
     10 seconds. If you like to change the timeout, you need to set the argument
     *connect_timeout* to a number of seconds of your choice.
     """
+    _constructed = False
     def __init__(self, **kwargs):
         """__init__([address[, credentials[, connect_timeout=10]]])
         """
@@ -81,6 +82,7 @@ class CCU(object):
         self._events = None
         self._rooms = None
         self._residents = None
+        self._constructed = True
 
 
     def __new__(cls, **kwargs):
@@ -104,9 +106,11 @@ class CCU(object):
         We need to override the __new__ instead of e.g. use a factory to keep the API of the
         pmatic scripts equal in all pmatic script use cases.
         """
-        if hasattr(builtins, "manager_ccu"):
+        if hasattr(builtins, "manager_ccu"): 
+#            print("CCU: reuse ")
             return builtins.manager_ccu
         else:
+#            print("CCU: create new CCU ")
             return super(CCU, cls).__new__(cls)
 
 
@@ -197,9 +201,9 @@ class CCU(object):
     def close(self):
         """Is used to close the connections with the CCU and the eventual open event listener"""
         self.api.close()
+#        print("CCU close")
         if self._events:
             self.events.close()
-
 
 
 class CCUDevices(Devices):
@@ -376,7 +380,6 @@ class CCUDevices(Devices):
 
         Only for internal use."""
         return self._device_dict
-
 
 
 class CCURooms(Rooms):

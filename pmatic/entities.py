@@ -228,7 +228,7 @@ class Channel(utils.LogMixin, Entity):
             return self._values
 
 
-    def _init_value_specs(self):
+    def _init_value_specs(self, target="ccu3"):
         """Initializes the value objects by fetching the specification from the CCU.
 
         The specification (description) of the VALUES paramset are fetched from
@@ -238,11 +238,13 @@ class Channel(utils.LogMixin, Entity):
         This method is called on the first access to the values.
         """
         self._values.clear()
-        if self._ccu.api._get_target() != "ccu2" :
+        if self._ccu.api._get_target() != "ccu2" and target != "ccu2":
+#            print ("test non CCU2")
             value_specs =  self._ccu.api.interface_get_paramset_description(interface=self.interface,
                                                     address=self.address, paramsetKey="VALUES")
         else:
             # org defintion
+#            print("test CCU2 get values")
             value_specs = self._ccu.api.interface_get_paramset_description(interface="BidCos-RF",
                                                     address=self.address, paramsetType="VALUES")
 

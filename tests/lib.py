@@ -31,6 +31,18 @@ try:
 except ImportError:
     from _pytest.monkeypatch import monkeypatch
 
+#try:
+#    from builtins import object # pylint:disable=redefined-builtin
+#except ImportError:
+#    pass
+
+# try:
+    # # Python 2.x
+    # import __builtin__ as builtins
+# except ImportError:
+    # # Python 3+
+    # import builtins
+
 import re
 import os
 import json
@@ -53,7 +65,6 @@ except ImportError:
 import pmatic
 import pmatic.api
 import pmatic.utils as utils
-
 
 resources_path = "tests/resources"
 
@@ -95,7 +106,7 @@ def fake_urlopen(url_or_request, data=None, timeout=None, __target__=""):
     """
     if isinstance(url_or_request, Request):
         data = url_or_request.data
-        print("fake_urlopen_ccu2 with url ", url_or_request.data)
+#        print("fake_urlopen_ccu2 with url ", url_or_request.data)
 
     fake_data = fake_session_id(data, data)
 
@@ -109,6 +120,9 @@ def fake_urlopen(url_or_request, data=None, timeout=None, __target__=""):
 
     rid = request_id(fake_data)
     response = open(response_file_path(rid, __target__ = __target__), "rb").read()
+#    except:
+ #       import traceback
+ #       traceback.print_exc()
     http_status = int(open(status_file_path(rid, __target__ = __target__), "rb").read())
 
     obj = StringIO(response)
@@ -194,6 +208,7 @@ class TestRemoteAPI(object):
             # When executed with real ccu we wrap urlopen for enabling recording
             self._monkeypatch.setattr(pmatic.api, 'urlopen', wrap_urlopen)
 
+#        print ("...................... Start Remote API1")
         API = pmatic.api.RemoteAPI(
             address="http://192.168.178.20",
             credentials=("PmaticAdmin", "EPIC-SECRET-PW"),
@@ -211,6 +226,7 @@ class TestRemoteAPI(object):
         # For exisiting ccu2 responses force read from file
         self._monkeypatch.setattr(pmatic.api, 'urlopen', fake_urlopen_ccu2)
       
+#        print ("........................... Start Remote API2")
         APICCU2 = pmatic.api.RemoteAPI(
             address="http://192.168.1.26",
             credentials=("Admin", "EPIC-SECRET-PW"),
@@ -218,19 +234,19 @@ class TestRemoteAPI(object):
             target="ccu2"
             #log_level=pmatic.DEBUG,
         )
-
+        
         request.addfinalizer(APICCU2.close)
 
         return APICCU2
-
-
+    
 class TestCCU(TestRemoteAPI):
     def _get_test_ccu(self, API):
         self._monkeypatch = monkeypatch()
         self._monkeypatch.setattr(pmatic.api, 'init', lambda: None)
-
+                   
         ccu = pmatic.CCU()
         ccu.api = API
+#        print( "ccu generation " )
         return ccu
 
     @pytest.fixture(scope="function")
@@ -242,6 +258,28 @@ class TestCCU2(TestRemoteAPI):
         self._monkeypatch = monkeypatch()
         self._monkeypatch.setattr(pmatic.api, 'init', lambda: None)
 
+        # # if ccu shall be reused by manager keep it for future restorage
+        # if "manager_ccu" in builtins.__dict__:
+            # builtinn_ccu = builtins.__dict__["manager_ccu"]
+            # del builtins.__dict__["manager_ccu"]
+        # else:    
+            # builtinn_ccu = None
+        # # if ccu shall be reused by test class check if class is instantiated and assign for reuse    
+        # if "test_ccu" in builtins.__dict__:
+            # try:
+                # builtinn_test = builtins.__dict__["test_ccu"]
+                # if builtinn_test._constructed: # check if object is really instantiated
+                    # builtins.manager_ccu = builtinn_test
+            # except:
+                # del builtins.__dict__["test_ccu"]
+                
+        # ccu2 = pmatic.CCU()
+
+        # if builtinn_ccu != None:
+            # builtins.manager_ccu = builtinn_ccu
+        # builtins.test_ccu = ccu2
+
+        # print( "ccu2 has buildin " , hasattr(builtins, "test_ccu"))
         ccu2 = pmatic.CCU()
         ccu2.api = APICCU2
         return ccu2

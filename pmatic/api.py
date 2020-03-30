@@ -105,6 +105,7 @@ class AbstractAPI(utils.LogMixin):
     LocalAPI() and RemoteAPI().
     """
     _constructed = False
+    _ID = 0
 
     @classmethod
     def _replace_wrong_encoded_json(self, text):
@@ -118,9 +119,11 @@ class AbstractAPI(utils.LogMixin):
         self._methods = {}
         self._fail_exc = None
         self._initialized = False
+ #       print("........................ open ID in abstract API:", self._ID)
 
         # For simplicity we only allow one thread to perform API calls at the time
         self._api_lock = threading.RLock()
+
 
 
     # is called in locked context
@@ -129,6 +132,7 @@ class AbstractAPI(utils.LogMixin):
 
         The APIs can register this to ensures the close() method is called
         on interpreter shutdown."""
+ #       print("........................ prep for close ID:", self._ID)
         atexit.register(self.close)
 
 
@@ -352,6 +356,9 @@ class RemoteAPI(AbstractAPI):
         self._credentials     = None
         self._http_auth       = None
         self._connect_timeout = None
+        self._ID = AbstractAPI._ID
+#        print("........................ open ID:", self._ID)
+        AbstractAPI._ID += 1        
 
         super(RemoteAPI, self).__init__()
 
@@ -419,8 +426,15 @@ class RemoteAPI(AbstractAPI):
 
     # is called in unlocked context
     def close(self):
+#        print("........................ wait for close ID:", self._ID)
         with self._api_lock:
-            self._logout()
+#            print("........................ close ID:", self._ID)
+#            print("........................ target:", self._target)
+#            try:
+                
+                self._logout()
+#            except:
+#                pass
 
 
     # is called in locked context
@@ -459,7 +473,10 @@ class RemoteAPI(AbstractAPI):
     # is called in locked context
     def _logout(self):
         if self._session_id is not None:
-            self._call("session_logout", _session_id_=self._session_id)
+            try:
+                self._call("session_logout", _session_id_=self._session_id)
+            except:
+                print(".......................... cannot logout here: ", self._session_id )
             self._session_id = None
 
 
@@ -478,7 +495,7 @@ class RemoteAPI(AbstractAPI):
 
         self.logger.debug("CALL: %s ARGS: %r", method["NAME"], args)
         # import traceback
-        # stack = "" #("".join(traceback.format_stack()[:-1])).encode("utf-8")
+        # stack = ("".join(traceback.format_stack()[:-1])).encode("utf-8")
         # print(b"".join(traceback.format_stack()[:-1]))
         # self.logger.debug("  Callstack: %s\n" % stack)
 
