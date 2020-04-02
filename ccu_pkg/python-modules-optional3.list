@@ -1,0 +1,65 @@
+# These files are not really optional, but have different paths on different platforms
+# ignore missing files during rsync.
+#
+# Differences between paths
+lib/python3.6/_sysconfigdata_nd.py
+lib/python3.6/plat-x86_64-linux-gnu/_sysconfigdata_nd.py
+lib/python3.6/lib-dynload/datetime.so
+lib/python3.6/lib-dynload/_io.so
+lib/python3.6/lib-dynload/_socket.so
+lib/python3.6/lib-dynload/_functools.so
+lib/python3.6/lib-dynload/time.so
+lib/python3.6/lib-dynload/cStringIO.so
+lib/python3.6/lib-dynload/_collections.so
+lib/python3.6/lib-dynload/*.so
+# travis+chroot path
+lib/python3.6/site-packages/simpletr64/*.py
+lib/python3.6/site-packages/simpletr64/actions/*.py
+lib/python3.6/site-packages/pytz/*.py
+lib/python3.6/site-packages/pytz/zoneinfo/*
+lib/python3.6/site-packages/pytz/zoneinfo/*/*
+lib/python3.6/site-packages/pytz/zoneinfo/*/*/*
+# ubuntu path
+local/lib/python3.6/dist-packages/simpletr64/*.py
+local/lib/python3.6/dist-packages/simpletr64/actions/*.py
+local/lib/python3.6/dist-packages/pytz/*.py
+local/lib/python3.6/dist-packages/pytz/zoneinfo/*
+local/lib/python3.6/dist-packages/pytz/zoneinfo/*/*
+local/lib/python3.6/dist-packages/pytz/zoneinfo/*/*/*
+# Same on debian system
+lib/python3.6/*-packages/pytz/*.py
+lib/python3.6/*-packages/pytz/zoneinfo/*
+lib/python3.6/*-packages/pytz/zoneinfo/*/*
+lib/python3.6/*-packages/pytz/zoneinfo/*/*/*
+lib/python3.6/*-packages/requests/*.py
+lib/python3.6/*-packages/requests/packages/*.py
+lib/python3.6/*-packages/requests/packages/*/*.py
+lib/python3.6/*-packages/requests/packages/*/*/*.py
+lib/python3.6/*-packages/requests/packages/*/*/*/*.py
+lib/python3.6/*-packages/chardet/*.py
+lib/python3.6/*-packages/urllib3/*.py
+lib/python3.6/*-packages/urllib3/util/*.py
+lib/python3.6/*-packages/urllib3/contrib/*.py
+lib/python3.6/*-packages/urllib3/packages/*.py
+lib/python3.6/*-packages/urllib3/packages/*/*.py
+lib/python3.6/*-packages/urllib3/packages/*/*/*.py
+lib/python3.6/*-packages/cryptography/*.py
+lib/python3.6/*-packages/cryptography/hazmat/*.py
+lib/python3.6/*-packages/cryptography/hazmat/*/*.py
+lib/python3.6/*-packages/cryptography/hazmat/*/*/*.py
+lib/python3.6/*-packages/cryptography/x509/*.py
+lib/python3.6/*-packages/cffi/*.py
+lib/python3.6/*-packages/certifi/*.py
+lib/python3.6/*-packages/idna/*.py
+lib/python3.6/*-packages/enum/*.py
+lib/python3.6/*-packages/pkg_resources/*.py
+lib/python3.6/*-packages/pkg_resources/*/*.py
+lib/python3.6/*-packages/pkg_resources/*/*/*.py
+lib/python3.6/*-packages/pkg_resources/*/*/*/*.py
+lib/python3.6/*-packages/six.py
+lib/python3.6/*-packages/ipaddress.py
+lib/python3.6/*-packages/asn1crypto/*.py
+lib/python3.6/*-packages/asn1crypto/*/*.py
+lib/python3.6/*-packages/pyasn1/*.py
+lib/python3.6/*-packages/pyasn1/*/*.py
+lib/python3.6/*-packages/pyasn1/*/*/*.py
