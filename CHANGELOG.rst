@@ -9,6 +9,22 @@ General
 
 * FIX: Fixed possble "KeyError: 'device_id'" exeption in set_logic_attributes()
 
+Version 0.61 (2017-01-08)
+------------------------
+
+General
+```````
+
+* Added CCU3 support
+* Added python 3.7 support
+* Addeded enhanced testing w/ fall back CCU2/file only support
+* FIX: smaller bugs in accessing API
+
+Manager
+```````
+
+* Timezone is now configurable. Using this timezone for displaying and time calculations
+
 Version 0.6 (2017-01-08)
 ------------------------
 
