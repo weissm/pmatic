@@ -6,7 +6,6 @@ CCU_PREDIST_PATH  ?= $(shell pwd)/ccu_pkg
 DIST_PATH         ?= $(shell pwd)/dist
 CCU_PKG_PATH      ?= $(DIST_PATH)/ccu
 CCU_HOST          ?= ccu3-webui
-PYTHON_PATH       ?= /usr/local/python-2.7.15
 
 # On OS X with macports coverage has no "coverage" link
 COVERAGE2 := $(shell if which coverage2 >/dev/null 2>&1; then echo coverage2; \
@@ -24,7 +23,7 @@ PYTHONPATH3      := $(LD_LIBRARY_PATH3)
 ENV_P2 := env PATH=/usr/local/python-2.7.15:$(PATH) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH2) PYTHONPATH=$(PYTHONPATH2)
 ENV_P3 := env PATH=/usr/local/python-3-3.6.3:$(PATH) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH3) PYTHONPATH=$(PYTHONPATH3)
 
-.PHONY: chroot dist
+.PHONY: dist
 
 
 help:
@@ -32,8 +31,6 @@ help:
 	@echo "Available commands:"
 	@echo
 	@echo "setup              - Install packages needed for development (at least on debian)"
-	@echo "chroot             - Create a debian chroot which is used to get python files for"
-	@echo "                     making python available to the CCU later"
 	@echo "version            - Set a new version number"
 	@echo
 	@echo "dist		  - Create all release packages"
@@ -58,6 +55,9 @@ help:
 	@echo "install-ccu        - Install python and pmatic on the CCU via SSH"
 	@echo "install-ccu-python - Install python files from chroot on CCU via SSH"
 	@echo "install-ccu-pmatic - Install pmatic files on CCU via SSH"
+	@echo
+	@echo
+	@echo "run	          - run pmatic directly from command line"
 	@echo
 	@echo "clean	          - Cleanup development files (e.g. chroot)"
 	@echo
@@ -88,43 +88,11 @@ dist-os:
 	$(ENV_P3) python setup.py sdist
 	@echo "Created dist/pmatic-$(VERSION).tar.gz"
 
-chroot:
-	[ ! -d $(CHROOT_PATH) ] && mkdir $(CHROOT_PATH) || true
-	sudo debootstrap --foreign --arch=armel  --no-check-gpg\
-	    --include=python,python-pip \
-	    buster $(CHROOT_PATH) $(CHROOT_DEB_MIRROR)
-	sudo cp /usr/bin/qemu-arm-static $(CHROOT_PATH)/usr/bin
-	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c "/debootstrap/debootstrap --second-stage"
-	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
-	    "pip install setuptools "
-	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
-	    "pip install wheel "
-	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
-	    "apt install python-dev "
-	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
-	    "apt install libffi-dev  "
-	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
-	    "apt install libssl-dev  "
-	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
-	    "apt-get install build-essential" 
-	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
-	    "pip install cryptography "
-	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
-	    "pip install simpleTR64"
-	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
-	    "pip install pytz"
-	LANG=C sudo chroot $(CHROOT_PATH) /bin/bash -c \
-	    "pip install six"
-
 dist-ccu:
 	sudo $(MAKE) dist-ccu-step1
 	$(MAKE) dist-ccu-step2
 
 dist-ccu-step1:
-	@if ! ls $(CHROOT_PATH)/* >/dev/null 2>&1; then \
-	    echo "ERROR: chroot missing. Please run \"make chroot\", then try again." ; \
-	    exit 1 ; \
-	fi
 	mkdir -p $(CCU_PREDIST_PATH)/python
 	cd $(CHROOT_PATH)/usr ; \
 	rsync -aRvL --no-g $$(cat $(REPO_PATH)/ccu_pkg/python-modules.list) \
@@ -253,7 +221,7 @@ setversion:
 	sed -i "s/version='.*',/version='$(NEW_VERSION)',/g" setup.py
 	sed -i "s/^VERSION=.*/VERSION=$(NEW_VERSION)/g" ccu_pkg/pmatic.init
 
-clean: clean-chroot clean-dist clean-test
+clean: clean-dist clean-test
 	$(MAKE) -C doc clean
 
 clean-test:
@@ -262,10 +230,6 @@ clean-test:
 	rm -rf *.egg || true
 	rm -rf .coverage htmlcov || true
 	rm -rf .cache || true
-
-clean-chroot:
-#   ignore rm when buildroot is not yet in central place
-#	rm -rf --one-file-system $(CHROOT_PATH)
 
 clean-dist:
 	rm -rf build 2>/dev/null || true
@@ -301,4 +265,5 @@ travis-doc:
 	echo "Finished adding current docs"
 
 run:
-	python pmatic-manager -g -o ../ccu3/etc -e . -r ../ccu3/scripts -t ./manager_static -f ../pmatic.log
+	[ ! -d etc ] && mkdir etc || true; \
+	python pmatic-manager -g -o etc -e . -r examples -t ./manager_static -f etc/pmatic.log
