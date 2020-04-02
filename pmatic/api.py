@@ -97,7 +97,6 @@ def init(mode=None, **kwargs):
         raise PMException("Invalid mode given. Valid ones are \"local\" and \"remote\".")
 
 
-
 class AbstractAPI(utils.LogMixin):
     """An abstract implementation of the pmatic low level API.
 
@@ -106,6 +105,7 @@ class AbstractAPI(utils.LogMixin):
     """
     _constructed = False
     _ID = 0
+    _session_ctr = 0
 
     @classmethod
     def _replace_wrong_encoded_json(self, text):
@@ -119,20 +119,18 @@ class AbstractAPI(utils.LogMixin):
         self._methods = {}
         self._fail_exc = None
         self._initialized = False
- #       print("........................ open ID in abstract API:", self._ID)
+        self.logger.debug("MY_SESSION:TRACE: open ID in abstract API: %s", self._ID)
 
         # For simplicity we only allow one thread to perform API calls at the time
         self._api_lock = threading.RLock()
-
-
-
+        
     # is called in locked context
     def _register_atexit_handler(self):
         """Can be called to register a cleanup handler on interpreter exit.
 
         The APIs can register this to ensures the close() method is called
         on interpreter shutdown."""
- #       print("........................ prep for close ID:", self._ID)
+        self.logger.debug("MY_SESSION:TRACE: prep for close ID: %s", self._ID)
         atexit.register(self.close)
 
 
@@ -357,7 +355,7 @@ class RemoteAPI(AbstractAPI):
         self._http_auth       = None
         self._connect_timeout = None
         self._ID = AbstractAPI._ID
-#        print("........................ open ID:", self._ID)
+        self.logger.debug("MY_SESSION:TRACE: open ID in abstract API: %s @ target %s", self._ID, target)
         AbstractAPI._ID += 1        
 
         super(RemoteAPI, self).__init__()
@@ -426,15 +424,9 @@ class RemoteAPI(AbstractAPI):
 
     # is called in unlocked context
     def close(self):
-#        print("........................ wait for close ID:", self._ID)
         with self._api_lock:
-#            print("........................ close ID:", self._ID)
-#            print("........................ target:", self._target)
-#            try:
-                
-                self._logout()
-#            except:
-#                pass
+            self.logger.debug("MY_SESSION:TRACE: close ID: %s @ Target: %s", self._ID, self._target)
+            self._logout()
 
 
     # is called in locked context
@@ -468,16 +460,20 @@ class RemoteAPI(AbstractAPI):
         if response is None:
             raise PMException("Login failed: Got no session id.")
         self._session_id = response
+        AbstractAPI._session_ctr += 1
+        self.logger.debug("MY_SESSION:TRACE: Login  Nr: %i SessionID: %s @ Target: %s Response: %s", self._ID, self._session_id, self._target, response)
 
 
     # is called in locked context
     def _logout(self):
         if self._session_id is not None:
             try:
-                self._call("session_logout", _session_id_=self._session_id)
+                response = self._call("session_logout", _session_id_=self._session_id)
+                self.logger.debug("MY_SESSION:TRACE: Logout Nr: %i SessionID: %s IP: %s Response: %s, logger %s", self._ID, self._session_id, self._address, response, self.logger.root.handlers[0].baseFilename)
             except:
-                print(".......................... cannot logout here: ", self._session_id )
-            self._session_id = None
+                self.logger.debug("MY_SESSION:TRACE: Logout Nr: %i SessionID: %s IP: %s ******FAIL*****", self._ID, self._session_id, self._address)
+                self._session_id = None
+            AbstractAPI._session_ctr -= 1
 
 
     # is called in unlocked context
