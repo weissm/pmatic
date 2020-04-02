@@ -146,6 +146,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+# pass arguments and treat password specific to allow baseline processing
 args = parse_args()
 pmatic.manager.Config.cfg_password = args.cfg_password
 pmatic.manager.Config.load()
