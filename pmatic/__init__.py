@@ -88,8 +88,9 @@ log_level_names = [
 ]
 
 logger_default_handler = None
+logger_default_file_handler = None
 
-def logging(log_level=None):
+def logging(log_level=None, log_file = ""):
     """Enables logging of pmatic log messages to stderr.
 
     When log_level is not set, it will default to WARNING if you did not
@@ -100,6 +101,11 @@ def logging(log_level=None):
     flexible logging, you are free to configure the logging module on your own.
     """
     global logger_default_handler
+    global logger_default_file_handler
+    global last_log_level
+    global last_log_filename
+    global job_handler
+
 
     if log_level == None:
         log_level = WARNING
@@ -110,6 +116,8 @@ def logging(log_level=None):
     if logger_default_handler:
         logger.removeHandler(logger_default_handler)
         logger_default_handler = None
+        logger.removeHandler(logger_default_file_handler)
+        logger_default_file_handler = None
 
     # create console handler and set level to debug
     ch = _logging.StreamHandler()
@@ -121,7 +129,16 @@ def logging(log_level=None):
     # add the stream handler to logger
     logger.addHandler(ch)
     logger_default_handler = ch
+    
+    if log_file != "":
+        fileHandler = _logging.FileHandler("{0}/{1}.log".format(".", log_file))
+        fileHandler.setFormatter(formatter)
 
+        logger.addHandler(fileHandler)
+        logger_default_file_handler = fileHandler
+        print("filename: ", fileHandler.baseFilename)
+
+   
 
 def fix_python2_pipe_encoding():
     """When using Python 2.7 and piping the output to a command like less or
@@ -135,6 +152,7 @@ def fix_python2_pipe_encoding():
 
 
 # Initialize logging with default log level (WARNING)
+#logging(log_level=None, log_file = "test_debug_trace")
 logging()
 
 fix_python2_pipe_encoding()
