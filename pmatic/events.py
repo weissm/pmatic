@@ -53,7 +53,6 @@ except ImportError:
     # Python 3+
     from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
-
 import pmatic.api
 import pmatic.utils as utils
 from pmatic.exceptions import PMException, PMConnectionError
@@ -399,10 +398,16 @@ class EventHandler(utils.LogMixin, object):
 
         # Don't fetch new new devices here. Use the already known ones. The CCU will inform
         # us about the ones we don't know yet.
-        for device in self._ccu.devices.already_initialized_devices.values():
-            devices.append({"ADDRESS": device.address, "VERSION": device.version})
-            for channel in device.channels:
-                devices.append({"ADDRESS": channel.address, "VERSION": channel.version})
+        if utils.is_py2():
+            for device in self._ccu.devices.already_initialized_devices.values():
+                devices.append({"ADDRESS": device.address, "VERSION": device.version})
+                for channel in device.channels:
+                    devices.append({"ADDRESS": channel.address, "VERSION": channel.version})
+        else:
+            for device in list(self._ccu.devices.already_initialized_devices.values()):
+                devices.append({"ADDRESS": device.address, "VERSION": device.version})
+                for channel in device.channels:
+                    devices.append({"ADDRESS": channel.address, "VERSION": channel.version})
 
         return devices
 
@@ -432,16 +437,16 @@ class EventHandler(utils.LogMixin, object):
         #specs = self._ccu.api.DeviceSpecs(self._ccu.api)
         #file("/tmp/api-devices.txt", "w").write(pprint.pformat(sorted(specs.items())))
         def normalize_spec(d):
-            for key in d.keys():
+            for key in list(d):
                 val = d.pop(key)
                 if isinstance(val, list):
                     for index, item in enumerate(val):
-                        val[index] = item.decode("utf-8")
+                        val[index] = item
 
                 elif utils.is_byte_string(val):
                     val = val.decode("utf-8")
 
-                new_key = key.lower().decode("utf-8")
+                new_key = key.lower()
 
                 if new_key in [ "aes_active", "roaming" ]:
                     val = val == 1
@@ -472,8 +477,12 @@ class EventHandler(utils.LogMixin, object):
                 channels = devices[spec["parent"]].setdefault("channels", [])
                 channels.append(spec)
 
-        for device_dict in devices.values():
-            self._ccu.devices.add_from_low_level_dict(device_dict)
+        if utils.is_py2():
+            for device_dict in devices.values():
+                self._ccu.devices.add_from_low_level_dict(device_dict)
+        else:
+            for device_dict in list(devices.values()):
+                self._ccu.devices.add_from_low_level_dict(device_dict)
 
         # As we just received all devices from the CCU mark the devices as initialized
         # in the CCU object. This saves one Interface.listDevices call when accessing

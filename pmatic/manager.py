@@ -137,24 +137,30 @@ class Config(utils.LogMixin):
             try:
                 config = json.load(open(cls._config_path()))
                 # load encrypted data
-                key_base = hashlib.sha256(cls.cfg_password.encode())
+                key_base = hashlib.sha256(cls.cfg_password.encode("utf-8"))
                 key = base64.urlsafe_b64encode(key_base.digest())
                 cipher_suite = Fernet(key)
-                for key, val in config.items():
+                if utils.is_py2():
+                    mylist = config.items()
+                else: 
+                    mylist = list(config.items())
+                for key, val in mylist:
                     if key[0] != "_" and key not in [ "config_path",
                                                         "static_path", "log_file" ] \
                     and not inspect.isroutine(val):
                         if utils.is_byte_string(val):
-                            val_dec = cipher_suite.decrypt((val).encode())			
-                            config[key] = val_dec
+                            val_dec = cipher_suite.decrypt((val).encode("utf-8"))			
+                            config[key] = val_dec.decode()
+                            print("valdec", val_dec)
                         else:
                             config[key] = val
                  # treat ccu password special           
                 if 'ccu_credentials' in config:
                     try:
-                        config['ccu_credentials'] = config['ccu_credentials'][0].encode(), cipher_suite.decrypt((config['ccu_credentials'][1]).encode())
+                        config['ccu_credentials'] = config['ccu_credentials'][0], cipher_suite.decrypt((config['ccu_credentials'][1]).encode()).decode()
+                        print("valdec", config['ccu_credentials'])
                     except InvalidToken:
-                        config['ccu_credentials'] = config['ccu_credentials'][0].encode(), "default"
+                        config['ccu_credentials'] = config['ccu_credentials'][0].encode("utf-8"), "default"
                         cls.cls_logger().warning("No valid credential, please use -x <passwd> option or define in setup section.", exc_info=False)
  
             except IOError as e:
@@ -167,31 +173,39 @@ class Config(utils.LogMixin):
             cls.cls_logger().error("Failed to load the config. Terminating.", exc_info=True)
             sys.exit(1)
 
-        for key, val in config.items():
+        if utils.is_py2():
+            mylist = config.items()
+        else: 
+            mylist = list(config.items())
+        for key, val in mylist:
             setattr(cls, key, val)
 
 
     @classmethod
     def save(cls):
         config = {}
-        key_base = hashlib.sha256(cls.cfg_password.encode())
+        key_base = hashlib.sha256(cls.cfg_password.encode("utf-8"))
         key = base64.urlsafe_b64encode(key_base.digest())
         cipher_suite = Fernet(key)
 
-        for key, val in cls.__dict__.items():
+        if utils.is_py2():
+            mylist = cls.__dict__.items()
+        else: 
+            mylist = list(cls.__dict__.items())
+        for key, val in mylist:
             if key[0] != "_" and key not in [ "config_path",
                                               "static_path", "log_file" ] \
                and not inspect.isroutine(val):
                 # store encrypted data
                 if utils.is_byte_string(val):
-                    val_enc = cipher_suite.encrypt((val).encode())
+                    val_enc = cipher_suite.encrypt((val).encode("utf-8"))
                     config[key] = val_enc
                 else:    
                     config[key] = val
 
         # treat ccu password special  
         if 'ccu_credentials' in config:
-            config['ccu_credentials'] = config['ccu_credentials'][0].encode(), cipher_suite.encrypt((config['ccu_credentials'][1]).encode())
+            config['ccu_credentials'] = config['ccu_credentials'][0].encode("utf-8"), cipher_suite.encrypt((config['ccu_credentials'][1]).encode("utf-8"))
         if not os.path.exists(os.path.dirname(cls._config_path())):
             os.makedirs(os.path.dirname(cls._config_path()))
 
@@ -262,7 +276,11 @@ class Html(object):
     def add_missing_vars(self):
         """Adds the vars which have been used to call this page but are yet missing in the
         current form as hidden vars to the form."""
-        for key in self._vars.keys():
+        if utils.is_py2():
+            mylist = self._vars.keys()
+        else: 
+            mylist = list(self._vars.keys())
+        for key in mylist:
             if key not in self._form_vars:
                 self.hidden(key, self._vars.getvalue(key))
 
@@ -425,9 +443,15 @@ class Html(object):
 
 class FieldStorage(cgi.FieldStorage):
     def getvalue(self, key, default=None):
-        value = cgi.FieldStorage.getvalue(self, key.encode("utf-8"), default)
+        if utils.is_py2():
+            value = cgi.FieldStorage.getvalue(self, key.encode("utf-8"), default)
+        else:
+            value = cgi.FieldStorage.getvalue(self, key, default)
         if value is not None:
-            return value.decode("utf-8")
+            if utils.is_py2():
+                return value.decode("utf-8")
+            else:
+                return value
         else:
             return None
 
@@ -458,7 +482,11 @@ class PageHandler(utils.LogMixin):
 
     @classmethod
     def _get_auth_cookie_value(self, environ):
-        for name, cookie in SimpleCookie(environ.get("HTTP_COOKIE")).items():
+        if utils.is_py2():
+            mylist = SimpleCookie(environ.get("HTTP_COOKIE")).items()
+        else: 
+            mylist = list(SimpleCookie(environ.get("HTTP_COOKIE")).items())
+        for name, cookie in mylist:
             if name == "pmatic_auth":
                 return cookie.value
 
@@ -475,9 +503,7 @@ class PageHandler(utils.LogMixin):
         secret = open(filepath).read().strip()
 
         to_hash = secret + salt
-        if not utils.is_py2():
-            to_hash = to_hash.encode("utf-8")
-        correct_hash = sha256(to_hash).hexdigest()
+        correct_hash = sha256(to_hash.encode("utf-8")).hexdigest()
 
         return salted_hash == correct_hash
 
@@ -544,14 +570,22 @@ class PageHandler(utils.LogMixin):
     def _new_transid(self):
         """Calculates a new random transaction id, adds it to the transaction id store and
         returns it to the caller."""
-        transid = uuid.uuid4().get_hex().lower()[:6]
+#        if utils.is_py2():
+#            transid = uuid.uuid4().get_hex().lower()[:6]
+#        else:
+#            print("test: ", str(uuid.uuid4()).lower(), ", type: ", type(uuid.uuid4()))
+        transid = str(uuid.uuid4()).lower()[:6]
         self._transids[transid] = (time.time(), self._request_url())
         return transid
 
 
     def _cleanup_transids(self):
         """Removes old, unused transaction ids that are older than 2 hours."""
-        for transid, (issue_time, url) in self._transids.items():
+        if utils.is_py2():
+            mylist = self._transids.items()
+        else: 
+            mylist = list(self._transids.items())
+        for transid, (issue_time, url) in mylist:
             if issue_time > 7200:
                 self._invalidate_transid(transid)
 
@@ -597,8 +631,12 @@ class PageHandler(utils.LogMixin):
 
     def _set_cookie(self, name, value):
         cookie = SimpleCookie()
-        cookie[name.encode("utf-8")] = value.encode("utf-8")
-        self._set_http_header("Set-Cookie", cookie[name.encode("utf-8")].OutputString())
+        if utils.is_py2():
+            cookie[name.encode("utf-8")] = value.encode("utf-8")
+            self._set_http_header("Set-Cookie", cookie[name.encode("utf-8")].OutputString())
+        else:
+            cookie[name] = value
+            self._set_http_header("Set-Cookie", cookie[name].OutputString())
 
 
     @property
@@ -640,7 +678,7 @@ class PageHandler(utils.LogMixin):
             except PMUserError as e:
                 self.error(e)
             except Exception as e:
-                self.error("Unhandled exception: %s" % e)
+                self.error("Unhandled exception (action): %s" % e)
                 self.logger.debug("Unhandled exception (action)", exc_info=True)
 
         # The action code can disable regular rendering of the page,
@@ -651,13 +689,13 @@ class PageHandler(utils.LogMixin):
             except PMUserError as e:
                 self.error(e)
             except Exception as e:
-                self.error("Unhandled exception: %s" % e)
+                self.error("Unhandled exception (process @ manager): %s" % e)
                 self.logger.debug("Unhandled exception (process)", exc_info=True)
 
         self.write("\n</div>")
         self.page_footer()
-
-        return [b"".join(self._page)]
+        result = [b"".join(self._page)]
+        return result
 
 
     def ensure_password_is_set(self):
@@ -798,8 +836,17 @@ class StaticFile(PageHandler):
                 "attachment; filename=\"%s\"" % os.path.basename(path_info))
 
         self._start_response(self._http_status(200), self._http_headers)
-        return [ l for l in open(file_path, "r") ]
-
+        if utils.is_py2():
+            result = [ l for l in open(file_path, "r") ]
+        else:
+            key, val  = self._http_headers[0]
+            if "charset=UTF-8" in val:
+                result = [ l.encode('UTF-8') for l in open(file_path, "r", encoding="utf-8", errors='ignore') ]
+            else:
+                result = [ l for l in open(file_path, "rb") ]
+        self.logger.info("Result: %s ", result)
+        return result
+ 
 
 
 class AbstractScriptProgressPage(Html):
@@ -1120,7 +1167,7 @@ class PageLogin(HtmlPageHandler, utils.LogMixin):
         filepath = os.path.join(Config.config_path, "manager.secret")
         secret = open(filepath).read().strip()
 
-        if secret != sha256(password).hexdigest():
+        if secret != sha256(password.encode("utf-8")).hexdigest():
             raise PMUserError("Invalid password.")
 
         self._login(secret)
@@ -1130,7 +1177,8 @@ class PageLogin(HtmlPageHandler, utils.LogMixin):
 
     def _login(self, secret):
         salt = "%d" % int(time.time())
-        salted_hash = sha256(secret + salt).hexdigest()
+        input = secret + salt
+        salted_hash = sha256(input.encode("utf-8")).hexdigest()
         cookie_value = salt + ":" + salted_hash
         self._set_cookie("pmatic_auth", cookie_value)
 
@@ -1471,7 +1519,7 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
             raise PMUserError("The password must have a minimal length of 6 characters.")
 
         filepath = os.path.join(Config.config_path, "manager.secret")
-        open(filepath, "w").write(sha256(password).hexdigest()+"\n")
+        open(filepath, "w").write(sha256(password.encode("utf-8")).hexdigest()+"\n")
         self.success("The password has been set. You will be redirect to the "
                      "<a href=\"/\">login</a>.")
         self.redirect(2, "/")
@@ -2023,7 +2071,11 @@ class PageSchedule(HtmlPageHandler, utils.LogMixin):
             self.write("</td>")
 
             self.write("<td>")
-            for condition in sorted(schedule.conditions.values(), key=lambda c: c.id):
+            if utils.is_py2():
+                mylist = schedule.conditions.values()
+            else: 
+                mylist = list(schedule.conditions.values())
+            for condition in sorted(mylist, key=lambda c: c.id):
                 self.write(condition.display()+"<br>")
             self.write("</td>")
             self.write("<td>%s</td>" % self.escape(schedule.script))
@@ -2224,7 +2276,11 @@ class PageEditSchedule(HtmlPageHandler, utils.LogMixin):
         self.write("</tr>")
 
         self.hidden("num_conditions", str(len(schedule.conditions)+1))
-        choices = sorted(schedule.conditions.values(), key=lambda c: c.id) \
+        if utils.is_py2():
+            mylist = schedule.conditions.values()
+        else: 
+            mylist = list(schedule.conditions.values())
+        choices = sorted(mylist, key=lambda c: c.id) \
                   + [Condition(self._manager)]
         for num, condition in enumerate(choices):
             varprefix = "cond_%d_" % num
@@ -2602,7 +2658,7 @@ class PMServerHandler(wsgiref.simple_server.ServerHandler, utils.LogMixin):
 
 
     def log_exception(self, exc_info):
-        self.logger.error("Unhandled exception", exc_info=True)
+        self.logger.error("Unhandled exception (log)", exc_info=True)
 
 
 
@@ -2649,6 +2705,8 @@ class Manager(wsgiref.simple_server.WSGIServer, utils.LogMixin):
 
         self.logger.info("Initializing connection with CCU...")
         try:
+#            print ("adress:", Config.ccu_address)
+#            print("credit", Config.ccu_credentials)
             self.ccu = pmatic.CCU(address=Config.ccu_address,
                               credentials=Config.ccu_credentials)
         except PMException as e:
@@ -2691,11 +2749,14 @@ class Manager(wsgiref.simple_server.WSGIServer, utils.LogMixin):
         # handler_class may be any subclass of PageHandler
         handler_class = PageHandler.get(environ)
         page = handler_class(self, environ, start_response)
-        return page.process_page()
+        retvalue = page.process_page()
+        self.logger.debug("Response:%s, Class %s, Page %s, retvalue %s", start_response, handler_class, page, retvalue)
+        return retvalue
 
 
     def process_request(self, request, client_address):
         try:
+            self.logger.debug("Request:%s, Client-Addr %s", request, client_address)
             super(Manager, self).process_request(request, client_address)
         except socket.error as e:
             if e.errno == 32:
@@ -2990,9 +3051,10 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
     def _execute_presence_update(self):
         """Updates the presence information of residents in the configured interval. When no
         resident is configured, this method is doing nothing."""
-        if not self._manager.residents.enabled:
-            self.logger.debug("Not updating presence information (not enabled)")
-            return
+#        not meaningful debug info, if resident tracking is not enabled
+#        if not self._manager.residents.enabled:
+#            self.logger.debug("Not updating presence information (not enabled)")
+#            return
 
         if self._next_presence_update == None or self._next_presence_update < time.time():
             self.logger.debug("Updating presence information")
@@ -3010,7 +3072,11 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
 
         # FIXME: Optimize schedule/condition handling
         for schedule in self.enabled_schedules:
-            for condition in schedule.conditions.values():
+            if utils.is_py2():
+                mylist = schedule.conditions.values()
+            else: 
+                mylist = list(schedule.conditions.values())
+            for condition in mylist:
                 if isinstance(condition, ConditionOnTime):
                     if condition.next_time <= time.time():
                         this_time = condition.next_time
@@ -3039,7 +3105,11 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
 
             for schedule in schedules:
                 matched = False
-                for condition in schedule.conditions.values():
+                if utils.is_py2():
+                    mylist = schedule.conditions.values()
+                else: 
+                    mylist = list(schedule.conditions.values())
+                for condition in mylist:
                     if isinstance(condition, ConditionOnDeviceEvent) \
                        or isinstance(condition, ConditionOnDevicesOfTypeEvent):
                         if condition.matches_device_event(device_event):
@@ -3077,7 +3147,11 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
     def _schedules_with_condition_type(self, cls):
         for schedule in self.enabled_schedules:
             matched = False
-            for condition in schedule.conditions.values():
+            if utils.is_py2():
+                mylist = schedule.conditions.values()
+            else: 
+                mylist = list(schedule.conditions.values())
+            for condition in mylist:
                 if isinstance(condition, cls):
                     matched = True
                     break
@@ -3092,7 +3166,11 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
         this just occured event. If so the schedule is executed.
         """
         for schedule in self.enabled_schedules:
-            for condition in schedule.conditions.values():
+            if utils.is_py2():
+                mylist = schedule.conditions.values()
+            else: 
+                mylist = list(schedule.conditions.values())
+            for condition in mylist:
                 if isinstance(condition, ConditionOnResidentPresence):
                     if condition.resident == resident:
                         event_type = condition.event_type
@@ -3161,14 +3239,21 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
     @property
     def enabled_schedules(self):
         """Return all non disabled schedules."""
-        for schedule in self._schedules.values():
+        if utils.is_py2():
+            mylist = self._schedules.values()
+        else: 
+            mylist = list(self._schedules.values())
+        for schedule in mylist:
             if not schedule.disabled:
                 yield schedule
 
 
     @property
     def schedules(self):
-        return self._schedules.values()
+        if utils.is_py2():
+            return self._schedules.values()
+        else: 
+            return list(self._schedules.values())
 
 
     def exists(self, schedule_id):
@@ -3216,28 +3301,44 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
 
     def to_config(self):
         schedule_config = []
-        for schedule in self._schedules.values():
+        if utils.is_py2():
+            mylist = self._schedules.values()
+        else: 
+            mylist = list(self._schedules.values())
+        for schedule in mylist:
             schedule_config.append(schedule.to_config())
         return schedule_config
-
-
+        
+        
     def from_state(self, state):
         if state is None:
             return # on default, do nothing
         self._next_presence_update = state["next_presence_update"]
-        for schedule, schedule_state in zip(self._schedules.values(), state["schedules"]):
+        if utils.is_py2():
+            mylist = self._schedules.values()
+        else: 
+            mylist = list(self._schedules.values())
+        for schedule, schedule_state in zip(mylist, state["schedules"]):
             schedule.from_state(schedule_state)
 
 
     def to_state(self):
+        if utils.is_py2():
+            mylist = self._schedules.values()
+        else: 
+            mylist = list(self._schedules.values())
         return {
             "next_presence_update" : self._next_presence_update,
-            "schedules"            : [ s.to_state() for s in self._schedules.values() ],
+            "schedules"            : [ s.to_state() for s in mylist ],
         }
 
 
     def update_conditions(self):
-        for schedule in self._schedules.values():
+        if utils.is_py2():
+            mylist = self._schedules.values()
+        else: 
+            mylist = list(self._schedules.values())
+        for schedule in mylist:
             schedule.update_conditions()
 
 
@@ -3314,13 +3415,21 @@ class Schedule(object):
 
 
     def update_conditions(self):
-        for condition in self.conditions.values():
+        if utils.is_py2():
+            mylist = self.conditions.values()
+        else: 
+            mylist = list(self.conditions.values())
+        for condition in mylist:
             condition.from_config(condition.to_config())
 
 
     def from_config(self, cfg):
         self.clear_conditions()
-        for key, val in cfg.items():
+        if utils.is_py2():
+            mylist = cfg.items()
+        else: 
+            mylist = list(cfg.items())
+        for key, val in mylist:
             if key != "conditions":
                 setattr(self, key, val)
             else:
@@ -3335,6 +3444,10 @@ class Schedule(object):
 
 
     def to_config(self):
+        if utils.is_py2():
+            mylist = self.conditions.values()
+        else: 
+            mylist = list(self.conditions.values())
         return {
             "id"           : self.id,
             "name"         : self.name,
@@ -3342,12 +3455,16 @@ class Schedule(object):
             "keep_running" : self.keep_running,
             "run_inline"   : self.run_inline,
             "script"       : self.script,
-            "conditions"   : [ c.to_config() for c in self.conditions.values() ],
+            "conditions"   : [ c.to_config() for c in mylist ],
         }
 
 
     def from_state(self, state):
-        for key, val in state.items():
+        if utils.is_py2():
+            mylist = state.items()
+        else: 
+            mylist = list(state.items())
+        for key, val in mylist:
             if key not in [ "conditions", "id" ]:
                 setattr(self, key, val)
 
@@ -3366,10 +3483,14 @@ class Schedule(object):
 
 
     def to_state(self):
+        if utils.is_py2():
+            mylist = self.conditions.values()
+        else: 
+            mylist = list(self.conditions.values())
         return {
             "id"             : self.id,
             "last_triggered" : self.last_triggered,
-            "conditions"     : [ c.to_state() for c in self.conditions.values() ],
+            "conditions"     : [ c.to_state() for c in mylist ],
         }
 
 
@@ -3407,7 +3528,11 @@ class Condition(object):
 
 
     def from_config(self, cfg):
-        for key, val in cfg.items():
+        if utils.is_py2():
+            mylist = cfg.items()
+        else: 
+            mylist = list(cfg.items())
+        for key, val in mylist:
             setattr(self, key, val)
 
 
@@ -3419,7 +3544,11 @@ class Condition(object):
 
 
     def from_state(self, cfg):
-        for key, val in cfg.items():
+        if utils.is_py2():
+            mylist = cfg.items()
+        else: 
+            mylist = list(cfg.items())
+        for key, val in mylist:
             if key != "id":
                 setattr(self, key, val)
 
@@ -3591,7 +3720,11 @@ class ConditionOnDeviceEvent(Condition, utils.LogMixin):
         if not self.channel:
             return
 
-        for param_id, param in self.channel.values.items():
+        if utils.is_py2():
+            mylist = self.channel.values.items()
+        else: 
+            mylist = list(self.channel.values.items())
+        for param_id, param in mylist:
             yield param_id, "%s (%s)" % (param.name, param_id)
 
 
@@ -3689,7 +3822,11 @@ class ConditionOnDevicesOfTypeEvent(Condition, utils.LogMixin):
         self.event_type = cfg["event_type"]
         ccu_initialized = self._manager.ccu_initialized
 
-        if not ccu_initialized or cfg["device_type"] in self._devices_by_type().keys():
+        if utils.is_py2():
+            mylist = self._devices_by_type()
+        else: 
+            mylist = list(self._devices_by_type())
+        if not ccu_initialized or cfg["device_type"] in mylist.keys():
             self.device_type = cfg["device_type"]
         if self.device_type is None:
             return
@@ -3741,7 +3878,11 @@ class ConditionOnDevicesOfTypeEvent(Condition, utils.LogMixin):
             yield self.device_type, self.device_type
             return
 
-        for type_name, devices in sorted(self._devices_by_type().items(), key=lambda x: x[1]):
+        if utils.is_py2():
+            mylist = self._devices_by_type().items()
+        else: 
+            mylist = list(self._devices_by_type().items())
+        for type_name, devices in sorted(mylist, key=lambda x: x[1]):
             device_names = [ "%s" % d.name for d in devices ]
             yield type_name, "%s (%s)" % (type_name, ", ".join(device_names))
 
@@ -3753,7 +3894,11 @@ class ConditionOnDevicesOfTypeEvent(Condition, utils.LogMixin):
         if not self.device_type:
             return
 
-        for channel_index, channels in sorted(self._channels_of_type().items(),
+        if utils.is_py2():
+            mylist = self._channels_of_type().items()
+        else: 
+            mylist = list(self._channels_of_type().items())
+        for channel_index, channels in sorted(mylist,
                                               key=lambda x: x[1]):
             channel_names = [ "%s" % c.name for c in channels ]
             yield channel_index, "%d (%s)" % (channel_index, ", ".join(channel_names))
@@ -3784,7 +3929,11 @@ class ConditionOnDevicesOfTypeEvent(Condition, utils.LogMixin):
     def _params_of_channel(self):
         device  = self._devices_by_type()[self.device_type][0]
         channel = device.channels[self.channel_id]
-        for param_id, param in channel.values.items():
+        if utils.is_py2():
+            mylist = channel.values.items()
+        else: 
+            mylist = list(channel.values.items())
+        for param_id, param in mylist:
             yield param_id, param.name
 
 
@@ -3914,7 +4063,11 @@ class ConditionOnTime(Condition):
             return
 
         # Initialize vars to be used as indices for timeparts
-        year, month, mday, hour, minute, second, wday = range(7)
+        if utils.is_py2():
+            mylist = range(7)
+        else: 
+            mylist = list(range(7))
+        year, month, mday, hour, minute, second, wday = mylist
 
         now = time.time()
 

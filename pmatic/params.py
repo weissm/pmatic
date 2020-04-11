@@ -69,7 +69,11 @@ class Parameter(utils.CallbackMixin):
 
 
     def _init_attributes(self, spec):
-        for key, val in spec.items():
+        if utils.is_py2():
+            mylist =  spec.items()
+        else: 
+            mylist = list(spec.items())
+        for key, val in mylist:
             # Optionally convert values using the given transform functions
             # for the specific object type
             trans_func = self._transform_attributes.get(key)
@@ -325,6 +329,7 @@ class ParameterNUMERIC(Parameter):
     def __eq__(self, other):
         return self.value == other
 
+    __hash__ = None
 
     def __ne__(self, other):
         return self.value != other

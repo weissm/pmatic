@@ -145,6 +145,7 @@ class AbstractAPI(utils.LogMixin):
 
         try:
             msg = json.loads(body)
+            self.logger.debug("MSG from %s : %s", method_name_int, body)
         except Exception as e:
             raise PMException("Failed to parse response to %s (%s):\n%s\n" %
                                                     (method_name_int, e, body))
@@ -386,9 +387,9 @@ class RemoteAPI(AbstractAPI):
         elif len(credentials) != 2:
             raise PMException("The credentials must be given as tuple of two elements.")
         elif not utils.is_string(credentials[0]):
-            raise PMException("The username is of unhandled type.")
+            raise PMException("The username is of unhandled type.", credentials[0])
         elif not utils.is_string(credentials[1]):
-            raise PMException("The password is of unhandled type.")
+            raise PMException("The password is of unhandled type.", credentials[1])
 
         self._credentials = credentials
 
@@ -501,13 +502,19 @@ class RemoteAPI(AbstractAPI):
         })
         url = "%s/api/homematic.cgi" % self._address
 
-        self.logger.debug("  URL: %s DATA: %s", url, json_data)
+        import inspect
+        import traceback
+        frame = inspect.currentframe()
+        stack_trace = traceback.format_stack(frame)
+        self.logger.debug("  URL: %s DATA: %s Trace %s", url, json_data, stack_trace)
         request = Request(url, data=json_data.encode("utf-8"))
+        self.logger.debug("  Request: %s", request)
 
         if self._http_auth:
             base64string = base64.encodestring('%s:%s' % self._http_auth).replace('\n', '')
             request.add_header("Authorization", "Basic %s" % base64string)
         handle = urlopen(request, timeout=self._connect_timeout)
+        self.logger.debug("  Handle: %s", handle)
 
         response_txt = ""
         for line in handle.readlines():
@@ -602,7 +609,7 @@ class LocalAPI(AbstractAPI):
             else:
                 raise
 
-        self._tclsh.stdin.write(
+        self._tclsh.stdin.write((
             "load tclrpc.so\n"
             "load tclrega.so\n"
             "source /www/api/eq3/common.tcl\n"
@@ -613,12 +620,21 @@ class LocalAPI(AbstractAPI):
             "source /www/api/eq3/event.tcl\n"
             "array set INTERFACE_LIST [ipc_getInterfaces]\n"
             "array set METHOD_LIST  [file_load %s]\n" % self._methods_file
-        )
+        ).encode("utf"))
 
 
     # is called in locked context
     def _get_methods_config(self):
-        return open(self._methods_file).read().decode("latin-1").split("\r\n")
+        if utils.is_py2():
+            splitdata=open(self._methods_file).read().decode("latin-1").split("\r\n")
+        else:
+            fileinfo = self._methods_file
+            with open(fileinfo, encoding="utf-8", errors='ignore' ) as f:
+                data = f.read()
+            decodedata = data
+            splitdata = decodedata.split("\n")
+        self.logger.debug("Read from file %s split data %s", self._methods_file, splitdata)
+        return splitdata
 
 
     # is called in unlocked context

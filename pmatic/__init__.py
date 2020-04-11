@@ -123,7 +123,7 @@ def logging(log_level=None, log_file = ""):
     ch = _logging.StreamHandler()
     ch.setLevel(log_level)
 
-    formatter = _logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+    formatter = _logging.Formatter('[%(levelname)s:%(filename)s:%(lineno)d] %(message)s')
     ch.setFormatter(formatter)
 
     # add the stream handler to logger

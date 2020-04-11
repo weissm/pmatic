@@ -90,8 +90,12 @@ class CallbackMixin(object):
         try:
             return self._callbacks[cb_name]
         except KeyError:
-            raise PMException("Invalid callback %s specified (Available: %s)" %
-                                    (cb_name, ", ".join(self._callbacks.keys())))
+            if is_py2():
+                raise PMException("Invalid callback %s specified (Available: %s)" %
+                                        (cb_name, ", ".join(self._callbacks.keys())))
+            else:
+                raise PMException("Invalid callback %s specified (Available: %s)" %
+                                        (cb_name, ", ".join(list(self._callbacks.keys()))))
 
 
     def register_callback(self, cb_name, func):

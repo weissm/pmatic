@@ -385,8 +385,13 @@ class PersonalDevice(object):
 
     def from_config(self, cfg):
         """Restores the object attributes from the persisted configuration."""
-        for key, val in cfg.items():
-            setattr(self, "_" + key, val)
+        if utils.is_py2():
+            for key, val in cfg.items():
+                setattr(self, "_" + key, val)
+        else:
+            for key, val in list(cfg.items()):
+                setattr(self, "_" + key, val)
+
 
 
     def to_config(self):
@@ -398,8 +403,12 @@ class PersonalDevice(object):
 
 
     def from_state(self, state):
-        for key, val in state.items():
-            setattr(self, "_" + key, val)
+        if utils.is_py2():
+            for key, val in state.items():
+                setattr(self, "_" + key, val)
+        else:
+            for key, val in list(state.items()):
+                setattr(self, "_" + key, val)
 
 
     def to_state(self):

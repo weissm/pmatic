@@ -181,7 +181,11 @@ class CCU(object):
         for interface in self.api.interface_list_bidcos_interfaces(
                                                     interface="BidCos-RF"):
             new = {}
-            for key, val in interface.items():
+            if utils.is_py2():
+                mylist = interface.items()
+            else: 
+                mylist = list(interface.items())
+            for key, val in mylist:
                 if key == "dutyCycle":
                     val = int(val)
                 new[utils.decamel(key)] = val
@@ -300,7 +304,11 @@ class CCUDevices(Devices):
         if "device_type" in filters and utils.is_string(filters["device_type"]):
             filters["device_type"] = [filters["device_type"]]
 
-        for address, spec in self._device_specs.items():
+        if utils.is_py2():
+            mylist = self._device_specs.items()
+        else: 
+            mylist = list(self._device_specs.items())
+        for address, spec in mylist:
             # First try to get an already created room object from the central
             # CCU room collection. Otherwise create the room object and add it
             # to the central collection and this collection.

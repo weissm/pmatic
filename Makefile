@@ -20,8 +20,11 @@ LD_LIBRARY_PATH3 :=/usr/local/python3-3.6.3
 PYTHONPATH2      := $(LD_LIBRARY_PATH2)
 PYTHONPATH3      := $(LD_LIBRARY_PATH3)
 
-ENV_P2 := env PATH=/usr/local/python-2.7.15:$(PATH) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH2) PYTHONPATH=$(PYTHONPATH2)
-ENV_P3 := env PATH=/usr/local/python-3-3.6.3:$(PATH) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH3) PYTHONPATH=$(PYTHONPATH3)
+#ENV_P2 := env PATH=/usr/local/python-2.7.15:$(PATH) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH2) PYTHONPATH=$(PYTHONPATH2)
+ENV_P2 := env PATH=$(CHROOT_PATH)/usr/bin/:$(PATH) LD_LIBRARY_PATH=$(CHROOT_PATH)/usr/lib:$(LD_LIBRARY_PATH)
+#ENV_P3 := env PATH=/usr/local/python-3-3.6.3:$(PATH) LD_LIBRARY_PATH=/home/pi/shared/org/pmatic/dist/ccu/python/lib:/usr/local/python3-3.6.3 PYTHONPATH=$(PYTHONPATH3)
+ENV_P3 := env PATH=$(CHROOT_PATH)/usr/bin/ LD_LIBRARY_PATH=$(CHROOT_PATH)/usr/lib:$(LD_LIBRARY_PATH)
+
 
 .PHONY: dist
 
@@ -85,57 +88,93 @@ dist: dist-os dist-ccu
 
 dist-os:
 	[ ! -d $(DIST_PATH) ] && mkdir $(DIST_PATH) || true
-	$(ENV_P3) python setup.py sdist
+	$(ENV_P3) python3.7 setup.py sdist
+#	python3 setup.py sdist
 	@echo "Created dist/pmatic-$(VERSION).tar.gz"
 
 dist-ccu:
-	sudo $(MAKE) dist-ccu-step1
-	$(MAKE) dist-ccu-step2
+	sudo $(MAKE) dist-ccu-step1a
+	sudo $(MAKE) dist-ccu-step1b
+	$(MAKE) dist-ccu-step2a
+	$(MAKE) dist-ccu-step2b
 
-dist-ccu-step1:
+dist-ccu-step1a:
 	mkdir -p $(CCU_PREDIST_PATH)/python
 	cd $(CHROOT_PATH)/usr ; \
 	rsync -aRvL --no-g $$(cat $(REPO_PATH)/ccu_pkg/python-modules.list) \
 	    $(CCU_PREDIST_PATH)/python ; \
 	rsync -aRL --no-g $$(cat $(REPO_PATH)/ccu_pkg/python-modules-optional.list) \
 	    $(CCU_PREDIST_PATH)/python 2>/dev/null || true
-	rsync -av --no-g $(CHROOT_PATH)/lib/arm-linux-gnueabi/libexpat.so.1.* \
-	    $(CCU_PREDIST_PATH)/libs/
-#	sudo cp $(PYTHON_PATH)/libpython2.7* \
-#            $(CCU_PREDIST_PATH)/python/bin
-#	sudo cp $(PYTHON_PATH)/python \
-#           $(CCU_PREDIST_PATH)/python/bin 
-#	sudo [ -d $(CCU_PREDIST_PATH)/python/bin/build ] || mkdir $(CCU_PREDIST_PATH)/python/bin/build  
-#	sudo cp -r $(PYTHON_PATH)/build/lib.linux2-arm-2.7 \
-#            $(CCU_PREDIST_PATH)/python/bin/build
+	rsync -av --no-g $(CHROOT_PATH)/lib/arm-linux-gnueabi/libexpat.so.1* \
+	    $(CCU_PREDIST_PATH)/python/lib/
 	# Cleanup site-packages to dist-packages
 	rsync -av $(CCU_PREDIST_PATH)/python/lib/python2.7/site-packages/* \
 	    $(CCU_PREDIST_PATH)/python/lib/python2.7/dist-packages/
 	rm -rf $(CCU_PREDIST_PATH)/python/lib/python2.7/site-packages
 
-dist-ccu-step2:
+dist-ccu-step1b:
+	mkdir -p $(CCU_PREDIST_PATH)/python3
+	cd $(CHROOT_PATH)/usr ; \
+	rsync -aRvL --no-g $$(cat $(REPO_PATH)/ccu_pkg/python-modules3.list) \
+	    $(CCU_PREDIST_PATH)/python3 ; \
+	rsync -aRL --no-g $$(cat $(REPO_PATH)/ccu_pkg/python-modules-optional3.list) \
+	    $(CCU_PREDIST_PATH)/python3 2>/dev/null || true 
+	rsync -av --no-g $(CHROOT_PATH)/lib/arm-linux-gnueabi/libexpat.so.1* \
+	    $(CCU_PREDIST_PATH)/python3/lib/
+	# Cleanup site-packages to dist-packages
+	rsync -av $(CCU_PREDIST_PATH)/python3/lib/python3.7/site-packages/* \
+	    $(CCU_PREDIST_PATH)/python3/lib/python3.7/dist-packages/
+	rm -rf $(CCU_PREDIST_PATH)/python3/lib/python3.7/site-packages
+
+dist-ccu-step2a:
 	[ ! -d $(DIST_PATH) ] && mkdir $(DIST_PATH) || true
-	rsync -av $(CCU_PREDIST_PATH)/python $(CCU_PREDIST_PATH)/libs $(CCU_PKG_PATH)/
+	[ ! -d $(CCU_PKG_PATH) ] && mkdir $(CCU_PKG_PATH) || true
+	rsync -av $(CCU_PREDIST_PATH)/python/bin $(CCU_PREDIST_PATH)/python/lib $(CCU_PKG_PATH)/python
 	rsync -aRv --no-g \
 	    --exclude=\*.pyc \
 	    --exclude=.\*.swp \
 	    --exclude=__pycache__ \
 	    pmatic examples pmatic-manager manager_static \
 	    $(CCU_PKG_PATH)
-	cd $(CCU_PKG_PATH) ; $(ENV_P2) python -m compileall .
-	tar -cv -C $(CCU_PKG_PATH) -f $(DIST_PATH)/pmatic-$(VERSION)_ccu.tar .
+	cd $(CCU_PKG_PATH)/python/lib/python2.7 ; $(ENV_P2) python -m compileall .
+	tar -cv -C $(CCU_PKG_PATH) -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_2.7.tar .
 	[ -d $(CCU_PKG_PATH) ] && rm -rf $(CCU_PKG_PATH) || true
-	tar -rv -C ccu_pkg -f $(DIST_PATH)/pmatic-$(VERSION)_ccu.tar \
+	tar -rv -C ccu_pkg -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_2.7.tar \
 	    update_script \
 	    python-wrapper \
 	    pmatic.init
 	tar -rv -f $(DIST_PATH)/pmatic-$(VERSION)_ccu.tar \
 	    LICENSE \
 	    README.rst
-	tar -rv -C pmatic.egg-info -f $(DIST_PATH)/pmatic-$(VERSION)_ccu.tar \
+	tar -rv -C pmatic.egg-info -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_2.7.tar \
 	    PKG-INFO
-	gzip -f $(DIST_PATH)/pmatic-$(VERSION)_ccu.tar
-	@echo "Created dist/pmatic-$(VERSION)_ccu.tar.gz"
+	gzip -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_2.7.tar
+	@echo "Created dist/pmatic-$(VERSION)_ccu.tar_2.7.gz"
+
+dist-ccu-step2b:
+	[ ! -d $(DIST_PATH) ] && mkdir $(DIST_PATH) || true
+	[ ! -d $(CCU_PKG_PATH) ] && mkdir $(CCU_PKG_PATH) || true
+	rsync -av $(CCU_PREDIST_PATH)/python3/bin $(CCU_PREDIST_PATH)/python3/lib $(CCU_PKG_PATH)/python
+	rsync -aRv --no-g \
+	    --exclude=\*.pyc \
+	    --exclude=.\*.swp \
+	    --exclude=__pycache__ \
+	    pmatic examples pmatic-manager manager_static \
+	    $(CCU_PKG_PATH)
+	cd $(CCU_PKG_PATH)/python/lib/python3.7 ; $(ENV_P3) python3.7 -m compileall .
+	tar -cv -C $(CCU_PKG_PATH) -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.7.tar .
+	[ -d $(CCU_PKG_PATH) ] && rm -rf $(CCU_PKG_PATH) || true
+	tar -rv -C ccu_pkg -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.7.tar \
+	    update_script \
+	    python-wrapper \
+	    pmatic.init
+	tar -rv -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.7.tar \
+	    LICENSE \
+	    README.rst
+	tar -rv -C pmatic.egg-info -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.7.tar \
+	    PKG-INFO
+	gzip -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.7.tar
+	@echo "Created dist/pmatic-$(VERSION)_ccu.tar_3.7.gz"
 
 test:
 	@if [ -z "$(COVERAGE2)" ]; then \
@@ -151,7 +190,7 @@ test:
 	$(MAKE) coverage coverage-html
 
 test-python3:
-	$(ENV_P3) python setup.py test
+	$(ENV_P3) python3 setup.py test
 
 test-with-ccu:
 	TEST_WITH_CCU=1 $(MAKE) test
@@ -179,6 +218,12 @@ install-ccu-python:
 	    --exclude=__pycache__ \
 	    $(CCU_PREDIST_PATH)/python/* \
 	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic/python/
+	rsync -av --no-g \
+	    --exclude=\*.pyc \
+	    --exclude=.\*.swp \
+	    --exclude=__pycache__ \
+	    $(CCU_PREDIST_PATH)/python3/* \
+	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic/python/
 
 install-ccu-pmatic:
 	ssh root@$(CCU_HOST) "[ -d /usr/local/etc/config/addons/pmatic/etc ] || mkdir /usr/local/etc/config/addons/pmatic/etc"
@@ -188,6 +233,12 @@ install-ccu-pmatic:
 	    --exclude=__pycache__ \
 	    pmatic \
 	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic/python/lib/python2.7/
+	rsync -aRv --no-g \
+	    --exclude=\*.pyc \
+	    --exclude=.\*.swp \
+	    --exclude=__pycache__ \
+	    pmatic \
+	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic/python/lib/python3.7/
 	rsync -aRv --no-g \
 	    --exclude=\*.pyc \
 	    --exclude=.\*.swp \
@@ -238,12 +289,13 @@ clean-dist:
 travis-build:
 	GIT_COMMIT=$(shell git rev-parse --short HEAD) ; \
 	NEW_VERSION=$$GIT_COMMIT $(MAKE) setversion ; \
-	$(MAKE) dist-os dist-ccu-step2 ; \
+	$(MAKE) dist-os dist-ccu-step2a ; \
+	$(MAKE) dist-os dist-ccu-step2b ; \
 	PKG_PATH=$(shell pwd)/dist ; \
 	cd $$HOME ; \
 	git config --global user.email "travis@travis-ci.org" ; \
 	git config --global user.name "Travis" ; \
-	git clone --quiet --branch=gh-pages https://$$GH_TOKEN@github.com/LarsMichelsen/pmatic.git gh-pages > /dev/null ; \
+	git clone --quiet --branch=gh-pages https://$$GH_TOKEN@github.com/mweiss/pmatic.git gh-pages > /dev/null ; \
 	cd gh-pages ; \
 	cp -f $$PKG_PATH/pmatic-$${GIT_COMMIT}_ccu.tar.gz pmatic-snapshot_ccu.tar.gz ; \
 	cp -f $$PKG_PATH/pmatic-$${GIT_COMMIT}.tar.gz pmatic-snapshot.tar.gz ; \

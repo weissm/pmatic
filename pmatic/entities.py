@@ -30,7 +30,7 @@ from __future__ import unicode_literals
 
 import time
 import threading
-
+1
 try:
     from builtins import object # pylint:disable=redefined-builtin
 except ImportError:
@@ -60,7 +60,11 @@ class Entity(object):
         Transforming and filtering dictionaries containing attributes for this entity
         by using the configured transform methods for the individual attributes and also
         excluding some attributes which keys are in self._skip_attributes."""
-        for key, val in obj_dict.items():
+        if utils.is_py2():
+            mylist = obj_dict.items()
+        else: 
+            mylist = list(obj_dict.items())
+        for key, val in mylist:
             if key in self._skip_attributes:
                 continue
 
@@ -117,7 +121,11 @@ class Channels(dict):
     With only a dict for device.channels it would need device.channels.values()
     """
     def __iter__(self):
-        return iter(sorted(self.values(), key=lambda x: x.index))
+        if utils.is_py2():
+            mylist = self.values()
+        else: 
+            mylist = list(self.values())
+        return iter(sorted(mylist, key=lambda x: x.index))
 
 
 
@@ -278,7 +286,11 @@ class Channel(utils.LogMixin, Entity):
     def _value_update_needed(self):
         """Tells whether or not the set of values should be fetched from the CCU."""
         oldest_value_time = None
-        for param in self._values.values():
+        if utils.is_py2():
+            mylist = self._values.values()
+        else: 
+            mylist = list(self._values.values())
+        for param in mylist:
             try:
                 last_updated = param.last_updated
                 if last_updated == None:
@@ -316,7 +328,11 @@ class Channel(utils.LogMixin, Entity):
             else:
                 raise
 
-        for param_id, value in values.items():
+        if utils.is_py2():
+            mylist = values.items()
+        else: 
+            mylist = list(values.items())
+        for param_id, value in mylist:
             if param_id in self._values:
                 self._values[param_id].set_from_api(value)
             else:
@@ -366,7 +382,11 @@ class Channel(utils.LogMixin, Entity):
         The function can be called with the `skip_invalid_values` argument set to `True`
         to only log exceptions of single values and continue with the next value."""
         values = {}
-        for param_id, value in self._values.items():
+        if utils.is_py2():
+            mylist = self._values.items()
+        else: 
+            mylist = list(self._values.items())
+        for param_id, value in mylist:
             if value.readable:
                 try:
                     values[value.id] = self._ccu.api.interface_get_value(
@@ -398,7 +418,11 @@ class Channel(utils.LogMixin, Entity):
         all channel values except the maintenance channel.
         The values are sorted by the titles."""
         formated = []
-        for title, value in sorted([ (v.name, v) for v in self.values.values() if v.readable ]):
+        if utils.is_py2():
+            mylist = self.values.values()
+        else: 
+            mylist = list(self.values.values())
+        for title, value in sorted([ (v.name, v) for v in mylist if v.readable ]):
             formated.append("%s: %s" % (title, value))
         return ", ".join(formated)
 
@@ -434,7 +458,10 @@ class Channel(utils.LogMixin, Entity):
         """Register a function to be called each time a value of this channel parameters
         has changed."""
         try:
-            values = self.values.values()
+            if utils.is_py2():
+                values = self.values.values()
+            else: 
+                values = list(self.values.values())
         except PMDeviceOffline:
             # Unable to register with parameters right now. Save for later registration
             # when values are available one day.
@@ -449,7 +476,10 @@ class Channel(utils.LogMixin, Entity):
         """Register a function to be called each time a value of this channel parameters has
         been updated."""
         try:
-            values = self.values.values()
+            if utils.is_py2():
+                values = self.values.values()
+            else: 
+                values = list(self.values.values())
         except PMDeviceOffline:
             # Unable to register with parameters right now. Save for later registration
             # when values are available one day.
@@ -467,9 +497,12 @@ class Channel(utils.LogMixin, Entity):
 
     def _register_saved_callbacks(self):
         """If there are saved callbacks to register to new fetched parameters, register them!"""
-        values = self._values.values()
+        if utils.is_py2():
+            values = self._values.values()
+        else: 
+            values = list(self._values.values())
 
-        for cb_name, callbacks in self._callbacks_to_register.items():
+        for cb_name, callbacks in list(self._callbacks_to_register.items()):
             if not callbacks:
                 continue
 
@@ -862,7 +895,10 @@ class Devices(object):
 
     def addresses(self):
         """Returns a list of all addresses of all initialized devices."""
-        return self._devices.keys()
+        if utils.is_py2():
+            return self._devices.keys()
+        else: 
+            return list(self._devices.keys())
 
 
     def delete(self, address):
@@ -896,20 +932,32 @@ class Devices(object):
     def on_value_changed(self, func):
         """Register a function to be called each time a value of a device in this
         collection changed."""
-        for device in self._devices.values():
+        if utils.is_py2():
+            mylist = self._devices.values()
+        else: 
+            mylist = list(self._devices.values())
+        for device in mylist:
             device.on_value_changed(func)
 
 
     def on_value_updated(self, func):
         """Register a function to be called each time a value of a device in this
         collection updated."""
-        for device in self._devices.values():
+        if utils.is_py2():
+            mylist = self._devices.values()
+        else: 
+            mylist = list(self._devices.values())
+        for device in mylist:
             device.on_value_updated(func)
 
 
     def __iter__(self):
         """Provides an iterator over the devices of this collection."""
-        for value in self._devices.values():
+        if utils.is_py2():
+            mylist = self._devices.values()
+        else: 
+            mylist = list(self._devices.values())
+        for value in mylist:
             yield value
 
 
@@ -1632,7 +1680,11 @@ class Rooms(object):
 
     def __iter__(self):
         """Provides an iterator over the rooms of this collection."""
-        for value in self._rooms.values():
+        if utils.is_py2():
+            mylist = self._rooms.values()
+        else: 
+            mylist = list(self._rooms.values())
+        for value in mylist:
             yield value
 
 

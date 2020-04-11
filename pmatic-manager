@@ -166,7 +166,7 @@ logger = logging.getLogger("pmatic")
 pmatic.manager.Config.log_file = args.log_file
 file_logger = RotatingFileHandler(args.log_file, maxBytes=5*1024*1024, backupCount=2)
 file_logger.setLevel(args.log_level)
-file_logger.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+file_logger.setFormatter(logging.Formatter('[%(levelname)s:%(filename)s:%(lineno)d] %(message)s'))
 
 # Apply other paths
 pmatic.manager.Config.script_path = args.script_path
