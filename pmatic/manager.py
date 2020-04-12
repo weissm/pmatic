@@ -205,7 +205,8 @@ class Config(utils.LogMixin):
 
         # treat ccu password special  
         if 'ccu_credentials' in config:
-            config['ccu_credentials'] = config['ccu_credentials'][0].encode("utf-8"), cipher_suite.encrypt((config['ccu_credentials'][1]).encode("utf-8"))
+            if utils.is_py2():
+                config['ccu_credentials'] = config['ccu_credentials'][0].encode("utf-8"), cipher_suite.encrypt((config['ccu_credentials'][1]).encode("utf-8"))
         if not os.path.exists(os.path.dirname(cls._config_path())):
             os.makedirs(os.path.dirname(cls._config_path()))
 
@@ -3051,10 +3052,10 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
     def _execute_presence_update(self):
         """Updates the presence information of residents in the configured interval. When no
         resident is configured, this method is doing nothing."""
-#        not meaningful debug info, if resident tracking is not enabled
-#        if not self._manager.residents.enabled:
+        if not self._manager.residents.enabled:
+#            not meaningful debug info, if resident tracking is not enabled
 #            self.logger.debug("Not updating presence information (not enabled)")
-#            return
+            return
 
         if self._next_presence_update == None or self._next_presence_update < time.time():
             self.logger.debug("Updating presence information")
