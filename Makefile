@@ -15,17 +15,6 @@ COVERAGE2 := $(shell if which coverage2 >/dev/null 2>&1; then echo coverage2; \
 COVERAGE3 := $(shell if which coverage3 >/dev/null 2>&1; then echo coverage3; \
 		   elif which coverage-3.4 >/dev/null 2>&1; then echo coverage-3.4; fi)
 
-LD_LIBRARY_PATH2 :=/usr/local/python-2.7.15
-LD_LIBRARY_PATH3 :=/usr/local/python3-3.6.3
-PYTHONPATH2      := $(LD_LIBRARY_PATH2)
-PYTHONPATH3      := $(LD_LIBRARY_PATH3)
-
-#ENV_P2 := env PATH=/usr/local/python-2.7.15:$(PATH) LD_LIBRARY_PATH=$(LD_LIBRARY_PATH2) PYTHONPATH=$(PYTHONPATH2)
-ENV_P2 := env PATH=$(CHROOT_PATH)/usr/bin/:$(PATH) LD_LIBRARY_PATH=$(CHROOT_PATH)/usr/lib:$(LD_LIBRARY_PATH)
-#ENV_P3 := env PATH=/usr/local/python-3-3.6.3:$(PATH) LD_LIBRARY_PATH=/home/pi/shared/org/pmatic/dist/ccu/python/lib:/usr/local/python3-3.6.3 PYTHONPATH=$(PYTHONPATH3)
-ENV_P3 := env PATH=$(CHROOT_PATH)/usr/bin/ LD_LIBRARY_PATH=$(CHROOT_PATH)/usr/lib:$(LD_LIBRARY_PATH)
-
-
 .PHONY: dist
 
 
@@ -88,8 +77,7 @@ dist: dist-os dist-ccu
 
 dist-os:
 	[ ! -d $(DIST_PATH) ] && mkdir $(DIST_PATH) || true
-	$(ENV_P3) python3.7 setup.py sdist
-#	python3 setup.py sdist
+	sudo python3 setup.py sdist
 	@echo "Created dist/pmatic-$(VERSION).tar.gz"
 
 dist-ccu:
@@ -129,6 +117,9 @@ dist-ccu-step1b:
 dist-ccu-step2a:
 	[ ! -d $(DIST_PATH) ] && mkdir $(DIST_PATH) || true
 	[ ! -d $(CCU_PKG_PATH) ] && mkdir $(CCU_PKG_PATH) || true
+	[ ! -d $(CCU_PKG_PATH)/python ] && mkdir $(CCU_PKG_PATH)/python || true
+	[ ! -d $(CCU_PKG_PATH)/python/bin ] && mkdir $(CCU_PKG_PATH)/python/bin || true
+	[ ! -d $(CCU_PKG_PATH)/python/lib ] && mkdir $(CCU_PKG_PATH)/python/lib || true
 	rsync -av $(CCU_PREDIST_PATH)/python/bin $(CCU_PREDIST_PATH)/python/lib $(CCU_PKG_PATH)/python
 	rsync -aRv --no-g \
 	    --exclude=\*.pyc \
@@ -136,7 +127,7 @@ dist-ccu-step2a:
 	    --exclude=__pycache__ \
 	    pmatic examples pmatic-manager manager_static \
 	    $(CCU_PKG_PATH)
-	cd $(CCU_PKG_PATH)/python/lib/python2.7 ; $(ENV_P2) python -m compileall .
+	cd $(CCU_PKG_PATH)/python/lib/python2.7 ; python -m compileall .
 	tar -cv -C $(CCU_PKG_PATH) -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_2.7.tar .
 	[ -d $(CCU_PKG_PATH) ] && rm -rf $(CCU_PKG_PATH) || true
 	tar -rv -C ccu_pkg -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_2.7.tar \
@@ -154,6 +145,9 @@ dist-ccu-step2a:
 dist-ccu-step2b:
 	[ ! -d $(DIST_PATH) ] && mkdir $(DIST_PATH) || true
 	[ ! -d $(CCU_PKG_PATH) ] && mkdir $(CCU_PKG_PATH) || true
+	[ ! -d $(CCU_PKG_PATH)/python ] && mkdir $(CCU_PKG_PATH)/python || true
+	[ ! -d $(CCU_PKG_PATH)/python/bin ] && mkdir $(CCU_PKG_PATH)/python/bin || true
+	[ ! -d $(CCU_PKG_PATH)/python/lib ] && mkdir $(CCU_PKG_PATH)/python/lib || true
 	rsync -av $(CCU_PREDIST_PATH)/python3/bin $(CCU_PREDIST_PATH)/python3/lib $(CCU_PKG_PATH)/python
 	rsync -aRv --no-g \
 	    --exclude=\*.pyc \
@@ -161,7 +155,7 @@ dist-ccu-step2b:
 	    --exclude=__pycache__ \
 	    pmatic examples pmatic-manager manager_static \
 	    $(CCU_PKG_PATH)
-	cd $(CCU_PKG_PATH)/python/lib/python3.7 ; $(ENV_P3) python3.7 -m compileall .
+	cd $(CCU_PKG_PATH)/python/lib/python3.7 ; python3 -m compileall .
 	tar -cv -C $(CCU_PKG_PATH) -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.7.tar .
 	[ -d $(CCU_PKG_PATH) ] && rm -rf $(CCU_PKG_PATH) || true
 	tar -rv -C ccu_pkg -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.7.tar \
@@ -190,7 +184,7 @@ test:
 	$(MAKE) coverage coverage-html
 
 test-python3:
-	$(ENV_P3) python3 setup.py test
+	python3 setup.py test
 
 test-with-ccu:
 	TEST_WITH_CCU=1 $(MAKE) test

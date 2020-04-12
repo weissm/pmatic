@@ -845,7 +845,7 @@ class StaticFile(PageHandler):
                 result = [ l.encode('UTF-8') for l in open(file_path, "r", encoding="utf-8", errors='ignore') ]
             else:
                 result = [ l for l in open(file_path, "rb") ]
-        self.logger.info("Result: %s ", result)
+        self.logger.debug("Result: %s ", result)
         return result
  
 
