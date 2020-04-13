@@ -59,7 +59,7 @@ def test_log(capfd):
     l.log(pmatic.CRITICAL, "Dingelingpiffpaff")
 
     out, err = capfd.readouterr()
-    assert "[CRITICAL] Dingelingpiffpaff" in err
+    assert "[CRITICAL:test_pmatic.py:59] Dingelingpiffpaff\n" in err
     assert out == ""
 
 

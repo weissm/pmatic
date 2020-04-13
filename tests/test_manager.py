@@ -701,16 +701,16 @@ class TestHtml(object):
 class TestFieldStorage(object):
     def test_getvalue(self):
         f = FieldStorage()
-        f.list.append(cgi.MiniFieldStorage(b"key1", b"dingdong"))
+        f.list.append(cgi.MiniFieldStorage(b"key1", u"dingdong"))
         f.list.append(cgi.MiniFieldStorage(b"key2", None))
 
-        assert utils.is_text(f.getvalue("key1"))
-        assert f.getvalue("key1") == "dingdong"
+        assert utils.is_text(f.getvalue(b"key1"))
+        assert f.getvalue(b"key1") == "dingdong"
 
         assert f.getvalue("key2") == None
 
         assert f.getvalue("key3") == None
-        assert f.getvalue("key3", b"x") == "x"
+        assert f.getvalue("key3", b"x") == b"x"
 
 
 

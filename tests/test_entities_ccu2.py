@@ -45,7 +45,6 @@ from pmatic.exceptions import PMException
 class TestHM_CC_RT_DN(lib.TestCCUClassWideCCU2):
     @pytest.fixture(scope="class")
     def d(self, ccu2):
-        print("hier: ", ccu2.devices)
         return list(ccu2.devices.query(device_name="Wohnzimmer"))[0]
 
 
