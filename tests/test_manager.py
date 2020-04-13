@@ -672,14 +672,16 @@ class TestHtml(object):
 
     def test_js(self, h):
         h.js("alert(1)")
-        soup = BeautifulSoup(h.flush(), "html.parser")
+        soup = BeautifulSoup(h.flush(), "html5lib")
+        # soup = BeautifulSoup(h.flush(), "html.parser")
         assert len(soup.find_all("script")) == 1
         assert soup.find("script").getText("alert(1)")
 
 
     def test_redirect(self, h):
         h.redirect(0, "http://lalaxy.i")
-        soup = BeautifulSoup(h.flush(), "html.parser")
+        soup = BeautifulSoup(h.flush(), "html5lib")
+        # soup = BeautifulSoup(h.flush(), "html.parser")
         assert len(soup.find_all("script")) == 1
         assert "setTimeout(" in soup.find("script").getText()
         assert "'http://lalaxy.i'" in soup.find("script").getText()

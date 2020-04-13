@@ -58,9 +58,9 @@ setup:
 	sudo apt-get install debootstrap qemu-user-static rsync dialog python-pytest python-pip \
 			python3-pip python-sphinx snakefood python-lxml \
 			python-six 
-	sudo pip install --upgrade pytest_flakes pytest_runner coverage beautifulsoup4==4.8.2 \
+	sudo pip install --upgrade pytest_flakes pytest_runner coverage beautifulsoup4 \
 			 Pygments==2.5.2 requests cryptography
-	sudo pip3 install --upgrade pytest_flakes pytest_runner coverage beautifulsoup4==4.8.2 \
+	sudo pip3 install --upgrade pytest_flakes pytest_runner coverage beautifulsoup4 \
 			 sphinxcontrib-images requests cryptography
 	# port install py-coverage py34-coverage \
 	# 	       py-setuptools py34-setuptools \
