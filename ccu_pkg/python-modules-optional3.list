@@ -2,7 +2,6 @@
 # ignore missing files during rsync.
 #
 # Differences between paths
-lib/python3.7/_sysconfigdata_nd.py
 lib/python3.7/plat-x86_64-linux-gnu/_sysconfigdata_nd.py
 lib/python3.7/lib-dynload/datetime.so
 lib/python3.7/lib-dynload/_io.so
@@ -18,7 +17,7 @@ lib/python3.7/ast.py
 lib/python3.7/_sysconfigdata_m_linux_arm-linux-gnueabihf.py
 lib/python3.7/_bootlocale.py
 lib/python3.7/lib-dynload/*.so
-lib/libpython3*
+lib/libpython3.7m.so.1.0
 # travis+chroot path
 lib/python3.7/site-packages/simpletr64/*.py
 lib/python3.7/site-packages/simpletr64/actions/*.py

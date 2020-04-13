@@ -9,11 +9,8 @@ lib/python3.7/genericpath.py
 lib/python3.7/warnings.py
 lib/python3.7/linecache.py
 lib/python3.7/types.py
-lib/python3.7/UserDict.py
-lib/python3.7/_abcoll.py
 lib/python3.7/abc.py
 lib/python3.7/_weakrefset.py
-lib/python3.7/copy_reg.py
 lib/python3.7/sysconfig.py
 lib/python3.7/sre_compile.py
 lib/python3.7/sre_parse.py
@@ -32,21 +29,16 @@ lib/python3.7/__future__.py
 
 lib/python3.7/logging/*.py
 lib/python3.7/weakref.py
-lib/python3.7/atexit.py
 
-lib/python3.7/urllib2.py
 lib/python3.7/base64.py
 lib/python3.7/hashlib.py
 lib/python3.7/lib-dynload/_hashlib*.so
-lib/python3.7/sha.py
-lib/python3.7/httplib.py
 lib/python3.7/datetime.py
 lib/python3.7/http/*.py
 lib/python3.7/html/*.py
 lib/python3.7/io.py
 lib/python3.7/socket.py
 lib/python3.7/functools.py
-lib/python3.7/urlparse.py
 lib/python3.7/collections/*.py
 lib/python3.7/operator.py
 lib/python3.7/reprlib.py
@@ -59,10 +51,8 @@ lib/python3.7/signal.py
 lib/python3.7/keyword.py
 lib/python3.7/heapq.py
 lib/python3.7/bisect.py
-lib/python3.7/mimetools.py
 lib/python3.7/tempfile.py
 lib/python3.7/random.py
-lib/python3.7/rfc822.py
 lib/python3.7/urllib/*.py
 lib/python3.7/ssl.py
 lib/python3.7/lib-dynload/_ssl*.so
@@ -71,8 +61,6 @@ lib/python3.7/smtplib.py
 
 lib/python3.7/threading.py
 lib/python3.7/socketserver.py
-lib/python3.7/BaseHTTPServer.py
-lib/python3.7/SimpleXMLRPCServer.py
 lib/python3.7/xmlrpc/*.py
 
 lib/python3.7/argparse.py
@@ -82,11 +70,9 @@ lib/python3.7/gettext.py
 lib/python3.7/locale.py
 
 lib/python3.7/cgi.py
-lib/python3.7/Cookie.py
 lib/python3.7/wsgiref/*.py
 lib/python3.7/contextlib.py
 lib/python3.7/contextvars.py
-lib/python3.7/StringIO.py
 lib/python3.7/glob.py
 lib/python3.7/fnmatch.py
 lib/python3.7/_strptime.py
@@ -109,10 +95,6 @@ lib/python3.7/email/*/*.py
 lib/python3.7/uu.py
 lib/python3.7/shlex.py
 lib/python3.7/quopri.py
-lib/python3.7/cookielib.py
-lib/python3.7/_LWPCookieJar.py
-lib/python3.7/_MozillaCookieJar.py
-lib/python3.7/Queue.py
 lib/python3.7/mimetypes.py
 lib/python3.7/gzip.py
 lib/python3.7/*-packages/six.py

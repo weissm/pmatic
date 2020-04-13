@@ -44,7 +44,7 @@ lib/python2.7/*-packages/urllib3/packages/*.py
 lib/python2.7/*-packages/urllib3/packages/*/*.py
 lib/python2.7/*-packages/urllib3/packages/*/*/*.py
 lib/python2.7/*-packages/cryptography/*.py
-lib/python2.7/*-packages/cryptography/hazmat/*.
+lib/python2.7/*-packages/cryptography/hazmat/*
 lib/python2.7/*-packages/cryptography/hazmat/*/*
 lib/python2.7/*-packages/cryptography/hazmat/*/*/*
 lib/python2.7/*-packages/cryptography/x509/*.py

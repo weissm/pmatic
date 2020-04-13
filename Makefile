@@ -93,7 +93,7 @@ dist-ccu-step1a:
 	    $(CCU_PREDIST_PATH)/python ; \
 	rsync -aRL --no-g $$(cat $(REPO_PATH)/ccu_pkg/python-modules-optional.list) \
 	    $(CCU_PREDIST_PATH)/python 2>/dev/null || true
-	rsync -av --no-g $(CHROOT_PATH)/lib/arm-linux-gnueabi/libexpat.so.1* \
+	rsync -av --no-g $(CHROOT_PATH)/lib/arm-linux-gnueabi/libexpat.so.1 \
 	    $(CCU_PREDIST_PATH)/python/lib/
 	# Cleanup site-packages to dist-packages
 	rsync -av $(CCU_PREDIST_PATH)/python/lib/python2.7/site-packages/* \
@@ -107,7 +107,7 @@ dist-ccu-step1b:
 	    $(CCU_PREDIST_PATH)/python3 ; \
 	rsync -aRL --no-g $$(cat $(REPO_PATH)/ccu_pkg/python-modules-optional3.list) \
 	    $(CCU_PREDIST_PATH)/python3 2>/dev/null || true 
-	rsync -av --no-g $(CHROOT_PATH)/lib/arm-linux-gnueabi/libexpat.so.1* \
+	rsync -av --no-g $(CHROOT_PATH)/lib/arm-linux-gnueabi/libexpat.so.1 \
 	    $(CCU_PREDIST_PATH)/python3/lib/
 	# Cleanup site-packages to dist-packages
 	rsync -av $(CCU_PREDIST_PATH)/python3/lib/python3.7/site-packages/* \
@@ -271,14 +271,17 @@ clean: clean-dist clean-test
 
 clean-test:
 	rm -rf tests/__pycache__ || true
-	rm -rf pmatic.egg-info || true
+	sudo rm -rf pmatic.egg-info || true
 	rm -rf *.egg || true
 	rm -rf .coverage htmlcov || true
 	rm -rf .cache || true
 
 clean-dist:
-	rm -rf build 2>/dev/null || true
-	rm -rf dist 2>/dev/null || true
+	sudo rm -rf build 2>/dev/null || true
+	sudo rm -rf dist 2>/dev/null || true
+	sudo rm -rf $(CCU_PKG_PATH)/python 2>/dev/null || true
+	sudo rm -rf $(CCU_PKG_PATH)/python3 2>/dev/null || true
+
 
 travis-build:
 	GIT_COMMIT=$(shell git rev-parse --short HEAD) ; \
