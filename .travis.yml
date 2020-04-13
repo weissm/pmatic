@@ -11,6 +11,7 @@ install:
     # install for test coverage analyzes
     - pip install coveralls
     - pip install html5lib
+    - pip install soupsieve==1.8
     # install for doc build / publish
     - pip install sphinx
     - pip install sphinxcontrib-images
