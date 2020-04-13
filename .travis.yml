@@ -17,6 +17,7 @@ install:
     # build installs this as egg which breaks the current import test so try
     # to install it manually before.
     - pip install simpleTR64
+    - pip install html5lib
     # install for for import tests
     - if [ $TRAVIS_PYTHON_VERSION = '2.7' ]; then pip install snakefood; fi
     #- find /opt/python/2.7.*/lib/python2.7

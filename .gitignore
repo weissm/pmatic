@@ -16,3 +16,5 @@ dist/pmatic-*.tar.gz
 dist/ccu
 playground.py
 .idea
+examples/myscripts
+
