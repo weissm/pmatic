@@ -77,7 +77,7 @@ dist: dist-os dist-ccu
 
 dist-os:
 	[ ! -d $(DIST_PATH) ] && mkdir $(DIST_PATH) || true
-	sudo python3 setup.py sdist
+	python3 setup.py sdist
 	@echo "Created dist/pmatic-$(VERSION).tar.gz"
 
 dist-ccu:

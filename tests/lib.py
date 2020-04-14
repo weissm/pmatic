@@ -210,7 +210,7 @@ class TestRemoteAPI(object):
 
 #        print ("...................... Start Remote API1")
         API = pmatic.api.RemoteAPI(
-            address="http://192.168.178.20",
+            address="http://ccu3-webui",
             credentials=("PmaticAdmin", "EPIC-SECRET-PW"),
             connect_timeout=5,
             # log_level=pmatic.DEBUG,
@@ -228,7 +228,7 @@ class TestRemoteAPI(object):
       
 #        print ("........................... Start Remote API2")
         APICCU2 = pmatic.api.RemoteAPI(
-            address="http://192.168.1.26",
+            address="http://ccu3-webui",
             credentials=("Admin", "EPIC-SECRET-PW"),
             connect_timeout=5,
             target="ccu2"
