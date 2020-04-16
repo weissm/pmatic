@@ -5,8 +5,8 @@ CONFIG_DIR=/etc/config
 ADDON_DIR=$CONFIG_DIR/addons/pmatic
 INIT_TARGET=/etc/init.d/S55pmatic
 PYTHON_DIR=$ADDON_DIR/python
-PYTHON_VER=python3.7
-#PYTHON_VER=python2.7
+#PYTHON_VER=python3.7
+PYTHON_VER=python2.7
 
 PM_PID=$(ps -o pid,args | awk '{if($3=="/usr/local/bin/pmatic-manager"){print $1}}')
 
@@ -87,15 +87,11 @@ uninstall)
   rm /usr/local/bin/pmatic-manager
   rm -rf $ADDON_DIR/python
   rm -rf $ADDON_DIR/pmatic
-  rm -rf $ADDON_DIR/lib
   rm -rf $ADDON_DIR/manager_static
   
   mount -o remount,rw /
   if [ -h $INIT_TARGET ]; then
       rm -f $INIT_TARGET
-  fi
-  if [ -h /usr/lib/libexpat.so.1 ]; then
-      rm -f /usr/lib/libexpat.so.1
   fi
   mount -o remount,ro /
   ;;

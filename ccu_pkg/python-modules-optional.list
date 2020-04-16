@@ -12,6 +12,7 @@ lib/python2.7/lib-dynload/time.so
 lib/python2.7/lib-dynload/cStringIO.so
 lib/python2.7/lib-dynload/_collections.so
 lib/python2.7/lib-dynload/*.so
+lib/libpython2.7.so.1.0
 # travis+chroot path
 lib/python2.7/site-packages/simpletr64/*.py
 lib/python2.7/site-packages/simpletr64/actions/*.py

@@ -1,10 +1,22 @@
 #!/bin/sh
 
+ADDON_NAME=pmatic
 BIN_DIR=/usr/local/bin
-ADDON_DIR=/usr/local/etc/config/addons/pmatic
+ADDON_DIR=/usr/local/etc/config/addons/${ADDON_NAME}
 RCD_DIR=/usr/local/etc/config/rc.d
 CONFIG_DIR=/usr/local/etc/config
 
+LOG_FILE=/tmp/${ADDON_NAME}-install.log
+
+exec 1<&-
+exec 2<&-
+exec 1<>$LOG_FILE
+exec 2>&1
+
+echo "starting installation of addon ${ADDON_NAME} at $(date)" >>$LOG_FILE
+echo $@ >>$LOG_FILE
+
+echo "mount /usr/local if not already mounted" >>$LOG_FILE
 if [ "$1" = "" ]; then
   echo "CCU1"
   lcdtool "installing pmatic   "
@@ -14,23 +26,20 @@ elif [ "$1" = "CCU2" ]; then
   if ! mount | grep ^ubi1:user.*rw >/dev/null 2>&1; then
       mount -t ubifs ubi1:user /usr/local
   fi
-elif [ "$1" = "HM-RASPBERRYMATIC" ]; then
-  echo "HM-RASPBERRYMATIC"
+elif [ "$1" == "HM-RASPBERRYMATIC" -o "$1" == "CCU3" ]; then
+  echo "Installing on CCU3/RaspberryMatic" 
   mount /usr/local
 fi
 
 # remove files of old versions (same as in pmatic.init)
+echo "remove files of old versions" >>$LOG_FILE
 rm $BIN_DIR/python2.7 $BIN_DIR/python $BIN_DIR/pmatic-manager
 rm -rf $ADDON_DIR/python
 rm -rf $ADDON_DIR/pmatic
 rm -rf $ADDON_DIR/lib
 rm -rf $ADDON_DIR/manager_static
-if [ -h /usr/lib/libexpat.so.1 ]; then
-    mount -o remount,rw /
-    rm -f /usr/lib/libexpat.so.1
-    mount -o remount,ro /
-fi
 
+echo "create directories" >>$LOG_FILE
 if [ ! -d $BIN_DIR ]; then
     mkdir -p $BIN_DIR
     chmod 755 $BIN_DIR
@@ -57,6 +66,7 @@ if [ ! -d $ADDON_DIR/etc ]; then
 fi
 
 # Make python executable shipped with pmatic available via PATH
+echo "Make python executable" >>$LOG_FILE
 ln -s ../etc/config/addons/pmatic/python/bin/python2.7 $BIN_DIR/python2.7
 cp python-wrapper $BIN_DIR/python
 chmod +x $BIN_DIR/python
@@ -65,8 +75,8 @@ cp pmatic-manager $BIN_DIR/
 chmod +x $BIN_DIR/pmatic-manager
 
 # copy all stuff and setup rc.d
+echo "copy all stuff and setup rc.d" >>$LOG_FILE
 cp -R python manager_static $ADDON_DIR/
-cp -R libs $ADDON_DIR/lib
 cp -R examples $ADDON_DIR/scripts/
 cp -R pmatic $ADDON_DIR/python/lib/python2.7/
 ln -s python/lib/python2.7/pmatic $ADDON_DIR/pmatic
@@ -85,6 +95,9 @@ if [ "$1" = "" ]; then
 elif [ "$1" = "CCU2" ]; then
   echo "CCU2"
   # CCU2 always reboots after Addon/Firmware Update
+elif [ "$1" = "CCU3" ]; then
+  echo "CCU3"
+  # CCU3 always reboots after Addon/Firmware Update
 elif [ "$1" = "HM-RASPBERRYMATIC" ]; then
   echo "HM-RASPBERRYMATIC"
   # RASPBERRYMATIC always reboots after Addon/Firmware Update
