@@ -51,12 +51,12 @@ import subprocess
 # Specific for the RemoteAPI()
 try:
     from urllib.request import urlopen, Request
-#    from urllib.error import URLError
-#    from http.client import BadStatusLine
+    from urllib.error import URLError
+    from http.client import BadStatusLine
 except ImportError:
     from urllib2 import urlopen, Request
-#    from urllib2 import URLError
-#    from httplib import BadStatusLine
+    from urllib2 import URLError
+    from httplib import BadStatusLine
 
 from pmatic.exceptions import PMException, PMConnectionError
 import pmatic.utils as utils
@@ -813,16 +813,20 @@ class DeviceLogic(CachedAPICall):
         # need ot be equalized and with internal naming specs just like the also different
         # keys from the XML-RPC messages.
         def decamel_dict_keys(d):
-            for k in d:
-                value = d.pop(k)
+            temp = {}
+            for k in d.keys():
+                value = d[k]
 
                 if isinstance(value, list):
-                    for entry in value:
+                    for idx, entry in enumerate(value):
                         if isinstance(entry, dict):
-                            decamel_dict_keys(entry)
+                            value[idx] = decamel_dict_keys(entry)
 
-                d[utils.decamel(k)] = value
-            return d
+                temp[utils.decamel(k)] = value
+            return temp
+
+        for spec in self._api.device_list_all_detail():
+            dict.__setitem__(self, spec["address"], decamel_dict_keys(spec))
 
         alldevices = self._api.device_list_all_detail()
         for spec in alldevices:
@@ -846,9 +850,10 @@ class DeviceSpecs(CachedAPICall):
         # need ot be equalized and with internal naming specs just like the also different
         # keys from the XML-RPC messages.
         def decamel_dict_keys(d):
-            for k in d:
-                d[utils.decamel(k)] = d.pop(k)
-            return d
+            temp = {}
+            for k in d.keys():
+                temp[utils.decamel(k)] = d[k]
+            return temp
 
         devices = {}
 
