@@ -51,12 +51,14 @@ import subprocess
 # Specific for the RemoteAPI()
 try:
     from urllib.request import urlopen, Request
-    from urllib.error import URLError
-    from http.client import BadStatusLine
+    if not utils.is_py2():
+        from urllib.error import URLError
+        from http.client import BadStatusLine
 except ImportError:
     from urllib2 import urlopen, Request
-    from urllib2 import URLError
-    from httplib import BadStatusLine
+    if not utils.is_py2():
+        from urllib2 import URLError
+        from httplib import BadStatusLine
 
 from pmatic.exceptions import PMException, PMConnectionError
 import pmatic.utils as utils
