@@ -49,6 +49,7 @@ import threading
 import subprocess
 
 # Specific for the RemoteAPI()
+import pmatic.utils as utils
 try:
     from urllib.request import urlopen, Request
     if not utils.is_py2():
