@@ -160,7 +160,7 @@ class Config(utils.LogMixin):
                         config['ccu_credentials'] = config['ccu_credentials'][0], cipher_suite.decrypt((config['ccu_credentials'][1]).encode()).decode()
                         print("valdec", config['ccu_credentials'])
                     except InvalidToken:
-                        config['ccu_credentials'] = config['ccu_credentials'][0].encode("utf-8"), "default"
+                        config['ccu_credentials'] = config['ccu_credentials'][0], "default"
                         cls.cls_logger().warning("No valid credential, please use -x <passwd> option or define in setup section.", exc_info=False)
  
             except IOError as e:
@@ -2436,11 +2436,11 @@ class PageState(HtmlPageHandler, utils.LogMixin):
         self.write("<td>%s</td></tr>" % self._manager.event_history.num_events_total)
 
         self.write("<tr><th>Time of Last Event</th>")
-        # fixed issue, when last_time_event is empty
-        # FIXME: more original formating into fixed solution
-        self.write("<td>%s</td></tr>" % self._manager.event_history.last_event_time)
-        #  time.strftime("%Y-%m-%d %H:%M:%S",
-        #      utils.localtime(self._manager.event_history.last_event_time, Config.timezone)))
+        if (self._manager.event_history.last_event_time == None):
+            self.write("<td>%s</td></tr>" % self._manager.event_history.last_event_time)
+        else:
+            self.write("<td>%s</td></tr>" % self._manager.event_history.last_event_time.strftime("%Y-%m-%d %H:%M:%S",
+              utils.localtime(self._manager.event_history.last_event_time, Config.timezone)))
 
         self.write("</table>")
 
@@ -2706,8 +2706,6 @@ class Manager(wsgiref.simple_server.WSGIServer, utils.LogMixin):
 
         self.logger.info("Initializing connection with CCU...")
         try:
-#            print ("adress:", Config.ccu_address)
-#            print("credit", Config.ccu_credentials)
             self.ccu = pmatic.CCU(address=Config.ccu_address,
                               credentials=Config.ccu_credentials)
         except PMException as e:

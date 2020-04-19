@@ -70,19 +70,23 @@ class TestCCU(lib.TestCCUClassWide):
         assert isinstance(interfaces[0]["port"], int)
 
 
-    # FIXME: Fetch test files
-    #def test_bidcos_interfaces(self, ccu):
-    #    interfaces = ccu.bidcos_interfaces
-    #    assert isinstance(interfaces, list)
-    #    assert len(interfaces) > 0
-    #    assert isinstance(interfaces[0], dict)
-    #    assert utils.is_string(interfaces[0]["address"])
-    #    assert utils.is_string(interfaces[0]["description"])
-    #    assert isinstance(interfaces[0]["duty_cycle"], int)
-    #    assert isinstance(interfaces[0]["is_connected"], bool)
-    #    assert isinstance(interfaces[0]["is_default"], bool)
+    def test_bidcos_interfaces(self, ccu):
+        interfaces = ccu.bidcos_interfaces
+        assert isinstance(interfaces, list)
+        assert len(interfaces) > 0
+        assert isinstance(interfaces[0], dict)
+        assert utils.is_string(interfaces[0]["address"])
+        assert utils.is_string(interfaces[0]["description"])
+        assert isinstance(interfaces[0]["duty_cycle"], int)
+        assert isinstance(interfaces[0]["is_connected"], bool)
+        assert isinstance(interfaces[0]["is_default"], bool)
 
 
-    # FIXME: Implement this
-    #def test_signal_strengths(self, ccu):
-    #    print(ccu.signal_strengths)
+    def test_signal_strengths(self, ccu):
+        print(ccu.signal_strengths)
+
+    def test_events(self, ccu):
+        assert isinstance(ccu.events, pmatic.events.EventListener)
+        events = ccu.events
+        assert events == ccu.events
+

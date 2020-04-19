@@ -22,7 +22,9 @@
 
 # Relevant docs:
 # - http://www.eq-3.de/Downloads/PDFs/Dokumentation_und_Tutorials/HM_XmlRpc_V1_502__2_.pdf
-
+# - https://www.homematic-inside.de/software/xml-api
+# - http://ccu3-webui/tools/devconfig.cgi
+#
 # Add Python 3.x behaviour to 2.7
 from __future__ import absolute_import
 from __future__ import division
@@ -199,7 +201,13 @@ class EventListener(utils.LogMixin, utils.CallbackMixin):
         """
         try:
             self._start_rpc_server()
-            self._register_with_ccu()
+            interface_names = [interface['name'] for interface in self._ccu.api.interface_list_interfaces()]
+            # now start and walk through all interface names
+            for interface_name in interface_names:
+                if interface_name == "VirtualDevices":
+                    continue
+                InterfaceId = self._init_interface_id(interface_id=None)
+                self._register_with_ccu(interface = interface_name, interfaceId = self._interface_id)
             self._initialized = True
         except:
             self.close()
@@ -222,14 +230,14 @@ class EventListener(utils.LogMixin, utils.CallbackMixin):
         self._server.start()
 
 
-    def _register_with_ccu(self):
+    def _register_with_ccu(self, interface="BidCos-RF", interfaceId="pmatic-0"):
         """Registers the RPC server of this EventListener object with the CCU.
 
         After executing this method the CCU will contact the RPC server of
         this EventListener and send events to the server.
         """
-        result = self._ccu.api.interface_init(interface="BidCos-RF",
-            url=self.rpc_server_url, interfaceId=self._interface_id)
+        result = self._ccu.api.interface_init(interface=interface,
+            url=self.rpc_server_url, interfaceId=interfaceId)
         if not result:
             raise PMConnectionError("Failed to register with the XML-RPC API of the CCU.")
         elif result == True:
