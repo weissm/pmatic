@@ -59,9 +59,9 @@ setup:
 			python3-pip python-sphinx snakefood python-lxml \
 			python-six 
 	sudo pip install --upgrade pytest_flakes pytest_runner coverage beautifulsoup4 \
-			 Pygments==2.5.2 requests cryptography
+			 Pygments==2.5.2 requests cryptography html5lib
 	sudo pip3 install --upgrade pytest_flakes pytest_runner coverage beautifulsoup4 \
-			 sphinxcontrib-images requests cryptography
+			 sphinxcontrib-images requests cryptography html5lib
 	# port install py-coverage py34-coverage \
 	# 	       py-setuptools py34-setuptools \
 	# 	       py-pytest py34-pytest
