@@ -82,11 +82,11 @@ class TestCCU(lib.TestCCUClassWide):
         assert isinstance(interfaces[0]["is_default"], bool)
 
 
-    def test_signal_strengths(self, ccu):
-        print(ccu.signal_strengths)
+#    def test_signal_strengths(self, ccu):
+#        print(ccu.signal_strengths)
 
-    def test_events(self, ccu):
-        assert isinstance(ccu.events, pmatic.events.EventListener)
-        events = ccu.events
-        assert events == ccu.events
+#    def test_events(self, ccu):
+#        assert isinstance(ccu.events, pmatic.events.EventListener)
+#        events = ccu.events
+#        assert events == ccu.events
 

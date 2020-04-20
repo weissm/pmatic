@@ -1248,7 +1248,7 @@ class TestDevice(lib.TestCCUClassWide):
         assert d.is_online == True
 
         d.maintenance.values["UNREACH"]._value = True
-        assert d.is_online == True
+        assert d.is_online == False
 
         orig_ty = d.type
         d.type = "HM-RCV-50"
