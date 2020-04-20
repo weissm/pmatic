@@ -204,10 +204,11 @@ class EventListener(utils.LogMixin, utils.CallbackMixin):
             interface_names = [interface['name'] for interface in self._ccu.api.interface_list_interfaces()]
             # now start and walk through all interface names
             for interface_name in interface_names:
-                if interface_name == "VirtualDevices":
-                    continue
                 InterfaceId = self._init_interface_id(interface_id=None)
-                self._register_with_ccu(interface = interface_name, interfaceId = self._interface_id)
+                try:
+                    self._register_with_ccu(interface = interface_name, interfaceId = self._interface_id)
+                except:
+                    self.logger.debug("Could not log into %s @ %s", interface_name, self._interface_id)                  
             self._initialized = True
         except:
             self.close()
