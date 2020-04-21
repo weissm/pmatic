@@ -224,7 +224,7 @@ install-ccu-python:
 	    --exclude=\*.pyc \
 	    --exclude=.\*.swp \
 	    --exclude=__pycache__ \
-	    $(CCU_PREDIST_PATH)/python3/* \
+	    $(CCU_PREDIST_PATH)_py3/* \
 	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic/python/
 
 install-ccu-pmatic:

@@ -246,7 +246,7 @@ class Channel(utils.LogMixin, Entity):
         This method is called on the first access to the values.
         """
         self._values.clear()
-        if self._ccu.api._get_target() != "ccu2" and target != "ccu2":
+        if target != "ccu2":
 #            print ("test non CCU2")
             value_specs =  self._ccu.api.interface_get_paramset_description(interface=self.interface,
                                                     address=self.address, paramsetKey="VALUES")

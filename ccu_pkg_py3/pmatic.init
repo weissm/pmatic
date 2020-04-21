@@ -2,6 +2,7 @@
 
 VERSION=0.6.1
 CONFIG_DIR=/etc/config
+ADDONNAME=pmatic
 ADDON_DIR=$CONFIG_DIR/addons/pmatic
 INIT_TARGET=/etc/init.d/S55pmatic
 PYTHON_DIR=$ADDON_DIR/python
@@ -75,6 +76,7 @@ info)
   echo "Name: pmatic"
   echo "Operations: uninstall restart"
   echo "Config-Url: '+location.protocol + '//' + location.hostname + ':9120"
+  echo "Update: /addons/${ADDONNAME}/update-check.cgi"
   #echo "Update: $CONFIG_URL/update-check.cgi"
   ;;
 uninstall)
