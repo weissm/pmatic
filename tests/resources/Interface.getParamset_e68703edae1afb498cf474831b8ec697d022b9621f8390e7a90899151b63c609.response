@@ -1,1 +1,1 @@
-{"error": null, "result": {"CONFIG_PENDING": "0", "UPDATE_PENDING": "0"}, "version": "1.1"}
+{"error": null, "result": {"ACTUAL_TEMPERATURE": "26.000000", "ACTUAL_TEMPERATURE_STATUS": "0", "CONFIG_PENDING": "0", "DUTY_CYCLE": "0", "ERROR_CODE": "0", "ERROR_OVERHEAT": "0", "RSSI_DEVICE": "-65", "RSSI_PEER": "-67", "UNREACH": "0", "UPDATE_PENDING": "0"}, "version": "1.1"}
