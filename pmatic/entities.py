@@ -246,8 +246,11 @@ class Channel(utils.LogMixin, Entity):
         This method is called on the first access to the values.
         """
         self._values.clear()
-        if target != "ccu2":
+        if self._ccu.api._get_target() != "ccu2" and target != "ccu2":
 #            print ("test non CCU2")
+            if (self.interface == ""):
+                print("empty interface", self.address, self.name)
+                exit(1)
             value_specs =  self._ccu.api.interface_get_paramset_description(interface=self.interface,
                                                     address=self.address, paramsetKey="VALUES")
         else:
@@ -924,7 +927,8 @@ class Devices(object):
         address in the already fetched objects."""
         if ":" in address:
             device_address = address.split(":", 1)[0]
-            return self._devices[device_address].channel_by_address(address)
+            channeldevice = self._devices[device_address].channel_by_address(address)
+            return channeldevice
         else:
             return self._devices[address]
 

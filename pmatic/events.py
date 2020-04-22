@@ -202,14 +202,15 @@ class EventListener(utils.LogMixin, utils.CallbackMixin):
         try:
             self._start_rpc_server()
             interface_names = [interface['name'] for interface in self._ccu.api.interface_list_interfaces()]
+#            interface_names =["HmIP-RF"]
             # now start and walk through all interface names
             for interface_name in interface_names:
-                InterfaceId = self._init_interface_id(interface_id=None)
+                InterfaceId = self._init_interface_id(interface_id=interface_name)
                 try:
                     self._register_with_ccu(interface = interface_name, interfaceId = self._interface_id)
                     self.logger.info("Logged into %s @ %s", interface_name, self._interface_id)                  
                 except:
-                    self.logger.debug("Could not log into %s @ %s", interface_name, self._interface_id)                  
+                    self.logger.info("Could not log into %s @ %s", interface_name, self._interface_id)                  
             self._initialized = True
         except:
             self.logger.debug("rpc server already loaded. Check if pmatic is running and stop eg. by sh -x /usr/local/etc/config/rc.d/pmatic stop")
@@ -377,20 +378,26 @@ class EventHandler(utils.LogMixin, object):
     # Values-Parameter-Sets des entsprechenden logischen Gerätes.
     def event(self, interface_id, address, value_key, value): # pylint:disable=unused-argument
         """Receives an event from the CCU and applies the update."""
-        self.logger.debug("[EVENT] %s %s = %r", address, value_key, value)
+        self.logger.info("[EVENT] %s %s %s = %r", address, interface_id, value_key, value)
 
         try:
             obj = self._ccu.devices.get_device_or_channel_by_address(address)
+            obj.interface = interface_id
         except KeyError:
             self.logger.info("[EVENT] %s Ignoring event for unknown device" % address)
             return True
 
-        param = obj.values[value_key]
 
-        value_changed = param.set_from_api(value)
-
+        try: 
+            param = obj.values[value_key]
+            value_changed = param.set_from_api(value)
+        except:
+            self.logger.info("[EVENT] cannot get event for device %s with key %s", address, value_key)
+            return True
+        
         self.listener.callback("value_updated", param)
         if value_changed:
+            self.logger.info("[EVENT] %s has value changed to %s", value_key, param)
             self.listener.callback("value_changed", param)
 
         return True

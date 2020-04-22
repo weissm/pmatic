@@ -573,9 +573,12 @@ class RemoteAPI(AbstractAPI):
             args["_session_id_"] = self._session_id
         return args
 
-    # for backward compability
+    # for backward compability w/ ccu2
     def _get_target(self):
-        return self._target
+        if self._target:
+            return self._target
+        else: # default
+            return "ccu3"
 
 
 class LocalAPI(AbstractAPI):
@@ -895,7 +898,7 @@ class DeviceSpecs(CachedAPICall):
                     spec.update(direction="")
                     spec.update(link_source_roles="")
                     spec.update(link_target_roles="")
-                    spec.update(interface="HmIP-RF")
+#                    spec.update(interface="HmIP-RF")
                     if spec["children"]:
                         devices[spec["address"]] = spec
                         parentaddress = spec["address"]

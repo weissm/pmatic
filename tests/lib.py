@@ -106,7 +106,6 @@ def fake_urlopen(url_or_request, data=None, timeout=None, __target__=""):
     """
     if isinstance(url_or_request, Request):
         data = url_or_request.data
-#        print("fake_urlopen_ccu2 with url ", url_or_request.data)
 
     fake_data = fake_session_id(data, data)
 
@@ -120,9 +119,6 @@ def fake_urlopen(url_or_request, data=None, timeout=None, __target__=""):
 
     rid = request_id(fake_data)
     response = open(response_file_path(rid, __target__ = __target__), "rb").read()
-#    except:
- #       import traceback
- #       traceback.print_exc()
     http_status = int(open(status_file_path(rid, __target__ = __target__), "rb").read())
 
     obj = StringIO(response)
