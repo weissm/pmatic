@@ -129,7 +129,7 @@ dist-ccu-step2a:
 	    --exclude=\*.pyc \
 	    --exclude=.\*.swp \
 	    --exclude=__pycache__ \
-	    pmatic examples pmatic-manager manager_static \
+	    pmatic examples pmatic-manager manager_static www \
 	    $(CCU_PKG_PATH)
 	cd $(CCU_PKG_PATH)/python/lib/python2.7 ; python -m compileall .
 	tar -cv -C $(CCU_PKG_PATH) -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_2.7.tar .
@@ -157,7 +157,7 @@ dist-ccu-step2b:
 	    --exclude=\*.pyc \
 	    --exclude=.\*.swp \
 	    --exclude=__pycache__ \
-	    pmatic examples pmatic-manager manager_static \
+	    pmatic examples pmatic-manager manager_static www \
 	    $(CCU_PKG_PATH)
 	cd $(CCU_PKG_PATH)/python/lib/python3.8 ; python3 -m compileall .
 	tar -cv -C $(CCU_PKG_PATH) -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.8.tar .

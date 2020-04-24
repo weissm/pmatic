@@ -67,8 +67,8 @@ if [ ! -d $ADDON_DIR/etc ]; then
 fi
 
 if [ ! -d $WWW_DIR/etc ]; then
-    mkdir -p $WWW_DIR/etc
-    chmod 755 $WWW_DIR/etc
+    mkdir -p $WWW_DIR
+    chmod 755 $WWW_DIR
 fi
 
 # Make python executable shipped with pmatic available via PATH
