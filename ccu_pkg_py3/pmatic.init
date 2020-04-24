@@ -92,6 +92,7 @@ uninstall)
   rm -rf $ADDON_DIR/etc
   rm -rf $ADDON_DIR/examples
   rm -rf $ADDON_DIR/manager_static
+  rm -rf $ADDON_DIR/www/pmatic/
   
   mount -o remount,rw /
   if [ -h $INIT_TARGET ]; then

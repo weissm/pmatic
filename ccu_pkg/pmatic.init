@@ -2,10 +2,11 @@
 
 VERSION=0.6.1
 CONFIG_DIR=/etc/config
-ADDON_DIR=$CONFIG_DIR/addons/pmatic
+ADDONNAME=pmatic
+ADDON_DIR=$CONFIG_DIR/addons/${ADDONNAME}
 INIT_TARGET=/etc/init.d/S55pmatic
 PYTHON_DIR=$ADDON_DIR/python
-#PYTHON_VER=python3.7
+#PYTHON_VER=python3.8
 PYTHON_VER=python2.7
 
 PM_PID=$(ps -o pid,args | awk '{if($3=="/usr/local/bin/pmatic-manager"){print $1}}')
@@ -27,7 +28,7 @@ start() {
           PYTHONPATH=$PYTHON_DIR/lib/$PYTHON_VER/dist-packages: \
           PYTHONENCODING=utf-8 $PYTHON_VER \
           /usr/local/bin/pmatic-manager  2>&1 | logger -t homematic -p user.info
-      logger -t homematic -p user.info "started pmatic manger"
+      logger -t homematic -p user.info "started pmatic manager"
       echo "OK"
   fi
 }
@@ -38,7 +39,7 @@ stop() {
       kill $PM_PID
       PM_PID=
       echo "OK"
-      logger -t homematic -p user.info "stopped pmatic manger"
+      logger -t homematic -p user.info "stopped pmatic manager"
   else
       echo "(already stopped) OK"
   fi
@@ -68,14 +69,15 @@ status)
     status
   ;;
 info)
-  echo "Info: <center><b>pmatic CCU Addon Python2.7 based</b><center>"
+  echo "Info: <center><b>pmatic CCU Addon</b><center>"
   echo "Info: <center><a href='https://github.com/LarsMichelsen/pmatic' target='_blank'>https://github.com/LarsMichelsen/pmatic</a><center><br>"
   echo "Info: <center><a href='/' onclick='javascript:event.target.port=9120' target='_blank'>pmatic Manager</a><center>"
   echo "Version: $VERSION"
   echo "Name: pmatic"
   echo "Operations: uninstall restart"
   echo "Config-Url: '+location.protocol + '//' + location.hostname + ':9120"
-  #echo "Update: $  /update-check.cgi"
+  echo "Update: /addons/${ADDONNAME}/update-check.cgi"
+  #echo "Update: $CONFIG_URL/update-check.cgi"
   ;;
 uninstall)
   logger -t homematic -p user.info "removing pmatic"
@@ -87,7 +89,10 @@ uninstall)
   rm /usr/local/bin/pmatic-manager
   rm -rf $ADDON_DIR/python
   rm -rf $ADDON_DIR/pmatic
+  rm -rf $ADDON_DIR/etc
+  rm -rf $ADDON_DIR/examples
   rm -rf $ADDON_DIR/manager_static
+  rm -rf $ADDON_DIR/www/pmatic/
   
   mount -o remount,rw /
   if [ -h $INIT_TARGET ]; then

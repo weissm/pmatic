@@ -2386,8 +2386,8 @@ class PageState(HtmlPageHandler, utils.LogMixin):
         self.write("<tr><th>Memory Usage (Resident)</th>")
         self.write("<td>%0.2f MB</td></tr>" % (vmrss/1024.0/1024.0))
         self.write("<tr><th>Python Version</th>")
-        self.write("<td>V%s</td></tr>" % (sys.version_info))
-        self.write("<tr><th>Target Info</th>")
+        self.write("<td>V%s.%s</td></tr>" % (sys.version_info[:2]))
+#        self.write("<tr><th>Target Info</th>")
 #        self.write("<td>%s</td></tr>" % (self._manager.ccu.api._get_target()))
         self.write("</table>")
 

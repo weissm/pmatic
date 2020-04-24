@@ -253,13 +253,19 @@ install-ccu-pmatic:
 	    --exclude=__pycache__ \
 	    manager_static \
 	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic
+	rsync -av --no-g \
+	    --exclude=\*.pyc \
+	    --exclude=.\*.swp \
+	    --exclude=__pycache__ \
+	    www/update-check.cgi \
+	    root@$(CCU_HOST):/usr/local/etc/config/addons/www/pmatic/update-check.cgi
 	rsync -aRv --no-g \
 	    pmatic-manager \
 	    root@$(CCU_HOST):/usr/local/bin/pmatic-manager
 
 install-ccu-scripts:
 	rsync -av --no-g \
-	    ccu_pkg/pmatic.init \
+	    ccu_pkg_py3/pmatic.init \
 	    root@$(CCU_HOST):/usr/local/etc/config/rc.d/pmatic
 
 version:
