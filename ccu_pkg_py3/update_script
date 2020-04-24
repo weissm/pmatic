@@ -2,9 +2,10 @@
 
 ADDON_NAME=pmatic
 BIN_DIR=/usr/local/bin
-ADDON_DIR=/usr/local/etc/config/addons/${ADDON_NAME}
-RCD_DIR=/usr/local/etc/config/rc.d
 CONFIG_DIR=/usr/local/etc/config
+ADDON_DIR=${CONFIG_DIR}/addons/${ADDON_NAME}
+WWW_DIR=${CONFIG_DIR}/addons/www/${ADDON_NAME}
+RCD_DIR=${CONFIG_DIR}/rc.d
 
 LOG_FILE=/tmp/${ADDON_NAME}-install3.log
 
@@ -33,7 +34,7 @@ fi
 
 # remove files of old versions (same as in pmatic.init)
 echo "remove files of old versions" >>$LOG_FILE
-rm $BIN_DIR/python3.7 $BIN_DIR/python $BIN_DIR/pmatic-manager
+rm $BIN_DIR/python3.8 $BIN_DIR/python $BIN_DIR/pmatic-manager
 rm -rf $ADDON_DIR/python
 rm -rf $ADDON_DIR/pmatic
 rm -rf $ADDON_DIR/lib
@@ -65,9 +66,14 @@ if [ ! -d $ADDON_DIR/etc ]; then
     chmod 755 $ADDON_DIR/etc
 fi
 
+if [ ! -d $WWW_DIR/etc ]; then
+    mkdir -p $WWW_DIR/etc
+    chmod 755 $WWW_DIR/etc
+fi
+
 # Make python executable shipped with pmatic available via PATH
 echo "Make python executable" >>$LOG_FILE
-ln -s ../etc/config/addons/pmatic/python/bin/python3.7 $BIN_DIR/python3.7
+ln -s ../etc/config/addons/pmatic/python/bin/python3.8 $BIN_DIR/python3.8
 cp python-wrapper $BIN_DIR/python
 chmod +x $BIN_DIR/python
 
@@ -78,10 +84,17 @@ chmod +x $BIN_DIR/pmatic-manager
 echo "copy all stuff and setup rc.d" >>$LOG_FILE
 cp -R python manager_static $ADDON_DIR/
 cp -R examples $ADDON_DIR/scripts/
-cp -R pmatic $ADDON_DIR/python/lib/python3.7/
-ln -s python/lib/python3.7/pmatic $ADDON_DIR/pmatic
+cp -R pmatic $ADDON_DIR/python/lib/python3.8/
+ln -s python/lib/python3.8/pmatic $ADDON_DIR/pmatic
 cp pmatic.init $RCD_DIR/pmatic
 chmod +x $RCD_DIR/pmatic
+
+# copy www stuff
+echo "copy www stuff" >>$LOG_FILE
+cp -af www ${ADDON_DIR}/
+if [ ! -e ${WWW_DIR} ]; then
+  ln -sf ${ADDON_DIR}/www ${WWW_DIR}
+fi
 
 sync
 

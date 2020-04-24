@@ -3,10 +3,10 @@
 VERSION=0.6.1
 CONFIG_DIR=/etc/config
 ADDONNAME=pmatic
-ADDON_DIR=$CONFIG_DIR/addons/pmatic
+ADDON_DIR=$CONFIG_DIR/addons/${ADDONNAME}
 INIT_TARGET=/etc/init.d/S55pmatic
 PYTHON_DIR=$ADDON_DIR/python
-PYTHON_VER=python3.7
+PYTHON_VER=python3.8
 #PYTHON_VER=python2.7
 
 PM_PID=$(ps -o pid,args | awk '{if($3=="/usr/local/bin/pmatic-manager"){print $1}}')
@@ -28,7 +28,7 @@ start() {
           PYTHONPATH=$PYTHON_DIR/lib/$PYTHON_VER/dist-packages: \
           PYTHONENCODING=utf-8 $PYTHON_VER \
           /usr/local/bin/pmatic-manager  2>&1 | logger -t homematic -p user.info
-      logger -t homematic -p user.info "started pmatic manger"
+      logger -t homematic -p user.info "started pmatic manager"
       echo "OK"
   fi
 }
@@ -39,7 +39,7 @@ stop() {
       kill $PM_PID
       PM_PID=
       echo "OK"
-      logger -t homematic -p user.info "stopped pmatic manger"
+      logger -t homematic -p user.info "stopped pmatic manager"
   else
       echo "(already stopped) OK"
   fi
@@ -89,6 +89,8 @@ uninstall)
   rm /usr/local/bin/pmatic-manager
   rm -rf $ADDON_DIR/python
   rm -rf $ADDON_DIR/pmatic
+  rm -rf $ADDON_DIR/etc
+  rm -rf $ADDON_DIR/examples
   rm -rf $ADDON_DIR/manager_static
   
   mount -o remount,rw /

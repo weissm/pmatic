@@ -112,9 +112,9 @@ dist-ccu-step1b:
 	rsync -av --no-g $(CHROOT_PATH)/lib/arm-linux-gnueabi/libexpat.so.1 \
 	    $(CCU_PREDIST_PATH)_py3/python/lib/
 	# Cleanup site-packages to dist-packages
-	rsync -av $(CCU_PREDIST_PATH)_py3/python/lib/python3.7/site-packages/* \
-	    $(CCU_PREDIST_PATH)_py3/python/lib/python3.7/dist-packages/
-	rm -rf $(CCU_PREDIST_PATH)_py3/python/lib/python3.7/site-packages
+	rsync -av $(CCU_PREDIST_PATH)_py3/python/lib/python3.8/site-packages/* \
+	    $(CCU_PREDIST_PATH)_py3/python/lib/python3.8/dist-packages/
+	rm -rf $(CCU_PREDIST_PATH)_py3/python/lib/python3.8/site-packages
 
 dist-ccu-step2: dist-ccu-step2a dist-ccu-step2b
 
@@ -159,20 +159,20 @@ dist-ccu-step2b:
 	    --exclude=__pycache__ \
 	    pmatic examples pmatic-manager manager_static \
 	    $(CCU_PKG_PATH)
-	cd $(CCU_PKG_PATH)/python/lib/python3.7 ; python3 -m compileall .
-	tar -cv -C $(CCU_PKG_PATH) -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.7.tar .
+	cd $(CCU_PKG_PATH)/python/lib/python3.8 ; python3 -m compileall .
+	tar -cv -C $(CCU_PKG_PATH) -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.8.tar .
 	[ -d $(CCU_PKG_PATH) ] && rm -rf $(CCU_PKG_PATH) || true
-	tar -rv -C ccu_pkg_py3 -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.7.tar \
+	tar -rv -C ccu_pkg_py3 -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.8.tar \
 	    update_script \
 	    python-wrapper \
 	    pmatic.init
-	tar -rv -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.7.tar \
+	tar -rv -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.8.tar \
 	    LICENSE \
 	    README.rst
-	tar -rv -C pmatic.egg-info -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.7.tar \
+	tar -rv -C pmatic.egg-info -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.8.tar \
 	    PKG-INFO
-	gzip -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.7.tar
-	@echo "Created dist/pmatic-$(VERSION)_ccu.tar_3.7.gz"
+	gzip -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.8.tar
+	@echo "Created dist/pmatic-$(VERSION)_ccu.tar_3.8.gz"
 
 test:
 	@if [ -z "$(COVERAGE2)" ]; then \
@@ -224,7 +224,7 @@ install-ccu-python:
 	    --exclude=\*.pyc \
 	    --exclude=.\*.swp \
 	    --exclude=__pycache__ \
-	    $(CCU_PREDIST_PATH)_py3/* \
+	    $(CCU_PREDIST_PATH)_py3/python/* \
 	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic/python/
 
 install-ccu-pmatic:
@@ -240,7 +240,7 @@ install-ccu-pmatic:
 	    --exclude=.\*.swp \
 	    --exclude=__pycache__ \
 	    pmatic \
-	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic/python/lib/python3.7/
+	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic/python/lib/python3.8/
 	rsync -aRv --no-g \
 	    --exclude=\*.pyc \
 	    --exclude=.\*.swp \

@@ -151,7 +151,6 @@ class Config(utils.LogMixin):
                         if utils.is_byte_string(val):
                             val_dec = cipher_suite.decrypt((val).encode("utf-8"))			
                             config[key] = val_dec.decode()
-                            print("valdec", val_dec)
                         else:
                             config[key] = val
                  # treat ccu password special           
@@ -1535,7 +1534,8 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
             Config.log_level = log_level_name
         pmatic.logging(Config.log_level)
 
-        cfg_password = self._vars.getvalue("cfg_password")
+#        cfg_password = self._vars.getvalue("cfg_password")
+        cfg_password = self._vars.getvalue("password")
         if cfg_password != "":
             Config.cfg_password = cfg_password
 
@@ -1899,20 +1899,20 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         self.write("</tr>")
         self.write("</table>")
 
-        self.h3("Config Password")
-        self.p("Retype password for the config file information. "
-			   "If you want proper decoding at start, use -x <passwd> option."
-			   "Keep information in mind, no recovery possible.")
-        self.write("<table>")
-        self.write("</tr>")
-        self.write("<tr><th>User/Password</th>")
-        self.write("<td>")
-        self.password("cfg_password")
-        self.write("</td>")
-        self.write("</tr>")
-        self.write("</table>")
+        # self.h3("Config Password")
+        # self.p("Retype password for the config file information. "
+			   # "If you want proper decoding at start, use -x <passwd> option."
+			   # "Keep information in mind, no recovery possible.")
+        # self.write("<table>")
+        # self.write("</tr>")
+        # self.write("<tr><th>User/Password</th>")
+        # self.write("<td>")
+        # self.password("cfg_password")
+        # self.write("</td>")
+        # self.write("</tr>")
+        # self.write("</table>")
 		
-        self.submit("Save configuration", "save_config")
+        # self.submit("Save configuration", "save_config")
         self.end_form()
         self.write("</div>\n")
 
@@ -2385,6 +2385,10 @@ class PageState(HtmlPageHandler, utils.LogMixin):
         self.write("<td>%0.2f MB</td></tr>" % (vmsize/1024.0/1024.0))
         self.write("<tr><th>Memory Usage (Resident)</th>")
         self.write("<td>%0.2f MB</td></tr>" % (vmrss/1024.0/1024.0))
+        self.write("<tr><th>Python Version</th>")
+        self.write("<td>V%s</td></tr>" % (sys.version_info))
+        self.write("<tr><th>Target Info</th>")
+#        self.write("<td>%s</td></tr>" % (self._manager.ccu.api._get_target()))
         self.write("</table>")
 
         self.h3("CCU Connection")

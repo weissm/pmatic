@@ -6,4 +6,4 @@
 # stderr and stdin to be UTF-8.
 export PYTHONIOENCODING=utf-8
 export PYTHONHOME=/usr/local/etc/config/addons/pmatic/python
-python2.7 "$@"
+python3.8 "$@"
