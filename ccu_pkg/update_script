@@ -36,11 +36,11 @@ fi
 
 # remove files of old versions (same as in pmatic.init)
 echo "remove files of old versions" >>$LOG_FILE
-rm $BIN_DIR/$PYTHON_VER $BIN_DIR/python $BIN_DIR/pmatic-manager
-rm -rf $ADDON_DIR/python
-rm -rf $ADDON_DIR/pmatic
-rm -rf $ADDON_DIR/lib
-rm -rf $ADDON_DIR/manager_static
+rm $BIN_DIR/$PYTHON_VER $BIN_DIR/python 
+rm $BIN_DIR/$PYTHON_VER $BIN_DIR/$PYTHON_VER 
+rm /usr/local/bin/pmatic-manager
+rm -rf $ADDON_DIR
+rm -rf $WWW_DIR
 
 echo "create directories" >>$LOG_FILE
 if [ ! -d $BIN_DIR ]; then
@@ -93,11 +93,8 @@ chmod +x $RCD_DIR/pmatic
 
 # copy www stuff
 echo "copy www stuff" >>$LOG_FILE
-cp -af www ${ADDON_DIR}/
-if [ ! -e ${WWW_DIR} ]; then
-  ln -sf ${ADDON_DIR}/www ${WWW_DIR}
-fi
-
+cp -af www/* ${WWW_DIR}/
+chmod 755 $WWWDIR
 sync
 
 if [ "$1" = "" ]; then
