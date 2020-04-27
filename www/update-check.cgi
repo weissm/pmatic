@@ -1,7 +1,7 @@
 #!/bin/tclsh
 
 set checkURL    "https://raw.githubusercontent.com/weissm/pmatic/ccu3/VERSION"
-set downloadURL "https://github.com/weissm/pmatic/ccu3/releases/latest"
+set downloadURL "https://github.com/weissm/pmatic/releases/latest"
 
 catch {
   set input $env(QUERY_STRING)

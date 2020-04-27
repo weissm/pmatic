@@ -1,4 +1,4 @@
-VERSION            = 199fd74
+VERSION            = v0.6.1
 REPO_PATH         ?= $(shell pwd)
 CHROOT_PATH       ?= $(shell pwd)/buildroot
 CHROOT_DEB_MIRROR ?= http://ftp.de.debian.org/debian
