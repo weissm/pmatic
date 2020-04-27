@@ -1,1 +1,0 @@
-{"method": "Interface.setValue", "params": {"_session_id_": "xxxxxxxxxx", "address": "LEQ1237196:1", "interface": "BidCos-RF", "type": "boolean", "value": "true", "valueKey": "PRESS_SHORT"}}
