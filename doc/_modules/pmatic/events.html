@@ -1,0 +1,629 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>pmatic.events &#8212; pmatic 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
+    <script src="../../_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+    <script src="../../_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pmatic 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../pmatic.html" accesskey="U">pmatic</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pmatic.events</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># encoding: utf-8</span>
+<span class="c1">#</span>
+<span class="c1"># pmatic - Python API for Homematic. Easy to use.</span>
+<span class="c1"># Copyright (C) 2016 Lars Michelsen &lt;lm@larsmichelsen.com&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># This program is free software; you can redistribute it and/or modify</span>
+<span class="c1"># it under the terms of the GNU General Public License as published by</span>
+<span class="c1"># the Free Software Foundation; either version 2 of the License, or</span>
+<span class="c1"># (at your option) any later version.</span>
+<span class="c1">#</span>
+<span class="c1"># This program is distributed in the hope that it will be useful,</span>
+<span class="c1"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c1"># GNU General Public License for more details.</span>
+<span class="c1">#</span>
+<span class="c1"># You should have received a copy of the GNU General Public License along</span>
+<span class="c1"># with this program; if not, write to the Free Software Foundation, Inc.,</span>
+<span class="c1"># 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.</span>
+
+<span class="sd">&quot;&quot;&quot;Realizes an event listener to receive events from the CCU XML-RPC API&quot;&quot;&quot;</span>
+
+<span class="c1"># Relevant docs:</span>
+<span class="c1"># - http://www.eq-3.de/Downloads/PDFs/Dokumentation_und_Tutorials/HM_XmlRpc_V1_502__2_.pdf</span>
+<span class="c1"># - https://www.homematic-inside.de/software/xml-api</span>
+<span class="c1"># - http://ccu3-webui/tools/devconfig.cgi</span>
+<span class="c1">#</span>
+<span class="c1"># Add Python 3.x behaviour to 2.7</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">unicode_literals</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Is recommended for Python 3.x but fails on 2.7, but is not mandatory</span>
+    <span class="kn">from</span> <span class="nn">builtins</span> <span class="kn">import</span> <span class="nb">object</span> <span class="c1"># pylint:disable=redefined-builtin</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Python 2</span>
+    <span class="kn">from</span> <span class="nn">urlparse</span> <span class="kn">import</span> <span class="n">urlparse</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="c1"># Python 3+</span>
+    <span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlparse</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Python 2</span>
+    <span class="kn">from</span> <span class="nn">SimpleXMLRPCServer</span> <span class="kn">import</span> <span class="n">SimpleXMLRPCServer</span><span class="p">,</span> <span class="n">SimpleXMLRPCRequestHandler</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="c1"># Python 3+</span>
+    <span class="kn">from</span> <span class="nn">xmlrpc.server</span> <span class="kn">import</span> <span class="n">SimpleXMLRPCServer</span><span class="p">,</span> <span class="n">SimpleXMLRPCRequestHandler</span>
+
+<span class="kn">import</span> <span class="nn">pmatic.api</span>
+<span class="kn">import</span> <span class="nn">pmatic.utils</span> <span class="k">as</span> <span class="nn">utils</span>
+<span class="kn">from</span> <span class="nn">pmatic.exceptions</span> <span class="kn">import</span> <span class="n">PMException</span><span class="p">,</span> <span class="n">PMConnectionError</span>
+
+
+<span class="k">class</span> <span class="nc">EventXMLRPCServer</span><span class="p">(</span><span class="n">SimpleXMLRPCServer</span><span class="p">,</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Implements SimpleXMLRPCServer executed in a separate thread&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">SimpleXMLRPCServer</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># Register system.listMethods, system.methodHelp and system.methodSignature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_introspection_functions</span><span class="p">()</span>
+        <span class="c1"># Allow multicalls</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_multicall_functions</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">system_listMethods</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_id</span><span class="p">):</span> <span class="c1"># pylint:disable=unused-argument</span>
+        <span class="sd">&quot;&quot;&quot;Wrap the standard system_listMethods of SimpleXMLRPCDispatcher. This is needed</span>
+<span class="sd">        because the CCU sends an argument (the interface_id) which is not handled by the</span>
+<span class="sd">        default system_listMethods() method.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">EventXMLRPCServer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">system_listMethods</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Starts listening for requests in the thread.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Tells the SimpleXMLRPCServer to stop serving.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server_close</span><span class="p">()</span>
+
+
+
+<span class="k">class</span> <span class="nc">EventXMLRPCRequestHandler</span><span class="p">(</span><span class="n">SimpleXMLRPCRequestHandler</span><span class="p">,</span> <span class="n">utils</span><span class="o">.</span><span class="n">LogMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;HTTP request handler for the XML-RPC API requests.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">log_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">format_str</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Logger messages for the web server logs.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> - - [</span><span class="si">%s</span><span class="s2">] </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">address_string</span><span class="p">(),</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">log_date_time_string</span><span class="p">(),</span>
+                                            <span class="n">format_str</span><span class="o">%</span><span class="n">args</span><span class="p">)</span>
+
+
+
+<div class="viewcode-block" id="EventListener"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.events.EventListener">[docs]</a><span class="k">class</span> <span class="nc">EventListener</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">LogMixin</span><span class="p">,</span> <span class="n">utils</span><span class="o">.</span><span class="n">CallbackMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Manages events received from the CCU XML-RPC API.</span>
+
+<span class="sd">    This class can tell the CCU to send status update events to pmatic</span>
+<span class="sd">    using it&#39;s XML-RPC API. The EventListener registers with the CCU</span>
+<span class="sd">    to get status updates. The CCU then synchronizes the known objects</span>
+<span class="sd">    with pmatic and starts sending status updates. These status updates</span>
+<span class="sd">    are then received by this class and handed over to the :class:`pmatic.entities.Device`</span>
+<span class="sd">    objects managed by the central :class:`CCU` object to update their</span>
+<span class="sd">    current state information.</span>
+
+<span class="sd">    The first argument *ccu* must be the :class:`CCU` instance to be associated</span>
+<span class="sd">    with this object.</span>
+
+<span class="sd">    The optional argument *listen_address* can be set to exactly tell</span>
+<span class="sd">    the CCU to which host address and TCP port to send it&#39;s XML-RPC calls. This</span>
+<span class="sd">    defaults to the host address of your local system and TCP port ``9124``. You</span>
+<span class="sd">    are free to set another port of your choice by specifying it as tuple of two</span>
+<span class="sd">    elements like e.g. ``(&quot;&quot;, 1337)``. The first element needs to contain the host</span>
+<span class="sd">    address of the system pmatic is running on and is normally automatically gathered.</span>
+<span class="sd">    But you can also set a fixed address if you like.</span>
+
+<span class="sd">    The second optional argument *interface_id* is an identifier which needs to be</span>
+<span class="sd">    unique on your local system at any time. As far as I can tell this is only</span>
+<span class="sd">    relevant when you plan to register multiple :class:`EventListener` objects at</span>
+<span class="sd">    the same time, on the same system and the same network port. If you start multiple</span>
+<span class="sd">    listeners within the same proccess the identifier is automatically made unique and</span>
+<span class="sd">    don&#39;t need to be set.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_ident</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_next_id</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Each event listener gets a unique ID which is used to register with the CCU.&quot;&quot;&quot;</span>
+        <span class="n">this_id</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_ident</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_ident</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">this_id</span>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ccu</span><span class="p">,</span> <span class="n">listen_address</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">interface_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EventListener</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span>         <span class="o">=</span> <span class="n">ccu</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_server</span>      <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_callbacks</span><span class="p">([</span><span class="s2">&quot;value_updated&quot;</span><span class="p">,</span> <span class="s2">&quot;value_changed&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_listen_address</span><span class="p">(</span><span class="n">listen_address</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_interface_id</span><span class="p">(</span><span class="n">interface_id</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_init_listen_address</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">listen_address</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parses the listen_address provided by the user.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">listen_address</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># listen on all interfaces. Use port 9124 by default.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_listen_address</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">9124</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">listen_address</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">listen_address</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_listen_address</span> <span class="o">=</span> <span class="n">listen_address</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PMException</span><span class="p">(</span><span class="s2">&quot;listen_address needs to be a tuple of two &quot;</span>
+                              <span class="s2">&quot;elements (address, port): </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">listen_address</span><span class="p">,</span> <span class="p">))</span>
+
+
+    <span class="k">def</span> <span class="nf">_init_interface_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initializes the interface ID of this object.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">interface_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">utils</span><span class="o">.</span><span class="n">is_string</span><span class="p">(</span><span class="n">interface_id</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_interface_id</span> <span class="o">=</span> <span class="n">interface_id</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">PMException</span><span class="p">(</span><span class="s2">&quot;interface_id has to be of type string&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_interface_id</span> <span class="o">=</span> <span class="s2">&quot;pmatic-</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">EventListener</span><span class="o">.</span><span class="n">_next_id</span><span class="p">()</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rpc_server_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Contains the URL the RPC server of this EventListener is listening on.</span>
+
+<span class="sd">        This URL is the URL sent to the CCU by :meth:`.init`.&quot;&quot;&quot;</span>
+        <span class="n">address</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_listen_address</span>
+        <span class="k">if</span> <span class="n">address</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="c1"># This EventListener is configured to listen on all interfaces. That</span>
+            <span class="c1"># makes things flexible. But the drawback is that we don&#39;t know which</span>
+            <span class="c1"># URL we should tell the CCU to send it&#39;s events to. Find out!</span>
+            <span class="n">address</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_find_listen_address_to_reach_ccu</span><span class="p">(),</span> <span class="n">address</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="s2">&quot;http://</span><span class="si">%s</span><span class="s2">:</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">address</span>
+
+
+<div class="viewcode-block" id="EventListener.init"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.events.EventListener.init">[docs]</a>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initializes this objects RPC server and registers with the CCU.</span>
+
+<span class="sd">        This method opens the XML-RPC server on the configured *listen_address* and</span>
+<span class="sd">        sends an API call to the CCU to register the just started XML-RPC server.</span>
+<span class="sd">        The CCU is then sending XLM-RPC messages to this server.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_start_rpc_server</span><span class="p">()</span>
+            <span class="n">interface_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">interface</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">interface_list_interfaces</span><span class="p">()]</span>
+            <span class="c1"># now start and walk through all interface names</span>
+            <span class="k">for</span> <span class="n">interface_name</span> <span class="ow">in</span> <span class="n">interface_names</span><span class="p">:</span>
+                <span class="n">InterfaceId</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_interface_id</span><span class="p">(</span><span class="n">interface_id</span><span class="o">=</span><span class="n">interface_name</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_register_with_ccu</span><span class="p">(</span><span class="n">interface</span> <span class="o">=</span> <span class="n">interface_name</span><span class="p">,</span> <span class="n">interfaceId</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interface_id</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Logged into </span><span class="si">%s</span><span class="s2"> @ </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">interface_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interface_id</span><span class="p">)</span>                  
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Could not log into </span><span class="si">%s</span><span class="s2"> @ </span><span class="si">%s</span><span class="s2">, skip&quot;</span><span class="p">,</span> <span class="n">interface_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interface_id</span><span class="p">)</span>                  
+            <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;rpc server already loaded. Check if pmatic is running and stop eg. by sh -x /usr/local/etc/config/rc.d/pmatic stop&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">raise</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">initialized</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Is set to true when the XML-RPC have been started and registered with the CCU.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span>
+
+
+    <span class="k">def</span> <span class="nf">_start_rpc_server</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Starts listening for incoming XML-RPC messages from CCU.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Start listening for events on </span><span class="si">%s</span><span class="s2"> TCP </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
+                            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_listen_address</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_listen_address</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="n">EventXMLRPCServer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_listen_address</span><span class="p">,</span>
+                                         <span class="n">requestHandler</span><span class="o">=</span><span class="n">EventXMLRPCRequestHandler</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">register_instance</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">_register_with_ccu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;BidCos-RF&quot;</span><span class="p">,</span> <span class="n">interfaceId</span><span class="o">=</span><span class="s2">&quot;pmatic-0&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Registers the RPC server of this EventListener object with the CCU.</span>
+
+<span class="sd">        After executing this method the CCU will contact the RPC server of</span>
+<span class="sd">        this EventListener and send events to the server.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">interface_init</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span>
+            <span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rpc_server_url</span><span class="p">,</span> <span class="n">interfaceId</span><span class="o">=</span><span class="n">interfaceId</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PMConnectionError</span><span class="p">(</span><span class="s2">&quot;Failed to register with the XML-RPC API of the CCU.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Successfully registered event listener with CCU&quot;</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_find_listen_address_to_reach_ccu</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determines the host address to tell the CCU to send it&#39;s messages to.</span>
+
+<span class="sd">        When the listen_address is either not set or set to an empty string this makes</span>
+<span class="sd">        the XML-RPC server listen on all local interfaces / addresses. But the drawback</span>
+<span class="sd">        is that we don&#39;t know which URL we should tell the CCU to send it&#39;s events to.</span>
+
+<span class="sd">        This method determines the address to tell the CCU.</span>
+
+<span class="sd">        When the script is executed on the CCU it returns &quot;127.0.0.1&quot;. Otherwise it creats</span>
+<span class="sd">        a socket and opens a connection to the CCU address (which is used by self._ccu.api)</span>
+<span class="sd">        and port 80. Then it knows which local IP address has been used to communicate</span>
+<span class="sd">        with the CCU. This address is then returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="o">.</span><span class="n">api</span><span class="p">,</span> <span class="n">pmatic</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">LocalAPI</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">&quot;127.0.0.1&quot;</span>
+
+        <span class="n">ccu_address</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">address</span><span class="p">)</span><span class="o">.</span><span class="n">hostname</span>
+
+        <span class="n">s</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># wait for 1 second for the connect.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">ccu_address</span><span class="p">,</span> <span class="mi">80</span><span class="p">))</span>
+            <span class="n">address</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">getsockname</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">address</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PMException</span><span class="p">(</span><span class="s2">&quot;Unable to detect the address to listen on for XML-RPC &quot;</span>
+                              <span class="s2">&quot;messages from the CCU (</span><span class="si">%s</span><span class="s2">). You might fix this by explicitly &quot;</span>
+                              <span class="s2">&quot;providing the parameter listen_address=([ADDRESS], [PORT]) &quot;</span>
+                              <span class="s2">&quot;to pmatic.events.init().&quot;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="EventListener.close"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.events.EventListener.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stops listening for XML-RPC messages and terminates the local XML-RPC server.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Stop listening for events&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_server</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;When object is removed, the close() method is called.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="EventListener.wait"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.events.EventListener.wait">[docs]</a>    <span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Waits for the event listener to terminate.</span>
+
+<span class="sd">        This is useful to let your code stay idle (for some time) and</span>
+<span class="sd">        just wait for incoming events from the CCU.</span>
+
+<span class="sd">        When a timeout is configured this method returns when the listener</span>
+<span class="sd">        terminates (for some reason) or the timeout happens.</span>
+
+<span class="sd">        This method returns ``True`` when the timeout happened and the listener</span>
+<span class="sd">        is still alive or ``False`` when the listener has been terminated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">timeout</span> <span class="o">-=</span> <span class="mf">0.1</span>
+                    <span class="k">if</span> <span class="n">timeout</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">break</span>
+        <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">is_alive</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="EventListener.on_value_changed"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.events.EventListener.on_value_changed">[docs]</a>    <span class="k">def</span> <span class="nf">on_value_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Register a function to be called each time any value of a device is changed.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_callback</span><span class="p">(</span><span class="s2">&quot;value_changed&quot;</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EventListener.on_value_updated"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.events.EventListener.on_value_updated">[docs]</a>    <span class="k">def</span> <span class="nf">on_value_updated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Register a function to be called each time a value of any device is updated.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_callback</span><span class="p">(</span><span class="s2">&quot;value_updated&quot;</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EventListener.callback"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.events.EventListener.callback">[docs]</a>    <span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cb_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Execute all registered callbacks for this event.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span><span class="p">(</span><span class="n">cb_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+
+
+
+<span class="k">class</span> <span class="nc">EventHandler</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">LogMixin</span><span class="p">,</span> <span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Handles incoming XML-RPC calls.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ccu</span><span class="p">,</span> <span class="n">listener</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span> <span class="o">=</span> <span class="n">ccu</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">listener</span> <span class="o">=</span> <span class="n">listener</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">_dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Central entry point for all calls.</span>
+
+<span class="sd">        It does not let exceptions through to the caller. The exceptions</span>
+<span class="sd">        are all catched and logged.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PMException</span><span class="p">(</span><span class="s2">&quot;Requested method </span><span class="si">%r</span><span class="s2"> is not implemented.&quot;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Exception in XML-RPC call </span><span class="si">%s%r</span><span class="s2">:&quot;</span><span class="p">,</span>
+                                <span class="n">method</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">params</span><span class="p">),</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+
+    <span class="c1"># Mit dieser Methode teilt der Schnittstellenprozess der Logikschicht mit, dass sich ein</span>
+    <span class="c1"># Wert geändert hat oder ein Event (z.B. Tastendruck) empfangen wurde.</span>
+    <span class="c1"># Der  Parameter interface_id gibt  die  id  des  Schnittstellenprozesses  an,  der  das</span>
+    <span class="c1"># Event sendet.</span>
+    <span class="c1"># Der  Parameter address ist  die  Addresse  des  logischen  Gerätes,  zu  dem  der</span>
+    <span class="c1"># geänderte Wert / das Event gehört.</span>
+    <span class="c1"># Der Parameter value_key ist der Name des entsprechenden Wertes. Die möglichen</span>
+    <span class="c1"># Werte  für  value_key  ergeben  sich  aus  der  ParamsetDescription  des  entsprechenden</span>
+    <span class="c1"># Parameter-Sets „VALUES“.</span>
+    <span class="c1"># Der Parameter value gibt den neuen Wert bzw. den dem Event zugeordneten Wert an.</span>
+    <span class="c1"># Der  Datentyp  von value ergibt  sich  aus  der  ParamsetDescription  des</span>
+    <span class="c1"># Values-Parameter-Sets des entsprechenden logischen Gerätes.</span>
+    <span class="k">def</span> <span class="nf">event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_id</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">value_key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span> <span class="c1"># pylint:disable=unused-argument</span>
+        <span class="sd">&quot;&quot;&quot;Receives an event from the CCU and applies the update.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[EVENT] </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> = </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">interface_id</span><span class="p">,</span> <span class="n">value_key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">get_device_or_channel_by_address</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">interface_id</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[EVENT] </span><span class="si">%s</span><span class="s2"> Ignoring event for unknown device&quot;</span> <span class="o">%</span> <span class="n">address</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+
+        <span class="k">try</span><span class="p">:</span> 
+            <span class="n">param</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">value_key</span><span class="p">]</span>
+            <span class="n">value_changed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">set_from_api</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[EVENT] cannot get event for device </span><span class="si">%s</span><span class="s2"> with key </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">value_key</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">listener</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="s2">&quot;value_updated&quot;</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value_changed</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[EVENT] has changed: </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">) = </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">interface_id</span><span class="p">,</span> <span class="n">value_key</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">listener</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="s2">&quot;value_changed&quot;</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
+
+
+    <span class="c1"># Diese  Methode  gibt  alle  der  Logikschicht  bekannten Geräte für den Schnittstellen-Prozess</span>
+    <span class="c1"># mit der Id interface_id in Form von Gerätebeschreibungen zurück. Damit kann der</span>
+    <span class="c1"># Schnittstellenprozess durch Aufruf von  new Devices() und deleteDevices() einen Abgleich</span>
+    <span class="c1"># vornehmen. Damit  das  funktioniert,  muss  sich  die  Logikschicht diese  Informationen</span>
+    <span class="c1"># zumindest teilweise merken. Es ist dabei ausreichend, wenn je weils die Member ADDRESS</span>
+    <span class="c1"># und VERSION einer DeviceDescription gesetzt sind.</span>
+    <span class="k">def</span> <span class="nf">listDevices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_id</span><span class="p">):</span> <span class="c1"># pylint:disable=unused-argument</span>
+        <span class="sd">&quot;&quot;&quot;The CCU asks for all already known devices. Send back the address and description</span>
+<span class="sd">        version.&quot;&quot;&quot;</span>
+        <span class="n">devices</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Don&#39;t fetch new new devices here. Use the already known ones. The CCU will inform</span>
+        <span class="c1"># us about the ones we don&#39;t know yet.</span>
+        <span class="k">if</span> <span class="n">utils</span><span class="o">.</span><span class="n">is_py2</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">already_initialized_devices</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">devices</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;ADDRESS&quot;</span><span class="p">:</span> <span class="n">device</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="s2">&quot;VERSION&quot;</span><span class="p">:</span> <span class="n">device</span><span class="o">.</span><span class="n">version</span><span class="p">})</span>
+                <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">device</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
+                    <span class="n">devices</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;ADDRESS&quot;</span><span class="p">:</span> <span class="n">channel</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="s2">&quot;VERSION&quot;</span><span class="p">:</span> <span class="n">channel</span><span class="o">.</span><span class="n">version</span><span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">already_initialized_devices</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+                <span class="n">devices</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;ADDRESS&quot;</span><span class="p">:</span> <span class="n">device</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="s2">&quot;VERSION&quot;</span><span class="p">:</span> <span class="n">device</span><span class="o">.</span><span class="n">version</span><span class="p">})</span>
+                <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">device</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
+                    <span class="n">devices</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;ADDRESS&quot;</span><span class="p">:</span> <span class="n">channel</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="s2">&quot;VERSION&quot;</span><span class="p">:</span> <span class="n">channel</span><span class="o">.</span><span class="n">version</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">devices</span>
+
+
+    <span class="c1"># Mit  dieser  Methode  wird  der  Logikschicht  mitgeteilt,  dass  neue  Geräte  gefunden</span>
+    <span class="c1"># wurden.</span>
+    <span class="c1"># Der Parameter interface_id gibt die id des Schnittstellenprozesses an, zu dem das Gerät</span>
+    <span class="c1"># gehört.</span>
+    <span class="c1"># Der Parameter dev_descriptions ist ein Array, das die Beschreibungen der neuen Geräte enthält.</span>
+    <span class="c1"># Wenn dev_descriptions Geräte enthält, die der Logikschicht bereits beka nnt sind,</span>
+    <span class="c1"># dann ist davon auszugehen, dass sich z.B. durch ein Firmwareupdate das Verhalten</span>
+    <span class="c1"># des Gerätes geändert hat. Die Basisplatform muß dann einen Abgleich mit der neuen</span>
+    <span class="c1"># Beschreibung  durchführen.  Dabei  sollte  die  Konfiguration  des  Gerätes  innerhalb  der</span>
+    <span class="c1"># Logikschicht so weit wie möglich erhalten bleiben.</span>
+    <span class="k">def</span> <span class="nf">newDevices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_id</span><span class="p">,</span> <span class="n">dev_descriptions</span><span class="p">):</span> <span class="c1"># pylint:disable=unused-argument</span>
+        <span class="sd">&quot;&quot;&quot;The CCU informs about new devices. Creates objects known for them.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[NEW DEVICES] Got </span><span class="si">%d</span><span class="s2"> new devices/channels&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">dev_descriptions</span><span class="p">))</span>
+
+        <span class="c1"># Perform the following steps to make the data equal to the ccu.devices._device_specs</span>
+        <span class="c1"># dict data structure which is fetched by the JSON API. To make the internal code of</span>
+        <span class="c1"># pmatic simpler it is better to normalize this here where it is clear where which kind</span>
+        <span class="c1"># of data comes from.</span>
+        <span class="c1">#</span>
+        <span class="c1"># The goal is to make this data totally equal (TODO Create a test for this):</span>
+        <span class="c1">#import pprint</span>
+        <span class="c1">#file(&quot;/tmp/event-devices.txt&quot;, &quot;w&quot;).write(pprint.pformat(sorted(devices.items())))</span>
+        <span class="c1">#specs = self._ccu.api.DeviceSpecs(self._ccu.api)</span>
+        <span class="c1">#file(&quot;/tmp/api-devices.txt&quot;, &quot;w&quot;).write(pprint.pformat(sorted(specs.items())))</span>
+        <span class="k">def</span> <span class="nf">normalize_spec</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+                        <span class="n">val</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span>
+
+                <span class="k">elif</span> <span class="n">utils</span><span class="o">.</span><span class="n">is_byte_string</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+                <span class="n">new_key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="n">new_key</span> <span class="ow">in</span> <span class="p">[</span> <span class="s2">&quot;aes_active&quot;</span><span class="p">,</span> <span class="s2">&quot;roaming&quot;</span> <span class="p">]:</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">val</span> <span class="o">==</span> <span class="mi">1</span>
+
+                <span class="k">elif</span> <span class="n">new_key</span> <span class="o">==</span> <span class="s2">&quot;updatable&quot;</span><span class="p">:</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">val</span>
+
+                <span class="k">elif</span> <span class="n">new_key</span> <span class="ow">in</span> <span class="p">[</span> <span class="s2">&quot;link_source_roles&quot;</span><span class="p">,</span> <span class="s2">&quot;link_target_roles&quot;</span> <span class="p">]:</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+                <span class="k">elif</span> <span class="n">new_key</span> <span class="ow">in</span> <span class="p">[</span> <span class="s2">&quot;rf_address&quot;</span><span class="p">,</span> <span class="s2">&quot;rx_mode&quot;</span> <span class="p">]:</span>
+                    <span class="k">continue</span>
+
+                <span class="n">d</span><span class="p">[</span><span class="n">new_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+            <span class="k">return</span> <span class="n">d</span>
+
+        <span class="n">devices</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">dev_descriptions</span><span class="p">:</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="n">normalize_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;parent&quot;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="n">spec</span><span class="p">[</span><span class="s2">&quot;parent&quot;</span><span class="p">]</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+                <span class="n">devices</span><span class="p">[</span><span class="n">spec</span><span class="p">[</span><span class="s2">&quot;address&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">spec</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">channels</span> <span class="o">=</span> <span class="n">devices</span><span class="p">[</span><span class="n">spec</span><span class="p">[</span><span class="s2">&quot;parent&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;channels&quot;</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="n">channels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">utils</span><span class="o">.</span><span class="n">is_py2</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">device_dict</span> <span class="ow">in</span> <span class="n">devices</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">add_from_low_level_dict</span><span class="p">(</span><span class="n">device_dict</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">device_dict</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">devices</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">add_from_low_level_dict</span><span class="p">(</span><span class="n">device_dict</span><span class="p">)</span>
+
+        <span class="c1"># As we just received all devices from the CCU mark the devices as initialized</span>
+        <span class="c1"># in the CCU object. This saves one Interface.listDevices call when accessing</span>
+        <span class="c1"># the &quot;self._ccu.devices.devices&quot; for the first time.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">initialized</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
+
+
+    <span class="c1"># Mit   dieser   Methode   wird   der   Logikschicht   mitgeteilt,   dass   Geräte   im</span>
+    <span class="c1"># Schnittstellenprozess gelöscht wurden.  Der Parameter interface_id</span>
+    <span class="c1">#  gibt die id des Schnittstellenprozesses an, zu dem das Gerät gehört.</span>
+    <span class="c1"># Der  Parameter addresses ist  ein  Array,  das  die  Adressen  der</span>
+    <span class="c1"># gelöschten  Geräte enthält.</span>
+    <span class="c1"># FIXME: Only handling device addresses. Can we get channels here?</span>
+    <span class="k">def</span> <span class="nf">deleteDevices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_id</span><span class="p">,</span> <span class="n">addresses</span><span class="p">):</span> <span class="c1"># pylint:disable=unused-argument</span>
+        <span class="sd">&quot;&quot;&quot;A device has been removed from the CCU. Reflect that change.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[DELETE DEVICES] Delete </span><span class="si">%d</span><span class="s2"> devices/channels&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">addresses</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">address</span> <span class="ow">in</span> <span class="n">addresses</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+
+    <span class="c1"># Mit dieser Methode wird der Logikschicht mitgeteilt, dass sich an einem Gerät etwas</span>
+    <span class="c1"># geändert hat.  Der Parameter interface_id gibt die id des Schnittstellenprozesses an, zu dem</span>
+    <span class="c1"># das Gerät gehört.</span>
+    <span class="c1"># Der Parameter address ist die Adresse des Gerätes oder des Kanals, auf das sich die</span>
+    <span class="c1"># Meldung bezieht.</span>
+    <span class="c1"># Der Parameter hint spezifiziert die Änderung genauer:</span>
+    <span class="c1"># • UPDATE_HINT_ALL=0</span>
+    <span class="c1"># Es hat eine nicht weiter spezifizierte Änderung stattgefunden und es sollen daher</span>
+    <span class="c1"># alle möglichen Änderungen berücksichtigt werden.</span>
+    <span class="c1"># • UPDATE_HINT_LINKS=1</span>
+    <span class="c1"># Es hat sich die Anzahl der Verknüpfungspartner geändert.</span>
+    <span class="c1">#</span>
+    <span class="c1"># Derzeit  werden  nur  Änderungen  an  den  Verknüpfungspa rtnern  auf  diesem  Weg</span>
+    <span class="c1"># mitgeteilt.</span>
+    <span class="c1"># FIXME: To be implemented.</span>
+    <span class="k">def</span> <span class="nf">updateDevices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface_id</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">hint</span><span class="p">):</span> <span class="c1"># pylint:disable=unused-argument</span>
+        <span class="sd">&quot;&quot;&quot;The CCU wants to update the parameters of a device.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[UPDATE DEVICES] Update for device </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">hint</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pmatic 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../pmatic.html" >pmatic</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Lars Michelsen.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.2.
+    </div>
+  </body>
+</html>

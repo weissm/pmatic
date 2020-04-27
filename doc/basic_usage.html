@@ -1,0 +1,413 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Basic Usage &#8212; pmatic 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
+    <script src="_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+    <script src="_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The pmatic Module" href="pmatic_module.html" />
+    <link rel="prev" title="Installation" href="install.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pmatic_module.html" title="The pmatic Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="install.html" title="Installation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pmatic 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="basic-usage">
+<h1>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h1>
+<p>Please take a look at the scripts below the <code class="docutils literal notranslate"><span class="pre">examples</span></code> directory for some
+sample scripts. I’ll try to add more in the near future.</p>
+<div class="section" id="list-shutter-contact-states">
+<h2>List shutter contact states<a class="headerlink" href="#list-shutter-contact-states" title="Permalink to this headline">¶</a></h2>
+<p>Just to give you a quick view, here a simple example how to list all shutter
+contacts and their current states:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/python</span>
+<span class="kn">import</span> <span class="nn">pmatic</span>
+
+<span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">pmatic</span><span class="o">.</span><span class="n">CCU</span><span class="p">()</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">device_type</span><span class="o">=</span><span class="s2">&quot;HM-Sec-SC&quot;</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%-20s</span><span class="s2"> </span><span class="si">%6s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">device</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">device</span><span class="o">.</span><span class="n">is_open</span> <span class="ow">and</span> <span class="s2">&quot;open&quot;</span> <span class="ow">or</span> <span class="s2">&quot;closed&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>When I execute this script on my CCU2, I get the following output:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>Kind-Fenster         closed
+Büro-Fenster         closed
+Schlafzimmer-Links   closed
+Bad-Fenster-Rechts   closed
+Bad-Fenster-Links    closed
+Wohnzimmer           closed
+</pre></div>
+</div>
+<p>The same script can now be executed from another system, e.g. a linux workstation,
+just by adding the address and credentials to access the CCU.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="c1">#!/usr/bin/python</span>
+ <span class="kn">import</span> <span class="nn">pmatic</span>
+ <span class="n">ccu</span> <span class="o">=</span> <span class="n">pmatic</span><span class="o">.</span><span class="n">CCU</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;http://192.168.1.26&quot;</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Admin&quot;</span><span class="p">,</span> <span class="s2">&quot;EPIC-SECRET-PW&quot;</span><span class="p">))</span>
+
+<span class="hll"> <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">ccu</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">device_type</span><span class="o">=</span><span class="s2">&quot;HM-Sec-SC&quot;</span><span class="p">):</span>
+</span>     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%-20s</span><span class="s2"> </span><span class="si">%6s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">device</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">device</span><span class="o">.</span><span class="n">is_open</span> <span class="ow">and</span> <span class="s2">&quot;open&quot;</span> <span class="ow">or</span> <span class="s2">&quot;closed&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Please note: I moved the CCU object definition to a separate line for readability.</p>
+<p>If you execute the exact same script directly on the CCU you may notice that it works
+even if you leave the credentials in the script. So your scrips developed on your
+workstation can be moved to the CCU and executed on it without change.</p>
+</div>
+<div class="section" id="list-devices-on-low-battery">
+<h2>List devices on low battery<a class="headerlink" href="#list-devices-on-low-battery" title="Permalink to this headline">¶</a></h2>
+<p>Besides the current states of devices, you can also query for maintenance information like
+whether or not devices are currently reachable or have a low battery.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/python</span>
+<span class="kn">import</span> <span class="nn">pmatic</span>
+<span class="n">ccu</span> <span class="o">=</span> <span class="n">pmatic</span><span class="o">.</span><span class="n">CCU</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;http://192.168.1.26&quot;</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Admin&quot;</span><span class="p">,</span> <span class="s2">&quot;EPIC-SECRET-PW&quot;</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Low battery: &quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">ccu</span><span class="o">.</span><span class="n">devices</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">is_battery_low</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">device</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  All battery powered devices are fine.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="trigger-actions">
+<h2>Trigger actions<a class="headerlink" href="#trigger-actions" title="Permalink to this headline">¶</a></h2>
+<p>Or do you want to simulate key presses of your buttons (e.g. HM-PBI-4-FM)?</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/python</span>
+<span class="kn">import</span> <span class="nn">pmatic</span>
+<span class="n">ccu</span> <span class="o">=</span> <span class="n">pmatic</span><span class="o">.</span><span class="n">CCU</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;http://192.168.1.26&quot;</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Admin&quot;</span><span class="p">,</span> <span class="s2">&quot;EPIC-SECRET-PW&quot;</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">ccu</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">device_name</span><span class="o">=</span><span class="sa">u</span><span class="s2">&quot;Büro-Schalter&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">press_short</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;done.&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;failed!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This scripts searches for the device having the name <code class="docutils literal notranslate"><span class="pre">Büro-Schalter</span></code> which is a HM-PBI-4-FM
+device. This device has 4 buttons which can be pressed for a short and long time. The script
+is simulating a short press of button 0 (the first button) and checks whether or not the
+command succeeded.</p>
+</div>
+<div class="section" id="print-temperature-updates">
+<h2>Print temperature updates<a class="headerlink" href="#print-temperature-updates" title="Permalink to this headline">¶</a></h2>
+<p>This example simply prints out all temperatures reported by the devices of type HM-CC-TC,
+HM-WDS10-TH-O and HM-CC-RT-DN.</p>
+<p>This script is executed until terminated by the user (e.g. via CTRL+C). It listens for
+incoming events and prints a message to the user once the a temperature update is received.</p>
+<p>This detection is using the events sent by the CCU. So the state updates are printed nearly
+instantly.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/python</span>
+<span class="kn">import</span> <span class="nn">pmatic</span>
+<span class="n">ccu</span> <span class="o">=</span> <span class="n">pmatic</span><span class="o">.</span><span class="n">CCU</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;http://192.168.1.26&quot;</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Admin&quot;</span><span class="p">,</span> <span class="s2">&quot;EPIC-SECRET-PW&quot;</span><span class="p">))</span>
+
+<span class="n">devices</span> <span class="o">=</span> <span class="n">ccu</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">device_type</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;HM-CC-TC&quot;</span><span class="p">,</span> <span class="s2">&quot;HM-WDS10-TH-O&quot;</span><span class="p">,</span> <span class="s2">&quot;HM-CC-RT-DN&quot;</span><span class="p">])</span>
+
+<span class="c1"># This function is executed on each state update</span>
+<span class="k">def</span> <span class="nf">print_summary_state</span><span class="p">(</span><span class="n">param</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">param</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">summary_state</span><span class="p">))</span>
+
+<span class="n">devices</span><span class="o">.</span><span class="n">on_value_updated</span><span class="p">(</span><span class="n">print_summary_state</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="n">devices</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Found no devices. Terminating.&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Waiting for changes...&quot;</span><span class="p">)</span>
+
+    <span class="n">ccu</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+    <span class="n">ccu</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+    <span class="n">ccu</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="list-rooms-with-their-devices">
+<h2>List Rooms with their devices<a class="headerlink" href="#list-rooms-with-their-devices" title="Permalink to this headline">¶</a></h2>
+<p>You can even get the devices grouped by the rooms which they are associated with. Accessing
+the rooms is similar to the devices. See an example below which prints out all devices
+grouped by the rooms.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/python</span>
+<span class="kn">import</span> <span class="nn">pmatic</span>
+<span class="n">ccu</span> <span class="o">=</span> <span class="n">pmatic</span><span class="o">.</span><span class="n">CCU</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;http://192.168.1.26&quot;</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Admin&quot;</span><span class="p">,</span> <span class="s2">&quot;EPIC-SECRET-PW&quot;</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="n">ccu</span><span class="o">.</span><span class="n">rooms</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">room</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">room</span><span class="o">.</span><span class="n">devices</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This script produces an output like this:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>Wohnzimmer
+  Wohnzimmer-Licht
+  Wohnzimmer-Schalter
+  Wohnzimmer-Tür
+Schlafzimmer
+  Schlafzimmer-Links-Heizung
+Büro
+  Büro-Fenster
+  Büro-Lampe
+  Büro-Schalter
+</pre></div>
+</div>
+</div>
+<div class="section" id="presence-detection-with-the-fritz-box">
+<h2>Presence detection with the fritz!Box<a class="headerlink" href="#presence-detection-with-the-fritz-box" title="Permalink to this headline">¶</a></h2>
+<p>Pmatic can assist you detecting the presence of your residents e.g. by communicating with the
+fritz!Box to check whether or not the mobile phone of a resident is currently active.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/python</span>
+<span class="kn">import</span> <span class="nn">pmatic</span>
+<span class="n">ccu</span> <span class="o">=</span> <span class="n">pmatic</span><span class="o">.</span><span class="n">CCU</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="s2">&quot;http://192.168.1.26&quot;</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Admin&quot;</span><span class="p">,</span> <span class="s2">&quot;EPIC-SECRET-PW&quot;</span><span class="p">))</span>
+
+<span class="c1"># Maybe you need to configure your fritz!Box credentials to be able to fetch the</span>
+<span class="c1"># presence information of the configured devices. Other available parameters are</span>
+<span class="c1"># port=49000, user=&quot;username&quot;.</span>
+<span class="kn">from</span> <span class="nn">pmatic.residents</span> <span class="kn">import</span> <span class="n">PersonalDeviceFritzBoxHost</span>
+<span class="n">PersonalDeviceFritzBoxHost</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="s2">&quot;fritz.box&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;EPIC-SECRET-PW&quot;</span><span class="p">)</span>
+
+<span class="c1"># Now create a residents manager instance and configure it. Currently the easiest</span>
+<span class="c1"># way is to use it is to use the from_config() method with the following data:</span>
+<span class="n">ccu</span><span class="o">.</span><span class="n">residents</span><span class="o">.</span><span class="n">from_config</span><span class="p">({</span>
+    <span class="s2">&quot;residents&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span>             <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span>           <span class="p">:</span> <span class="s2">&quot;Lars&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;email&quot;</span>          <span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;mobile&quot;</span>         <span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pushover_token&quot;</span> <span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;devices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;type_name&quot;</span><span class="p">:</span> <span class="s2">&quot;fritz_box_host&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;mac&quot;</span><span class="p">:</span> <span class="s2">&quot;30:10:E6:10:D4:B2&quot;</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">],</span>
+<span class="p">})</span>
+
+<span class="c1"># You may use ccu.residents.load(config_file=&quot;...&quot;) and the counterpart</span>
+<span class="c1"># ccu.residents.load(config_file=&quot;...&quot;) to load and store your resident config.</span>
+
+<span class="c1"># After initialization you can run either .update() on the residents instance</span>
+<span class="c1"># or .update_presence() on a specific resident to update the presence information</span>
+<span class="c1"># from the data source, in this case the fritz!Box.</span>
+<span class="n">ccu</span><span class="o">.</span><span class="n">residents</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">resident</span> <span class="ow">in</span> <span class="n">ccu</span><span class="o">.</span><span class="n">residents</span><span class="o">.</span><span class="n">residents</span><span class="p">:</span>
+    <span class="c1">#resident.update_presence()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">resident</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="p">(</span><span class="n">resident</span><span class="o">.</span><span class="n">present</span> <span class="ow">and</span> <span class="s2">&quot;is at home&quot;</span> <span class="ow">or</span> <span class="s2">&quot;is not at home&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>This script produces an output like this:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>Lars is at home
+</pre></div>
+</div>
+<p>Having this piece of information you can now modify your scripts to behave differently,
+depending on which of your residents is at home. Take a look at the
+<a class="reference internal" href="pmatic_residents.html#presence-detection"><span class="std std-ref">Presence detection with pmatic</span></a> chapter for details.</p>
+</div>
+<div class="section" id="computing-the-sun-s-position-in-the-sky">
+<h2>Computing the sun’s position in the sky<a class="headerlink" href="#computing-the-sun-s-position-in-the-sky" title="Permalink to this headline">¶</a></h2>
+<p>If you want to control the window shutters automatically, knowledge of the sun’s position
+in the sky is important. It can be computed with the function <code class="docutils literal notranslate"><span class="pre">sun_position</span></code> which is
+included in module <code class="docutils literal notranslate"><span class="pre">pmatic/utils.py</span></code>. It uses the <a class="reference external" href="https://de.wikipedia.org/wiki/Sonnenstand">algorithm from Wikipedia</a>
+and was validated by comparing the results with the high-precision astronomy software <code class="docutils literal notranslate"><span class="pre">Guide</span> <span class="pre">9.0</span></code>.
+The positional accuracy is generally better than 1/100 degree. Since the function does
+not take atmospheric refraction into account, the error is somewhat largerv ery close
+to the horizon.</p>
+<p>The function returns a tuple of two coordinates: the sun’s azimuth and its elevation. The
+azimuth is the angle along the horizon between North and the point underneath the sun,
+counted positive to the East. The elevation is the angle between the sun and the horizon.</p>
+<div class="section" id="example">
+<h3>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/python</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">radians</span><span class="p">,</span> <span class="n">degrees</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">strftime</span><span class="p">,</span> <span class="n">localtime</span>
+
+<span class="kn">import</span> <span class="nn">pmatic.utils</span> <span class="k">as</span> <span class="nn">utils</span>
+
+<span class="n">latitude</span> <span class="o">=</span> <span class="mf">50.5</span>
+<span class="n">longitude</span> <span class="o">=</span> <span class="mf">8.3</span>
+
+<span class="nb">print</span> <span class="s2">&quot;Computing the current position of the sun for&quot;</span><span class="p">,</span> <span class="n">longitude</span><span class="p">,</span> <span class="s2">&quot;degrees eastern longitude and&quot;</span><span class="p">,</span> <span class="n">latitude</span><span class="p">,</span> \
+    <span class="s2">&quot;degrees northern latitude.&quot;</span>
+<span class="nb">print</span> <span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;Date and time: </span><span class="si">%a</span><span class="s2">, </span><span class="si">%d</span><span class="s2"> %b %Y %H:%M:%S&quot;</span><span class="p">,</span> <span class="n">localtime</span><span class="p">())</span>
+<span class="n">azimuth</span><span class="p">,</span> <span class="n">altitude</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">sun_position</span><span class="p">(</span><span class="n">radians</span><span class="p">(</span><span class="n">longitude</span><span class="p">),</span> <span class="n">radians</span><span class="p">(</span><span class="n">latitude</span><span class="p">))</span>
+
+<span class="nb">print</span> <span class="s2">&quot;Azimut: &quot;</span><span class="p">,</span> <span class="n">degrees</span><span class="p">(</span><span class="n">azimuth</span><span class="p">),</span> <span class="s2">&quot;, Altitude: &quot;</span><span class="p">,</span> <span class="n">degrees</span><span class="p">(</span><span class="n">altitude</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This script produces an output like this:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>Computing the current position of the sun <span class="k">for</span> <span class="m">8</span>.3 degrees eastern longitude and <span class="m">50</span>.5 degrees northern latitude.
+Date and time: Wed, <span class="m">06</span> Jul <span class="m">2016</span> <span class="m">12</span>:26:54
+Azimut:  <span class="m">149</span>.656647766 , Altitude:  <span class="m">59</span>.3890451373
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="computing-the-dew-point-temperature">
+<h2>Computing the dew point temperature<a class="headerlink" href="#computing-the-dew-point-temperature" title="Permalink to this headline">¶</a></h2>
+<p>For the automation of ventilation systems the dew point temperature of the outside air must be known. It can be
+computed with the function <code class="docutils literal notranslate"><span class="pre">dew_point</span></code> which is included in module <code class="docutils literal notranslate"><span class="pre">pmatic/utils.py</span></code>. It uses the
+<a class="reference external" href="https://de.wikipedia.org/wiki/Taupunkt">algorithm from Wikipedia</a>. The algorithm was validated with independent
+data tables published in the internet.</p>
+<p>The function takes the air temperature (in degrees Celsius) and humidity (a value between 0. and 1.) as input and
+returns the dew point temperature (in degrees Celsius).</p>
+<div class="section" id="id2">
+<h3>Example<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/python</span>
+<span class="kn">import</span> <span class="nn">pmatic.utils</span> <span class="k">as</span> <span class="nn">utils</span>
+
+<span class="n">temperature</span> <span class="o">=</span> <span class="mf">22.</span>
+<span class="n">humidity</span> <span class="o">=</span> <span class="mf">0.60</span>
+
+<span class="nb">print</span> <span class="s2">&quot;Temperature (C): &quot;</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="s2">&quot;, Humidity (%): &quot;</span><span class="p">,</span>\
+    <span class="n">humidity</span> <span class="o">*</span> <span class="mf">100.</span><span class="p">,</span> <span class="s2">&quot;, Dew point (C): &quot;</span><span class="p">,</span> <span class="n">utils</span><span class="o">.</span><span class="n">dew_point</span><span class="p">(</span><span class="n">temperature</span><span class="p">,</span> <span class="n">humidity</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This script produces an output like this:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>Temperature <span class="o">(</span>C<span class="o">)</span>:  <span class="m">22</span>.0 , Humidity <span class="o">(</span>%<span class="o">)</span>:  <span class="m">60</span>.0 , Dew point <span class="o">(</span>C<span class="o">)</span>:  <span class="m">13</span>.8751835583
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="some-use-cases">
+<h2>Some use cases<a class="headerlink" href="#some-use-cases" title="Permalink to this headline">¶</a></h2>
+<p>You might use pmatic for different kind of software. Some ideas:</p>
+<ul>
+<li><p><strong>Manually triggered one shot scripts</strong></p>
+<p>The most simple use cases I can imagine is to create small scripts which
+are executed, gather some information, print them or do anything else with
+it and then finish. Of curse these scripts could also trigger something.</p>
+<p>An example could be a script which triggers a power switch when you turn on
+your workstation which is then powering on some kind of ambient light.</p>
+<p>Take a look at the <a class="reference external" href="https://github.com/LarsMichelsen/pmatic/tree/master/examples">example</a>
+directory for more ideas.</p>
+</li>
+<li><p><strong>Continously running daemons</strong></p>
+<p>A program which is e.g. starting with the system/CCU, permanently running,
+observing things and performing actions depending on the gathered information.</p>
+<p>This daemon could either continously poll the needed information on it’s own
+using the APIs pmatic provides or register for specific events happening and
+then perform custom actions.</p>
+</li>
+<li><p><strong>Scripts executed based on events</strong></p>
+<p>You can use the pmatic manager to deal with the CCUs events and create schedules
+which are triggered when events for specific devices are received.</p>
+<p>It is also possible to do the event handling on your own. Take a look at the
+“Print temperature updates” example above.</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Basic Usage</a><ul>
+<li><a class="reference internal" href="#list-shutter-contact-states">List shutter contact states</a></li>
+<li><a class="reference internal" href="#list-devices-on-low-battery">List devices on low battery</a></li>
+<li><a class="reference internal" href="#trigger-actions">Trigger actions</a></li>
+<li><a class="reference internal" href="#print-temperature-updates">Print temperature updates</a></li>
+<li><a class="reference internal" href="#list-rooms-with-their-devices">List Rooms with their devices</a></li>
+<li><a class="reference internal" href="#presence-detection-with-the-fritz-box">Presence detection with the fritz!Box</a></li>
+<li><a class="reference internal" href="#computing-the-sun-s-position-in-the-sky">Computing the sun’s position in the sky</a><ul>
+<li><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#computing-the-dew-point-temperature">Computing the dew point temperature</a><ul>
+<li><a class="reference internal" href="#id2">Example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#some-use-cases">Some use cases</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="install.html"
+                        title="previous chapter">Installation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pmatic_module.html"
+                        title="next chapter">The pmatic Module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/basic_usage.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pmatic_module.html" title="The pmatic Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="install.html" title="Installation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pmatic 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Lars Michelsen.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,585 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>pmatic.ccu &#8212; pmatic 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
+    <script src="../../_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+    <script src="../../_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pmatic 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../pmatic.html" accesskey="U">pmatic</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pmatic.ccu</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># encoding: utf-8</span>
+<span class="c1">#</span>
+<span class="c1"># pmatic - Python API for Homematic. Easy to use.</span>
+<span class="c1"># Copyright (C) 2016 Lars Michelsen &lt;lm@larsmichelsen.com&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># This program is free software; you can redistribute it and/or modify</span>
+<span class="c1"># it under the terms of the GNU General Public License as published by</span>
+<span class="c1"># the Free Software Foundation; either version 2 of the License, or</span>
+<span class="c1"># (at your option) any later version.</span>
+<span class="c1">#</span>
+<span class="c1"># This program is distributed in the hope that it will be useful,</span>
+<span class="c1"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c1"># GNU General Public License for more details.</span>
+<span class="c1">#</span>
+<span class="c1"># You should have received a copy of the GNU General Public License along</span>
+<span class="c1"># with this program; if not, write to the Free Software Foundation, Inc.,</span>
+<span class="c1"># 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.</span>
+
+<span class="c1"># Add Python 3.x behaviour to 2.7</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">unicode_literals</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Is recommended for Python 3.x but fails on 2.7, but is not mandatory</span>
+    <span class="kn">from</span> <span class="nn">builtins</span> <span class="kn">import</span> <span class="nb">object</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Python 2.x</span>
+    <span class="kn">import</span> <span class="nn">__builtin__</span> <span class="k">as</span> <span class="nn">builtins</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="c1"># Python 3+</span>
+    <span class="kn">import</span> <span class="nn">builtins</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+
+<span class="kn">import</span> <span class="nn">pmatic.api</span>
+<span class="kn">import</span> <span class="nn">pmatic.events</span>
+<span class="kn">import</span> <span class="nn">pmatic.utils</span> <span class="k">as</span> <span class="nn">utils</span>
+<span class="kn">from</span> <span class="nn">pmatic.entities</span> <span class="kn">import</span> <span class="n">Devices</span><span class="p">,</span> <span class="n">Device</span><span class="p">,</span> <span class="n">Rooms</span><span class="p">,</span> <span class="n">Room</span>
+<span class="kn">from</span> <span class="nn">pmatic.residents</span> <span class="kn">import</span> <span class="n">Residents</span>
+
+
+<div class="viewcode-block" id="CCU"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.CCU">[docs]</a><span class="k">class</span> <span class="nc">CCU</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Provides the simple to use access to the CCU.</span>
+
+<span class="sd">    This is the main object to be used with pmatic. It provides top level</span>
+<span class="sd">    access to all kind of entities like devices, channels, parameters, rooms</span>
+<span class="sd">    and so on. It is possible to either poll information from the CCU or</span>
+<span class="sd">    wait for incoming state update events provided by the CCU.</span>
+
+<span class="sd">    If your program is executed right on the CCU, you don&#39;t need to provide</span>
+<span class="sd">    any of the optional arguments.</span>
+
+<span class="sd">    The optional arguments *address* and *credentials* are needed if you execute</span>
+<span class="sd">    your program not on the CCU. You need to provide the host address of the</span>
+<span class="sd">    CCU, which can be an IP address or resolvable host name as *address* argument.</span>
+<span class="sd">    The *credentials* need to be given as two element tuple of username and password,</span>
+<span class="sd">    for example ``(&quot;admin&quot;, &quot;secretpw&quot;)`` which are then used to access the CCU.</span>
+
+<span class="sd">    The default TCP connect timeout for the HTTP requests to the CCU is set to</span>
+<span class="sd">    10 seconds. If you like to change the timeout, you need to set the argument</span>
+<span class="sd">    *connect_timeout* to a number of seconds of your choice.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_constructed</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__init__([address[, credentials[, connect_timeout=10]]])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;api&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="c1"># Skip second __init__ of pmatic manager CCU instances (see __new__ below)</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">CCU</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">pmatic</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rssi</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_devices</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_events</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rooms</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_residents</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_constructed</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This special method is used to prevent creation of a new CCU object by scripts which are</span>
+<span class="sd">        executed with the option &quot;run inline&quot; by the pmatic manager.</span>
+
+<span class="sd">        In this mode the scripts are not executed as separate process, but in the context of the</span>
+<span class="sd">        pmatic manager. This mode has been implemented to provide direct access to the already</span>
+<span class="sd">        fully initialized CCU() object off the pmatic manager. So scripts can access all devices,</span>
+<span class="sd">        channels, values etc. without the need to fetch them on their own from the CCU. This makes</span>
+<span class="sd">        running scripts running a lot faster while producing a very small load.</span>
+
+<span class="sd">        This method makes it possible to use regular pmatic scripts which create their own</span>
+<span class="sd">        CCU object and connect to the CCU on their own when run as dedicated programs within the</span>
+<span class="sd">        contxt of the pmatic manager and use the CCU object of the manager when executed in</span>
+<span class="sd">        &quot;run inline&quot; mode.</span>
+
+<span class="sd">        But this only works as intended after the connection of the manager with the CCU has been</span>
+<span class="sd">        initialized. So better not use the &quot;on startup of manager&quot; condition for this.</span>
+
+<span class="sd">        We need to override the __new__ instead of e.g. use a factory to keep the API of the</span>
+<span class="sd">        pmatic scripts equal in all pmatic script use cases.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">builtins</span><span class="p">,</span> <span class="s2">&quot;manager_ccu&quot;</span><span class="p">):</span> 
+<span class="c1">#            print(&quot;CCU: reuse &quot;)</span>
+            <span class="k">return</span> <span class="n">builtins</span><span class="o">.</span><span class="n">manager_ccu</span>
+        <span class="k">else</span><span class="p">:</span>
+<span class="c1">#            print(&quot;CCU: create new CCU &quot;)</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">CCU</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">devices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This property provides access to the collection of all known devices.</span>
+
+<span class="sd">        This collection is an instance of :class:`pmatic.ccu.CCUDevices`, which is a subclass</span>
+<span class="sd">        of the room collection class :class:`pmatic.entities.Devices`.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_devices</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_devices</span> <span class="o">=</span> <span class="n">CCUDevices</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_devices</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Using this property you can use the XML-RPC event listener of pmatic.</span>
+
+<span class="sd">        Provides access to the XML-RPC :class:`pmatic.events.EventListener` instance.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_events</span> <span class="o">=</span> <span class="n">pmatic</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">EventListener</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rooms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Provides access to the collection of all known rooms.</span>
+
+<span class="sd">        This collection is an instance of :class:`pmatic.ccu.CCURooms`, which is a subclass</span>
+<span class="sd">        of the room collection class :class:`pmatic.entities.Rooms`.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rooms</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_rooms</span> <span class="o">=</span> <span class="n">CCURooms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rooms</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">residents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Provides access to the resident and presence management functionality of pmatic.</span>
+<span class="sd">        See :class:`pmatic.residents.Residents` for details.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residents</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_residents</span> <span class="o">=</span> <span class="n">Residents</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residents</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Provides a list of available CCU communication interfaces.</span>
+
+<span class="sd">        Example output:</span>
+<span class="sd">            [ {u&#39;info&#39;: u&#39;BidCos-RF&#39;, u&#39;name&#39;: u&#39;BidCos-RF&#39;, u&#39;port&#39;: 2001},</span>
+<span class="sd">              {u&#39;info&#39;: u&#39;Virtual Devices&#39;, u&#39;name&#39;: u&#39;VirtualDevices&#39;, u&#39;port&#39;: 9292} ]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">interface_list_interfaces</span><span class="p">()</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">bidcos_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Provides a list of all BidCos interfaces of the CCU.</span>
+
+<span class="sd">        Example output:</span>
+<span class="sd">          [{u&#39;address&#39;: u&#39;KEQ0714972&#39;,</span>
+<span class="sd">            u&#39;description&#39;: u&#39;&#39;,</span>
+<span class="sd">            u&#39;duty_cycle&#39;: 0,</span>
+<span class="sd">            u&#39;is_connected&#39;: True,</span>
+<span class="sd">            u&#39;is_default&#39;: True}]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">interfaces</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">interface_list_bidcos_interfaces</span><span class="p">(</span>
+                                                    <span class="n">interface</span><span class="o">=</span><span class="s2">&quot;BidCos-RF&quot;</span><span class="p">):</span>
+            <span class="n">new</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">utils</span><span class="o">.</span><span class="n">is_py2</span><span class="p">():</span>
+                <span class="n">mylist</span> <span class="o">=</span> <span class="n">interface</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span> 
+                <span class="n">mylist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">interface</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">mylist</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;dutyCycle&quot;</span><span class="p">:</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                <span class="n">new</span><span class="p">[</span><span class="n">utils</span><span class="o">.</span><span class="n">decamel</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">val</span>
+            <span class="n">interfaces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">interfaces</span>
+
+
+    <span class="c1"># FIXME: Consolidate API with self.devices.(...)</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">signal_strengths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rssi</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_rssi</span> <span class="o">=</span> <span class="n">pmatic</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">SignalStrength</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rssi</span>
+
+
+<div class="viewcode-block" id="CCU.close"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.CCU.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Is used to close the connections with the CCU and the eventual open event listener&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="c1">#        print(&quot;CCU close&quot;)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="CCUDevices"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.CCUDevices">[docs]</a><span class="k">class</span> <span class="nc">CCUDevices</span><span class="p">(</span><span class="n">Devices</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The central device management class.</span>
+
+<span class="sd">    CCUDevices class is just like the :class:`.pmatic.entities.Devices` class, with the difference</span>
+<span class="sd">    that it provides the :meth:`.CCUDevices.query` method which can be used to create new</span>
+<span class="sd">    :class:`.pmatic.entities.Devices` collections. Another difference is, that it is initializing</span>
+<span class="sd">    all devices configured in the CCU as device objects when generic methods to access the devices</span>
+<span class="sd">    like :func:`len` are called on the object.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ccu</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CCUDevices</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">ccu</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_device_specs</span> <span class="o">=</span> <span class="n">pmatic</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">DeviceSpecs</span><span class="p">(</span><span class="n">ccu</span><span class="o">.</span><span class="n">api</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_device_logic</span> <span class="o">=</span> <span class="n">pmatic</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">DeviceLogic</span><span class="p">(</span><span class="n">ccu</span><span class="o">.</span><span class="n">api</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lock</span>   <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_devices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Optional initializer of the devices data structure, called on first access.&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_init_all_devices</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device_dict</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">initialized</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Full initialization of the device collection.</span>
+
+<span class="sd">        :getter: Whether or not the devices collection has been fully initialized.</span>
+<span class="sd">        :setter: Sets the device collection to initialized state (Only for internal use)</span>
+<span class="sd">        :type: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span>
+
+
+    <span class="nd">@initialized</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">initialized</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="n">value</span>
+
+
+    <span class="k">def</span> <span class="nf">_add_without_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_device_dict</span><span class="p">[</span><span class="n">device</span><span class="o">.</span><span class="n">address</span><span class="p">]</span> <span class="o">=</span> <span class="n">device</span>
+
+
+<div class="viewcode-block" id="CCUDevices.query"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.CCUDevices.query">[docs]</a>    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">filters</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;query([device_type=None[, device_name=None[, device_name_regex=None[, device_address=None ]]]])</span>
+<span class="sd">        Use this function to query the CCU for a collection of devices.</span>
+
+<span class="sd">        The devices are returned in a :class:`.pmatic.entities.Devices` collection.</span>
+<span class="sd">        Additionally the device objects are cached in the centrall :class:`.pmatic.CCU` object for</span>
+<span class="sd">        later reference, when e.g. another search is asking for the same device. In</span>
+<span class="sd">        case the same object is returned.</span>
+
+<span class="sd">        The object can be filtered using different filter parameters.</span>
+
+<span class="sd">        The *device_type*</span>
+<span class="sd">        can be used to either search for devices of one specific or multiple types. The</span>
+<span class="sd">        device type needs to be given as string which needs to be the exact product name,</span>
+<span class="sd">        for example ``device_type=&quot;HM-Sec-SC&quot;``. If you want to get multiple device types,</span>
+<span class="sd">        you can do it like this: ``device_type=[&quot;HM-Sec-SC&quot;, &quot;HM-CC-RT-DN&quot;]``.</span>
+
+<span class="sd">        You can also search for specific devices by their names. The first option is to</span>
+<span class="sd">        search for the exact name of one single device by setting the *device_name* to the</span>
+<span class="sd">        name of the device, for example: ``device_name=&quot;Wohnzimmer-Fenster&quot;``. Please note</span>
+<span class="sd">        that this filter is case sensitive and a full exact match for the device name.</span>
+
+<span class="sd">        If you need more flexible filtering by the name, you can use the *device_name_regex*</span>
+<span class="sd">        filter. You can either provide a regex in form of a string which is then matched</span>
+<span class="sd">        with the device name from the start of the name (prefix match).</span>
+<span class="sd">        One example to match all device names ending with *-Fenster*:</span>
+<span class="sd">        ``device_name_regex=&quot;.*-Fenster$&quot;``.</span>
+<span class="sd">        You can also provide the result of :func:`re.compile` as value of *device_name_regex*.</span>
+<span class="sd">        This is useful if you want to specify some special regex flags for your matching regex.</span>
+
+<span class="sd">        The *device_address* can be used to get a specific device by it&#39;s address. This is an</span>
+<span class="sd">        exact match filter. So you can either get a device collection of one device or an empty</span>
+<span class="sd">        one back.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">devices</span> <span class="o">=</span> <span class="n">Devices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_for_devices</span><span class="p">(</span><span class="o">**</span><span class="n">filters</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_without_init</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">devices</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">devices</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_query_for_devices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">filters</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;device_type&quot;</span> <span class="ow">in</span> <span class="n">filters</span> <span class="ow">and</span> <span class="n">utils</span><span class="o">.</span><span class="n">is_string</span><span class="p">(</span><span class="n">filters</span><span class="p">[</span><span class="s2">&quot;device_type&quot;</span><span class="p">]):</span>
+            <span class="n">filters</span><span class="p">[</span><span class="s2">&quot;device_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">filters</span><span class="p">[</span><span class="s2">&quot;device_type&quot;</span><span class="p">]]</span>
+
+        <span class="k">if</span> <span class="n">utils</span><span class="o">.</span><span class="n">is_py2</span><span class="p">():</span>
+            <span class="n">mylist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device_specs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">mylist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device_specs</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">address</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">mylist</span><span class="p">:</span>
+            <span class="c1"># First try to get an already created room object from the central</span>
+            <span class="c1"># CCU room collection. Otherwise create the room object and add it</span>
+            <span class="c1"># to the central collection and this collection.</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">device</span><span class="p">:</span>
+                <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_from_low_level_dict</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+
+            <span class="c1"># Now perform optional filtering</span>
+
+            <span class="c1"># Filter by device type</span>
+            <span class="k">if</span> <span class="s2">&quot;device_type&quot;</span> <span class="ow">in</span> <span class="n">filters</span> <span class="ow">and</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">[</span><span class="s2">&quot;device_type&quot;</span><span class="p">]:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Exact match device name</span>
+            <span class="k">if</span> <span class="s2">&quot;device_name&quot;</span> <span class="ow">in</span> <span class="n">filters</span> <span class="ow">and</span> <span class="n">filters</span><span class="p">[</span><span class="s2">&quot;device_name&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">device</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># regex match device name</span>
+            <span class="k">if</span> <span class="s2">&quot;device_name_regex&quot;</span> <span class="ow">in</span> <span class="n">filters</span> \
+               <span class="ow">and</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">filters</span><span class="p">[</span><span class="s2">&quot;device_name_regex&quot;</span><span class="p">],</span> <span class="n">device</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Add devices which have one of the channel ids listed in has_channel_ids</span>
+            <span class="k">if</span> <span class="s2">&quot;has_channel_ids&quot;</span> <span class="ow">in</span> <span class="n">filters</span> \
+               <span class="ow">and</span> <span class="ow">not</span> <span class="p">[</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">device</span><span class="o">.</span><span class="n">channels</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">[</span><span class="s2">&quot;has_channel_ids&quot;</span><span class="p">]</span> <span class="p">]:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># exact device address match</span>
+            <span class="k">if</span> <span class="s2">&quot;device_address&quot;</span> <span class="ow">in</span> <span class="n">filters</span> <span class="ow">and</span> <span class="n">device</span><span class="o">.</span><span class="n">address</span> <span class="o">!=</span> <span class="n">filters</span><span class="p">[</span><span class="s2">&quot;device_address&quot;</span><span class="p">]:</span>
+                <span class="k">continue</span>
+
+            <span class="k">yield</span> <span class="n">device</span>
+
+
+    <span class="k">def</span> <span class="nf">_init_all_devices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds all devices known to the CCU to this collection.</span>
+
+<span class="sd">        It is called to initialize the devices on the first accessor method call. It initializes</span>
+<span class="sd">        the device collections once. You can enforce the collection too be re-initialized by</span>
+<span class="sd">        calling :meth:`clear` and then call an accessor again.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_for_devices</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_without_init</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">add_from_low_level_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Creates a device object and add it to the collection.</span>
+
+<span class="sd">        This method can be used to create a device object by providing a valid</span>
+<span class="sd">        low level attributes dictionary specifying an object.</span>
+
+<span class="sd">        It creates the device and also assigns the logic level attributes to</span>
+<span class="sd">        the object so that it is a fully initialized device object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_without_init</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_create_from_low_level_dict</span><span class="p">(</span><span class="n">spec</span><span class="p">))</span>
+
+
+    <span class="k">def</span> <span class="nf">_create_from_low_level_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Creates a device object from a low level device spec.&quot;&quot;&quot;</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">Device</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="p">,</span> <span class="n">spec</span><span class="p">)</span>
+        <span class="n">device</span><span class="o">.</span><span class="n">set_logic_attributes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device_logic</span><span class="p">[</span><span class="n">device</span><span class="o">.</span><span class="n">address</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">device</span>
+
+
+<div class="viewcode-block" id="CCUDevices.clear"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.CCUDevices.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove all objects from this devices collection.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_devices</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">already_initialized_devices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Provides access to the already known devices without fetching new ones.</span>
+
+<span class="sd">        Directly provices access to the device dictionary where the address of the devices</span>
+<span class="sd">        is used as key and the device objects are the values.</span>
+
+<span class="sd">        Only for internal use.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device_dict</span></div>
+
+
+<div class="viewcode-block" id="CCURooms"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.CCURooms">[docs]</a><span class="k">class</span> <span class="nc">CCURooms</span><span class="p">(</span><span class="n">Rooms</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The central room management class.</span>
+
+<span class="sd">    The :class:`.CCURooms` class is just like the :class:`.pmatic.entities.Rooms` class, with the</span>
+<span class="sd">    difference that it provides the :meth:`.CCURooms.query` method which can be used to create new</span>
+<span class="sd">    :class:`.pmatic.entities.Rooms` collections. Another difference is, that it is initializing</span>
+<span class="sd">    all rooms configured in the CCU as room objects when generic methods to access the rooms</span>
+<span class="sd">    like :func:`len` are called on the object.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ccu</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CCURooms</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">ccu</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_rooms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Optional initializer of the rooms data structure, called on first access.&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_room_dict</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_init_all_rooms</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_room_dict</span>
+
+
+    <span class="k">def</span> <span class="nf">_add_without_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">room</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_room_dict</span><span class="p">[</span><span class="n">room</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">room</span>
+
+
+<div class="viewcode-block" id="CCURooms.query"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.CCURooms.query">[docs]</a>    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">filters</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;query([room_name=None[, room_name_regex=None]])</span>
+<span class="sd">        Use this function to query the CCU for a collection of rooms.</span>
+
+<span class="sd">        The room objects are returned in a :class:`.pmatic.entities.Rooms` collection.</span>
+<span class="sd">        Additionally the room objects are cached in the central :class:`.pmatic.CCU` object for</span>
+<span class="sd">        later reference, when e.g. another search is asking for the same room. In</span>
+<span class="sd">        case the same object is returned.</span>
+
+<span class="sd">        The object can be filtered using different filter parameters.</span>
+
+<span class="sd">        You can search for specific rooms by their names. The first option is to</span>
+<span class="sd">        search for the exact name of one single room by setting the *room_name* to the</span>
+<span class="sd">        name of the room, for example: ``room_name=&quot;Wohnzimmer&quot;``. Please note</span>
+<span class="sd">        that this filter is case sensitive and a full exact match for the room name.</span>
+
+<span class="sd">        If you need more flexible filtering by the name, you can use the *room_name_regex*</span>
+<span class="sd">        filter. You can either provide a regex in form of a string which is then matched</span>
+<span class="sd">        with the room name from the start of the name (prefix match).</span>
+<span class="sd">        One example to match all room names ending with *-2-Floor*:</span>
+<span class="sd">        ``room_name_regex=&quot;.*-2-Floor$&quot;``.</span>
+<span class="sd">        You can also provide the result of :func:`re.compile` as value of *room_name_regex*.</span>
+<span class="sd">        This is useful if you want to specify some special regex flags for your matching regex.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rooms</span> <span class="o">=</span> <span class="n">Rooms</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_for_rooms</span><span class="p">(</span><span class="o">**</span><span class="n">filters</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_without_init</span><span class="p">(</span><span class="n">room</span><span class="p">)</span>
+            <span class="n">rooms</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">room</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">rooms</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_query_for_rooms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">filters</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initializes the list of rooms for this collection.</span>
+
+<span class="sd">        When the rooms have not been fetched yet, the room specs might be fetched</span>
+<span class="sd">        from the CCU.</span>
+
+<span class="sd">        You can enforce reinitialization by first calling :meth:`clear` and the access the data</span>
+<span class="sd">        of this instance again.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">room_dict</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">room_get_all</span><span class="p">():</span>
+            <span class="c1"># First try to get an olready created room object from the central</span>
+            <span class="c1"># CCU room collection. Otherwise create the room object and add it</span>
+            <span class="c1"># to the central collection and this collection.</span>
+            <span class="n">room</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_room_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">room_dict</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">room</span><span class="p">:</span>
+                <span class="n">room</span> <span class="o">=</span> <span class="n">Room</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ccu</span><span class="p">,</span> <span class="n">room_dict</span><span class="p">)</span>
+
+            <span class="c1"># Now perform optional filtering</span>
+
+            <span class="c1"># Exact match device name</span>
+            <span class="k">if</span> <span class="s2">&quot;room_name&quot;</span> <span class="ow">in</span> <span class="n">filters</span> <span class="ow">and</span> <span class="n">filters</span><span class="p">[</span><span class="s2">&quot;room_name&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">room</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># regex match device name</span>
+            <span class="k">if</span> <span class="s2">&quot;room_name_regex&quot;</span> <span class="ow">in</span> <span class="n">filters</span> \
+               <span class="ow">and</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">filters</span><span class="p">[</span><span class="s2">&quot;room_name_regex&quot;</span><span class="p">],</span> <span class="n">room</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="k">yield</span> <span class="n">room</span>
+
+
+    <span class="k">def</span> <span class="nf">_init_all_rooms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds all rooms known to the CCU to this collection.</span>
+
+<span class="sd">        It is called to initialize the rooms on the first accessor method call. It initializes the</span>
+<span class="sd">        collections once. You can enforce the collection too be re-initialized by calling</span>
+<span class="sd">        :meth:`clear` and then call an accessor again.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">room</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query_for_rooms</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_without_init</span><span class="p">(</span><span class="n">room</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CCURooms.clear"><a class="viewcode-back" href="../../pmatic_module.html#pmatic.CCURooms.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove all :class:`Room` objects from this collection.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rooms</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">False</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pmatic 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../pmatic.html" >pmatic</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Lars Michelsen.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.2.
+    </div>
+  </body>
+</html>

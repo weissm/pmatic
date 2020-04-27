@@ -1,0 +1,188 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Installation &#8212; pmatic 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
+    <script src="_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+    <script src="_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Basic Usage" href="basic_usage.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="basic_usage.html" title="Basic Usage"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pmatic 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>pmatic can either be installed and used on any Linux system of your choice having
+Python installed or directly on the Homematic CCU. Later might be useful if you
+want to run your scripts when all your other devices aren’t running.</p>
+<div class="section" id="installation-on-the-ccu2">
+<h2>Installation on the CCU2<a class="headerlink" href="#installation-on-the-ccu2" title="Permalink to this headline">¶</a></h2>
+<p>You have two options to download pmatic. To have a stable version, you should
+download a released version from the <a class="reference external" href="https://github.com/LarsMichelsen/pmatic/releases">GitHub releases page of pmatic</a>.
+To get the CCU addon you need to download the file named like <code class="docutils literal notranslate"><span class="pre">pmatic-*_ccu.tar.gz</span></code>.</p>
+<p>If you feel adventurous and like to test the newest changes, you can download a snapshot
+CCU addon package from <a class="reference external" href="https://larsmichelsen.github.io/pmatic/pmatic-snapshot_ccu.tar.gz">here</a>.
+It is a snapshot package which is automatically built from the latest
+git version available. So please note that this is not as stable as a
+released version would be. But feel free to try and test it. Let me know
+if you experience any issues with it. Once there is a better version ready
+I’ll change these lines.</p>
+<p>Once you downloaded the version of your choice, open up the Web Interface of the CCU in
+your browser and upload this file to your CCU using the regular addon upload form
+(In German: “Einstellungen / Systemsteuerung / Zusatzsoftware”) to install pmatic on it.</p>
+<p>After the CCU has been restarted, pmatic should have been installed. You can now use
+the pmatic Manager, which can be opened from the addon menu you used before to install
+pmatic. Open this dialog again. You should see an entry for the pmatic addon and a link
+to the pmatic manager in the right column. If you click on it, the pmatic manager will
+be opened. Here you can see a list of example scripts which you can try to execute now.</p>
+<p>If you like to stick to the command line instead, you can connect to your CCU via SSH
+and run this command to confirm pmatic has been installed correctly:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python -c <span class="s1">&#39;import pmatic&#39;</span>
+</pre></div>
+</div>
+<p>When the command completes silently (without <code class="docutils literal notranslate"><span class="pre">ImportError</span></code> exception) the
+installation was successful.</p>
+<p>The installation has been finished. You can now execute your own
+python and pmatic scripts on your CCU. For some examples you can change
+to <code class="docutils literal notranslate"><span class="pre">/etc/config/addons/pmatic/scripts/examples</span></code> and have a look at the source or
+just try them.</p>
+<p>Your own scripts should be placed in the directory <code class="docutils literal notranslate"><span class="pre">/etc/config/addons/pmatic/scripts</span></code>
+or any directory below. This makes the scripts accessible through command line and
+through the pmatic manager.</p>
+<p>As I only have a CCU2, not a CCU, I don’t know whether or not pmatic is
+working on the CCU too. But I hope so. Please let me know if it is working
+or not.</p>
+</div>
+<div class="section" id="installation-on-your-workstation">
+<h2>Installation on your workstation<a class="headerlink" href="#installation-on-your-workstation" title="Permalink to this headline">¶</a></h2>
+<p>The easiest way is to use <code class="docutils literal notranslate"><span class="pre">pip</span></code> for installation. Simply execute</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip install --upgrade pmatic
+</pre></div>
+</div>
+<p>If this does not work for you for some reason, you can install pmatic manually. This should
+also be straight forward. First download pmatic by either downloading a released version from
+the <a class="reference external" href="https://pypi.python.org/pypi/pmatic">PyPI pmatic page</a> or the
+<a class="reference external" href="https://github.com/LarsMichelsen/pmatic/releases">GitHub releases page of pmatic</a>, the
+<a class="reference external" href="https://larsmichelsen.github.io/pmatic/pmatic-snapshot.tar.gz">current git snapshot</a> or
+by cloning the <a class="reference external" href="https://github.com/LarsMichelsen/pmatic">Git repository</a>.
+Then unpack it and change to the extracted directory <code class="docutils literal notranslate"><span class="pre">pmatic-*</span></code>. Then execute:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python setup.py install
+</pre></div>
+</div>
+<p>After installation you can confirm pmatic has been installed by executing</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python -c <span class="s1">&#39;import pmatic&#39;</span>
+</pre></div>
+</div>
+<p>When the command completes silently (without <code class="docutils literal notranslate"><span class="pre">ImportError</span></code> exception) the
+installation was successful.</p>
+<p>I developed and tested pmatic on a Debian 8 system with Python 2.7.9, but
+pmatic should work on other platforms meeting the pmatic requirements. It is also
+tested with all current Python 3 versions.</p>
+<p>Please let me know or send me a pull request on GitHub if there are compatibility
+issues on a platform you would expect pmatic to work.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#installation-on-the-ccu2">Installation on the CCU2</a></li>
+<li><a class="reference internal" href="#installation-on-your-workstation">Installation on your workstation</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="introduction.html"
+                        title="previous chapter">Introduction</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="basic_usage.html"
+                        title="next chapter">Basic Usage</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/install.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="basic_usage.html" title="Basic Usage"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pmatic 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Lars Michelsen.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.2.
+    </div>
+  </body>
+</html>

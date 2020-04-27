@@ -1,0 +1,1090 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>The pmatic Module &#8212; pmatic 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
+    <script src="_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+    <script src="_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Specific Devices" href="pmatic_devices.html" />
+    <link rel="prev" title="Basic Usage" href="basic_usage.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pmatic_devices.html" title="Specific Devices"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="basic_usage.html" title="Basic Usage"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pmatic 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="the-pmatic-module">
+<h1>The pmatic Module<a class="headerlink" href="#the-pmatic-module" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-pmatic">
+<span id="ccu-the-central-object"></span><h2>CCU - The Central Object<a class="headerlink" href="#module-pmatic" title="Permalink to this headline">¶</a></h2>
+<p>A simple to use API to the Homematic CCU</p>
+<p>The pmatic module provides access to the Homematic CCU which operates as
+the central unit in Homematic based home automation setips.. You can use
+pmatic directly on the CCU2 or another system having Python installed.
+With pmatic you can write your own Python scripts to communicate with
+your CCU device.</p>
+<p>Take a look at &lt;<a class="reference external" href="https://github.com/LarsMichelsen/pmatic">https://github.com/LarsMichelsen/pmatic</a>&gt; for details.</p>
+<dl class="py class">
+<dt id="pmatic.CCU">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.</code><code class="sig-name descname">CCU</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/ccu.html#CCU"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.CCU" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides the simple to use access to the CCU.</p>
+<p>This is the main object to be used with pmatic. It provides top level
+access to all kind of entities like devices, channels, parameters, rooms
+and so on. It is possible to either poll information from the CCU or
+wait for incoming state update events provided by the CCU.</p>
+<p>If your program is executed right on the CCU, you don’t need to provide
+any of the optional arguments.</p>
+<p>The optional arguments <em>address</em> and <em>credentials</em> are needed if you execute
+your program not on the CCU. You need to provide the host address of the
+CCU, which can be an IP address or resolvable host name as <em>address</em> argument.
+The <em>credentials</em> need to be given as two element tuple of username and password,
+for example <code class="docutils literal notranslate"><span class="pre">(&quot;admin&quot;,</span> <span class="pre">&quot;secretpw&quot;)</span></code> which are then used to access the CCU.</p>
+<p>The default TCP connect timeout for the HTTP requests to the CCU is set to
+10 seconds. If you like to change the timeout, you need to set the argument
+<em>connect_timeout</em> to a number of seconds of your choice.</p>
+<dl class="py method">
+<dt id="pmatic.CCU.devices">
+<em class="property">property </em><code class="sig-name descname">devices</code><a class="headerlink" href="#pmatic.CCU.devices" title="Permalink to this definition">¶</a></dt>
+<dd><p>This property provides access to the collection of all known devices.</p>
+<p>This collection is an instance of <a class="reference internal" href="#pmatic.ccu.CCUDevices" title="pmatic.ccu.CCUDevices"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.ccu.CCUDevices</span></code></a>, which is a subclass
+of the room collection class <a class="reference internal" href="#pmatic.entities.Devices" title="pmatic.entities.Devices"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.entities.Devices</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.CCU.events">
+<em class="property">property </em><code class="sig-name descname">events</code><a class="headerlink" href="#pmatic.CCU.events" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using this property you can use the XML-RPC event listener of pmatic.</p>
+<p>Provides access to the XML-RPC <a class="reference internal" href="#pmatic.events.EventListener" title="pmatic.events.EventListener"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.events.EventListener</span></code></a> instance.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.CCU.rooms">
+<em class="property">property </em><code class="sig-name descname">rooms</code><a class="headerlink" href="#pmatic.CCU.rooms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides access to the collection of all known rooms.</p>
+<p>This collection is an instance of <a class="reference internal" href="#pmatic.ccu.CCURooms" title="pmatic.ccu.CCURooms"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.ccu.CCURooms</span></code></a>, which is a subclass
+of the room collection class <a class="reference internal" href="#pmatic.entities.Rooms" title="pmatic.entities.Rooms"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.entities.Rooms</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.CCU.residents">
+<em class="property">property </em><code class="sig-name descname">residents</code><a class="headerlink" href="#pmatic.CCU.residents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides access to the resident and presence management functionality of pmatic.
+See <a class="reference internal" href="pmatic_residents.html#pmatic.residents.Residents" title="pmatic.residents.Residents"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.residents.Residents</span></code></a> for details.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.CCU.close">
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/ccu.html#CCU.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.CCU.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is used to close the connections with the CCU and the eventual open event listener</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pmatic.PMException">
+<em class="property">exception </em><code class="sig-prename descclassname">pmatic.</code><code class="sig-name descname">PMException</code><a class="reference internal" href="_modules/pmatic/exceptions.html#PMException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.PMException" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the base exception for all exceptions raised by pmatic.</p>
+<p>This exception is either a base class for all other pmatic specific
+exceptions but also directly raised in a lot of places where no more
+specific exception type exists.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pmatic.PMConnectionError">
+<em class="property">exception </em><code class="sig-prename descclassname">pmatic.</code><code class="sig-name descname">PMConnectionError</code><a class="reference internal" href="_modules/pmatic/exceptions.html#PMConnectionError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.PMConnectionError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is raised when the connection with the CCU could not be established.</p>
+<p>This exception is raised by pmatic.api in situations where the CCU could not
+be contacted. Normally such an exception means that the just failed action
+can be tried again later.</p>
+<p>For example when the CCU is currently not reachable this kind of exception
+is raised. Means it is worth it to try again later with same parameters.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pmatic.PMDeviceOffline">
+<em class="property">exception </em><code class="sig-prename descclassname">pmatic.</code><code class="sig-name descname">PMDeviceOffline</code><a class="reference internal" href="_modules/pmatic/exceptions.html#PMDeviceOffline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.PMDeviceOffline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is raised when trying to read e.g. values from the device but it is offline.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pmatic.PMActionFailed">
+<em class="property">exception </em><code class="sig-prename descclassname">pmatic.</code><code class="sig-name descname">PMActionFailed</code><a class="reference internal" href="_modules/pmatic/exceptions.html#PMActionFailed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.PMActionFailed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is raised when setting a value (parameter) of a channel fails.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pmatic.PMUserError">
+<em class="property">exception </em><code class="sig-prename descclassname">pmatic.</code><code class="sig-name descname">PMUserError</code><a class="reference internal" href="_modules/pmatic/exceptions.html#PMUserError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.PMUserError" title="Permalink to this definition">¶</a></dt>
+<dd><p>This exception is used when this situation is explicitly an error caused by the user.</p>
+<p>For example invalid user input in forms of the pmatic manager or similar.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pmatic.logging">
+<code class="sig-prename descclassname">pmatic.</code><code class="sig-name descname">logging</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">log_level</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log_file</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic.html#logging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.logging" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enables logging of pmatic log messages to stderr.</p>
+<p>When log_level is not set, it will default to WARNING if you did not
+configure the logging on your own in your application. Otherwise all log messages
+of pmatic which are of the given level or more severe will be logged to stderr.</p>
+<p>This is only a default to be used e.g. in simple scripts. If you need more
+flexible logging, you are free to configure the logging module on your own.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="ccudevices-top-level-collection-of-devices">
+<h2>CCUDevices - Top Level Collection of Devices<a class="headerlink" href="#ccudevices-top-level-collection-of-devices" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="pmatic.ccu.CCUDevices">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.ccu.</code><code class="sig-name descname">CCUDevices</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ccu</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/ccu.html#CCUDevices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.ccu.CCUDevices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pmatic.entities.Devices" title="pmatic.entities.Devices"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.entities.Devices</span></code></a></p>
+<p>The central device management class.</p>
+<p>CCUDevices class is just like the <a class="reference internal" href="#pmatic.entities.Devices" title="pmatic.entities.Devices"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.entities.Devices</span></code></a> class, with the difference
+that it provides the <a class="reference internal" href="#pmatic.ccu.CCUDevices.query" title="pmatic.ccu.CCUDevices.query"><code class="xref py py-meth docutils literal notranslate"><span class="pre">CCUDevices.query()</span></code></a> method which can be used to create new
+<a class="reference internal" href="#pmatic.entities.Devices" title="pmatic.entities.Devices"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.entities.Devices</span></code></a> collections. Another difference is, that it is initializing
+all devices configured in the CCU as device objects when generic methods to access the devices
+like <a class="reference external" href="https://docs.python.org/2.7/library/functions.html#len" title="(in Python v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">len()</span></code></a> are called on the object.</p>
+<dl class="py method">
+<dt id="pmatic.ccu.CCUDevices.query">
+<code class="sig-name descname">query</code><span class="sig-paren">(</span><span class="optional">[</span><em class="sig-param">device_type=None</em><span class="optional">[</span>, <em class="sig-param">device_name=None</em><span class="optional">[</span>, <em class="sig-param">device_name_regex=None</em><span class="optional">[</span>, <em class="sig-param">device_address=None</em><span class="optional">]</span><span class="optional">]</span><span class="optional">]</span><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/ccu.html#CCUDevices.query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.ccu.CCUDevices.query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use this function to query the CCU for a collection of devices.</p>
+<p>The devices are returned in a <a class="reference internal" href="#pmatic.entities.Devices" title="pmatic.entities.Devices"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.entities.Devices</span></code></a> collection.
+Additionally the device objects are cached in the centrall <a class="reference internal" href="#pmatic.CCU" title="pmatic.CCU"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.CCU</span></code></a> object for
+later reference, when e.g. another search is asking for the same device. In
+case the same object is returned.</p>
+<p>The object can be filtered using different filter parameters.</p>
+<p>The <em>device_type</em>
+can be used to either search for devices of one specific or multiple types. The
+device type needs to be given as string which needs to be the exact product name,
+for example <code class="docutils literal notranslate"><span class="pre">device_type=&quot;HM-Sec-SC&quot;</span></code>. If you want to get multiple device types,
+you can do it like this: <code class="docutils literal notranslate"><span class="pre">device_type=[&quot;HM-Sec-SC&quot;,</span> <span class="pre">&quot;HM-CC-RT-DN&quot;]</span></code>.</p>
+<p>You can also search for specific devices by their names. The first option is to
+search for the exact name of one single device by setting the <em>device_name</em> to the
+name of the device, for example: <code class="docutils literal notranslate"><span class="pre">device_name=&quot;Wohnzimmer-Fenster&quot;</span></code>. Please note
+that this filter is case sensitive and a full exact match for the device name.</p>
+<p>If you need more flexible filtering by the name, you can use the <em>device_name_regex</em>
+filter. You can either provide a regex in form of a string which is then matched
+with the device name from the start of the name (prefix match).
+One example to match all device names ending with <em>-Fenster</em>:
+<code class="docutils literal notranslate"><span class="pre">device_name_regex=&quot;.*-Fenster$&quot;</span></code>.
+You can also provide the result of <a class="reference external" href="https://docs.python.org/2.7/library/re.html#re.compile" title="(in Python v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">re.compile()</span></code></a> as value of <em>device_name_regex</em>.
+This is useful if you want to specify some special regex flags for your matching regex.</p>
+<p>The <em>device_address</em> can be used to get a specific device by it’s address. This is an
+exact match filter. So you can either get a device collection of one device or an empty
+one back.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.ccu.CCUDevices.clear">
+<code class="sig-name descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/ccu.html#CCUDevices.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.ccu.CCUDevices.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all objects from this devices collection.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="devices-collections-of-devices">
+<h2>Devices - Collections of Devices<a class="headerlink" href="#devices-collections-of-devices" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="pmatic.entities.Devices">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.entities.</code><code class="sig-name descname">Devices</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ccu</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Devices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Devices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manages a collection of CCU devices.</p>
+<dl class="py method">
+<dt id="pmatic.entities.Devices.get">
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">address</span></em>, <em class="sig-param"><span class="n">deflt</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Devices.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Devices.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the device matching the given device address.</p>
+<p>If there is none matching the given address either None or the value
+specified by the optional attribute <em>deflt</em> is returned.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Devices.add">
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">device</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Devices.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Devices.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a <a class="reference internal" href="#pmatic.entities.Device" title="pmatic.entities.Device"><code class="xref py py-class docutils literal notranslate"><span class="pre">Device</span></code></a> object to the collection.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Devices.exists">
+<code class="sig-name descname">exists</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">address</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Devices.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Devices.exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether or not a device with the given address is in this collection.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Devices.addresses">
+<code class="sig-name descname">addresses</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Devices.addresses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Devices.addresses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all addresses of all initialized devices.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Devices.delete">
+<code class="sig-name descname">delete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">address</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Devices.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Devices.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the device with the given address from the pmatic runtime.</p>
+<p>The device is not deleted from the CCU.
+When the device is not known, the method is tollerating that.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Devices.clear">
+<code class="sig-name descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Devices.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Devices.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all objects from this devices collection.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Devices.get_device_or_channel_by_address">
+<code class="sig-name descname">get_device_or_channel_by_address</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">address</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Devices.get_device_or_channel_by_address"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Devices.get_device_or_channel_by_address" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the device or channel object of the given address.</p>
+<p>Raises a KeyError exception when no device exists for this
+address in the already fetched objects.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Devices.on_value_changed">
+<code class="sig-name descname">on_value_changed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Devices.on_value_changed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Devices.on_value_changed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a function to be called each time a value of a device in this
+collection changed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Devices.on_value_updated">
+<code class="sig-name descname">on_value_updated</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Devices.on_value_updated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Devices.on_value_updated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a function to be called each time a value of a device in this
+collection updated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Devices.__iter__">
+<code class="sig-name descname">__iter__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Devices.__iter__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Devices.__iter__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides an iterator over the devices of this collection.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Devices.__len__">
+<code class="sig-name descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Devices.__len__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Devices.__len__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is e.g. used by <a class="reference external" href="https://docs.python.org/2.7/library/functions.html#len" title="(in Python v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">len()</span></code></a>. Returns the number of devices in this collection.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="device-device-connected-with-the-ccu">
+<h2>Device - Device connected with the CCU<a class="headerlink" href="#device-device-connected-with-the-ccu" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="pmatic.entities.Device">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.entities.</code><code class="sig-name descname">Device</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ccu</span></em>, <em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Device"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Device" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="pmatic.entities.Device.from_dict">
+<em class="property">classmethod </em><code class="sig-name descname">from_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ccu</span></em>, <em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Device.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Device.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new device object from the attributes given in the <em>spec</em> dictionary.</p>
+<p>The <em>spec</em> dictionary needs to contain the mandatory attributes with values of the correct
+format. Depending on the device type specified by the <em>spec</em> dictionary, either a specific
+device class or the generic <a class="reference internal" href="#pmatic.entities.Device" title="pmatic.entities.Device"><code class="xref py py-class docutils literal notranslate"><span class="pre">Device</span></code></a> class is used to create the object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Device.maintenance">
+<em class="property">property </em><code class="sig-name descname">maintenance</code><a class="headerlink" href="#pmatic.entities.Device.maintenance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the <a class="reference internal" href="pmatic_devices.html#pmatic.entities.ChannelMaintenance" title="pmatic.entities.ChannelMaintenance"><code class="xref py py-class docutils literal notranslate"><span class="pre">ChannelMaintenance</span></code></a> object of this device. It provides
+access to generic maintenance information available on this device.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Device.set_logic_attributes">
+<code class="sig-name descname">set_logic_attributes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attrs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Device.set_logic_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Device.set_logic_attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to update the logic attributes of this device.</p>
+<p>Applying the attributes in the dictionary to this object. Special handling
+for some attributes which are already set by the low level attributes and
+for the channel attributes which are also part of attrs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Device.is_online">
+<em class="property">property </em><code class="sig-name descname">is_online</code><a class="headerlink" href="#pmatic.entities.Device.is_online" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is <code class="docutils literal notranslate"><span class="pre">True</span></code> when the device is currently reachable. Otherwise it is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Device.is_battery_low">
+<em class="property">property </em><code class="sig-name descname">is_battery_low</code><a class="headerlink" href="#pmatic.entities.Device.is_battery_low" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is <code class="docutils literal notranslate"><span class="pre">True</span></code> when the battery is reported to be low.</p>
+<p>When the battery is in normal state, it is <code class="docutils literal notranslate"><span class="pre">False</span></code>. It might be a
+non battery powered device, then it is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Device.has_pending_config">
+<em class="property">property </em><code class="sig-name descname">has_pending_config</code><a class="headerlink" href="#pmatic.entities.Device.has_pending_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is <code class="docutils literal notranslate"><span class="pre">True</span></code> when the CCU has pending configuration changes for this device.
+Otherwise it is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Device.has_pending_update">
+<em class="property">property </em><code class="sig-name descname">has_pending_update</code><a class="headerlink" href="#pmatic.entities.Device.has_pending_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is <code class="docutils literal notranslate"><span class="pre">True</span></code> when the CCU has a pending firmware update for this device.
+Otherwise it is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Device.rssi">
+<em class="property">property </em><code class="sig-name descname">rssi</code><a class="headerlink" href="#pmatic.entities.Device.rssi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is a two element tuple of the devices current RSSI (Received Signal Strength Indication).</p>
+<p>The first element is the devices RSSI, the second one the CCUs RSSI.</p>
+<p>In case of the CCU itself or a non radio device it is set to <code class="docutils literal notranslate"><span class="pre">(None,</span> <span class="pre">None)</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Device.inhibit">
+<em class="property">property </em><code class="sig-name descname">inhibit</code><a class="headerlink" href="#pmatic.entities.Device.inhibit" title="Permalink to this definition">¶</a></dt>
+<dd><p>The actual inhibit state of the device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Getter</dt>
+<dd class="field-odd"><p>Whether or not the device is currently locked, provided as
+<code class="xref py py-class docutils literal notranslate"><span class="pre">params.ParameterBOOL</span></code>.</p>
+</dd>
+<dt class="field-even">Setter</dt>
+<dd class="field-even"><p>Specify the new inhibit state as boolean.</p>
+</dd>
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">params.ParameterBOOL</span></code>/bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Device.summary_state">
+<em class="property">property </em><code class="sig-name descname">summary_state</code><a class="headerlink" href="#pmatic.entities.Device.summary_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a textual summary state of the device.</p>
+<p>Gives you a string representing some kind of summary state of the device. This
+string does not necessarly contain all state information of the devices.</p>
+<p>When a device is unreachable, it does only contain this information.</p>
+<p>This default method concatenates values and titles of channel values and
+provides them as string. The values are sorted by the titles.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Device.channel_by_address">
+<code class="sig-name descname">channel_by_address</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">address</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Device.channel_by_address"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Device.channel_by_address" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the channel object having the requested address.</p>
+<p>When the device has no such channel, a KeyError() is raised.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Device.on_value_changed">
+<code class="sig-name descname">on_value_changed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Device.on_value_changed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Device.on_value_changed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a function to be called each time a value of this device has changed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Device.on_value_updated">
+<code class="sig-name descname">on_value_updated</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Device.on_value_updated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Device.on_value_updated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a function to be called each time a value of this device has updated.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="channel-manages-values">
+<h2>Channel - Manages values<a class="headerlink" href="#channel-manages-values" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="pmatic.entities.Channel">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.entities.</code><code class="sig-name descname">Channel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">device</span></em>, <em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Channel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Channel" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="pmatic.entities.Channel.from_channel_dicts">
+<em class="property">classmethod </em><code class="sig-name descname">from_channel_dicts</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">device</span></em>, <em class="sig-param"><span class="n">channel_dicts</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Channel.from_channel_dicts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Channel.from_channel_dicts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates channel instances associated with the given <em>device</em> instance from the given
+attribute dictionaries.</p>
+<p>Uses the list of channel attribute dictionaries given with <em>channel_dicts</em> to create a
+dictionary of specific <cite>Channel</cite> instances (like e.g. <a class="reference internal" href="pmatic_devices.html#pmatic.entities.ChannelShutterContact" title="pmatic.entities.ChannelShutterContact"><code class="xref py py-class docutils literal notranslate"><span class="pre">ChannelShutterContact</span></code></a>)
+or the generic <a class="reference internal" href="#pmatic.entities.Channel" title="pmatic.entities.Channel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Channel</span></code></a> class. Normally each channel should have a specific
+class. In case an unknown channel needs to be created a debug message is being logged.
+The dictionary uses the index of the channel (the channel id) as key for entries.</p>
+<p>The dictionary of the created channels is then returned.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Channel.values">
+<em class="property">property </em><code class="sig-name descname">values</code><a class="headerlink" href="#pmatic.entities.Channel.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides access to all value objects of this channel.</p>
+<p>The values are provided as dictionary where the name of the parameter is used as key
+and some kind of specific <a class="reference internal" href="#pmatic.params.Parameter" title="pmatic.params.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">params.Parameter</span></code></a> instance is the value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Channel.summary_state">
+<em class="property">property </em><code class="sig-name descname">summary_state</code><a class="headerlink" href="#pmatic.entities.Channel.summary_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a summary state of the channel.</p>
+<p>Formats values and titles of channel values and returns them as string.</p>
+<p>Default formating of channel values. Concatenates titles and values of
+all channel values except the maintenance channel.
+The values are sorted by the titles.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Channel.is_virtual_channel">
+<em class="property">property </em><code class="sig-name descname">is_virtual_channel</code><a class="headerlink" href="#pmatic.entities.Channel.is_virtual_channel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Channel.on_value_changed">
+<code class="sig-name descname">on_value_changed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Channel.on_value_changed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Channel.on_value_changed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a function to be called each time a value of this channel parameters
+has changed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Channel.on_value_updated">
+<code class="sig-name descname">on_value_updated</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Channel.on_value_updated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Channel.on_value_updated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a function to be called each time a value of this channel parameters has
+been updated.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="ccurooms-top-level-collection-of-rooms">
+<h2>CCURooms - Top Level Collection of Rooms<a class="headerlink" href="#ccurooms-top-level-collection-of-rooms" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="pmatic.ccu.CCURooms">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.ccu.</code><code class="sig-name descname">CCURooms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ccu</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/ccu.html#CCURooms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.ccu.CCURooms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pmatic.entities.Rooms" title="pmatic.entities.Rooms"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.entities.Rooms</span></code></a></p>
+<p>The central room management class.</p>
+<p>The <a class="reference internal" href="#pmatic.ccu.CCURooms" title="pmatic.ccu.CCURooms"><code class="xref py py-class docutils literal notranslate"><span class="pre">CCURooms</span></code></a> class is just like the <a class="reference internal" href="#pmatic.entities.Rooms" title="pmatic.entities.Rooms"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.entities.Rooms</span></code></a> class, with the
+difference that it provides the <a class="reference internal" href="#pmatic.ccu.CCURooms.query" title="pmatic.ccu.CCURooms.query"><code class="xref py py-meth docutils literal notranslate"><span class="pre">CCURooms.query()</span></code></a> method which can be used to create new
+<a class="reference internal" href="#pmatic.entities.Rooms" title="pmatic.entities.Rooms"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.entities.Rooms</span></code></a> collections. Another difference is, that it is initializing
+all rooms configured in the CCU as room objects when generic methods to access the rooms
+like <a class="reference external" href="https://docs.python.org/2.7/library/functions.html#len" title="(in Python v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">len()</span></code></a> are called on the object.</p>
+<dl class="py method">
+<dt id="pmatic.ccu.CCURooms.query">
+<code class="sig-name descname">query</code><span class="sig-paren">(</span><span class="optional">[</span><em class="sig-param">room_name=None</em><span class="optional">[</span>, <em class="sig-param">room_name_regex=None</em><span class="optional">]</span><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/ccu.html#CCURooms.query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.ccu.CCURooms.query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use this function to query the CCU for a collection of rooms.</p>
+<p>The room objects are returned in a <a class="reference internal" href="#pmatic.entities.Rooms" title="pmatic.entities.Rooms"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.entities.Rooms</span></code></a> collection.
+Additionally the room objects are cached in the central <a class="reference internal" href="#pmatic.CCU" title="pmatic.CCU"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.CCU</span></code></a> object for
+later reference, when e.g. another search is asking for the same room. In
+case the same object is returned.</p>
+<p>The object can be filtered using different filter parameters.</p>
+<p>You can search for specific rooms by their names. The first option is to
+search for the exact name of one single room by setting the <em>room_name</em> to the
+name of the room, for example: <code class="docutils literal notranslate"><span class="pre">room_name=&quot;Wohnzimmer&quot;</span></code>. Please note
+that this filter is case sensitive and a full exact match for the room name.</p>
+<p>If you need more flexible filtering by the name, you can use the <em>room_name_regex</em>
+filter. You can either provide a regex in form of a string which is then matched
+with the room name from the start of the name (prefix match).
+One example to match all room names ending with <em>-2-Floor</em>:
+<code class="docutils literal notranslate"><span class="pre">room_name_regex=&quot;.*-2-Floor$&quot;</span></code>.
+You can also provide the result of <a class="reference external" href="https://docs.python.org/2.7/library/re.html#re.compile" title="(in Python v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">re.compile()</span></code></a> as value of <em>room_name_regex</em>.
+This is useful if you want to specify some special regex flags for your matching regex.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.ccu.CCURooms.clear">
+<code class="sig-name descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/ccu.html#CCURooms.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.ccu.CCURooms.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all <code class="xref py py-class docutils literal notranslate"><span class="pre">Room</span></code> objects from this collection.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="rooms-collections-of-rooms">
+<h2>Rooms - Collections of Rooms<a class="headerlink" href="#rooms-collections-of-rooms" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="pmatic.entities.Rooms">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.entities.</code><code class="sig-name descname">Rooms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ccu</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Rooms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Rooms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manages a collection of rooms.</p>
+<dl class="py method">
+<dt id="pmatic.entities.Rooms.get">
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">room_id</span></em>, <em class="sig-param"><span class="n">deflt</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Rooms.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Rooms.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the <a class="reference internal" href="#pmatic.entities.Room" title="pmatic.entities.Room"><code class="xref py py-class docutils literal notranslate"><span class="pre">Room</span></code></a> matching the given room id.</p>
+<p>If there is none matching the given ID either None or the value
+specified by the optional attribute <em>deflt</em> is returned.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Rooms.ids">
+<em class="property">property </em><code class="sig-name descname">ids</code><a class="headerlink" href="#pmatic.entities.Rooms.ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a sorted list of all ids of all initialized room.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Rooms.add">
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">room</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Rooms.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Rooms.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a <a class="reference internal" href="#pmatic.entities.Room" title="pmatic.entities.Room"><code class="xref py py-class docutils literal notranslate"><span class="pre">Room</span></code></a> to the collection.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Rooms.exists">
+<code class="sig-name descname">exists</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">room_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Rooms.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Rooms.exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether or not a <a class="reference internal" href="#pmatic.entities.Room" title="pmatic.entities.Room"><code class="xref py py-class docutils literal notranslate"><span class="pre">Room</span></code></a> with the given id is in this collection.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Rooms.delete">
+<code class="sig-name descname">delete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">room_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Rooms.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Rooms.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the <a class="reference internal" href="#pmatic.entities.Room" title="pmatic.entities.Room"><code class="xref py py-class docutils literal notranslate"><span class="pre">Room</span></code></a> with the given id from the pmatic runtime.</p>
+<p>The room is not deleted from the CCU. When the room is not known, the method is
+tollerating that.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Rooms.clear">
+<code class="sig-name descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Rooms.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Rooms.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all <a class="reference internal" href="#pmatic.entities.Room" title="pmatic.entities.Room"><code class="xref py py-class docutils literal notranslate"><span class="pre">Room</span></code></a> objects from this collection.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Rooms.__iter__">
+<code class="sig-name descname">__iter__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Rooms.__iter__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Rooms.__iter__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides an iterator over the rooms of this collection.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Rooms.__len__">
+<code class="sig-name descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Rooms.__len__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Rooms.__len__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is e.g. used by <a class="reference external" href="https://docs.python.org/2.7/library/functions.html#len" title="(in Python v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">len()</span></code></a>. Returns the number of rooms in this collection.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="room-a-configured-room">
+<h2>Room - A Configured Room<a class="headerlink" href="#room-a-configured-room" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="pmatic.entities.Room">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.entities.</code><code class="sig-name descname">Room</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ccu</span></em>, <em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/entities.html#Room"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.entities.Room" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="pmatic.entities.Room.devices">
+<em class="property">property </em><code class="sig-name descname">devices</code><a class="headerlink" href="#pmatic.entities.Room.devices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides access to a collection of <a class="reference internal" href="#pmatic.entities.Device" title="pmatic.entities.Device"><code class="xref py py-class docutils literal notranslate"><span class="pre">Device</span></code></a> objects which have at least one
+channel associated with this room.</p>
+<p>The collections is a <a class="reference internal" href="#pmatic.entities.Devices" title="pmatic.entities.Devices"><code class="xref py py-class docutils literal notranslate"><span class="pre">Devices</span></code></a> instance.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.entities.Room.channels">
+<em class="property">property </em><code class="sig-name descname">channels</code><a class="headerlink" href="#pmatic.entities.Room.channels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Holds a list of channel objects associated with this room.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="eventlistener-listen-for-ccu-events">
+<h2>EventListener - Listen for CCU Events<a class="headerlink" href="#eventlistener-listen-for-ccu-events" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="pmatic.events.EventListener">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.events.</code><code class="sig-name descname">EventListener</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ccu</span></em>, <em class="sig-param"><span class="n">listen_address</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">interface_id</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/events.html#EventListener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.events.EventListener" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manages events received from the CCU XML-RPC API.</p>
+<p>This class can tell the CCU to send status update events to pmatic
+using it’s XML-RPC API. The EventListener registers with the CCU
+to get status updates. The CCU then synchronizes the known objects
+with pmatic and starts sending status updates. These status updates
+are then received by this class and handed over to the <a class="reference internal" href="#pmatic.entities.Device" title="pmatic.entities.Device"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.entities.Device</span></code></a>
+objects managed by the central <code class="xref py py-class docutils literal notranslate"><span class="pre">CCU</span></code> object to update their
+current state information.</p>
+<p>The first argument <em>ccu</em> must be the <code class="xref py py-class docutils literal notranslate"><span class="pre">CCU</span></code> instance to be associated
+with this object.</p>
+<p>The optional argument <em>listen_address</em> can be set to exactly tell
+the CCU to which host address and TCP port to send it’s XML-RPC calls. This
+defaults to the host address of your local system and TCP port <code class="docutils literal notranslate"><span class="pre">9124</span></code>. You
+are free to set another port of your choice by specifying it as tuple of two
+elements like e.g. <code class="docutils literal notranslate"><span class="pre">(&quot;&quot;,</span> <span class="pre">1337)</span></code>. The first element needs to contain the host
+address of the system pmatic is running on and is normally automatically gathered.
+But you can also set a fixed address if you like.</p>
+<p>The second optional argument <em>interface_id</em> is an identifier which needs to be
+unique on your local system at any time. As far as I can tell this is only
+relevant when you plan to register multiple <a class="reference internal" href="#pmatic.events.EventListener" title="pmatic.events.EventListener"><code class="xref py py-class docutils literal notranslate"><span class="pre">EventListener</span></code></a> objects at
+the same time, on the same system and the same network port. If you start multiple
+listeners within the same proccess the identifier is automatically made unique and
+don’t need to be set.</p>
+<dl class="py method">
+<dt id="pmatic.events.EventListener.rpc_server_url">
+<em class="property">property </em><code class="sig-name descname">rpc_server_url</code><a class="headerlink" href="#pmatic.events.EventListener.rpc_server_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains the URL the RPC server of this EventListener is listening on.</p>
+<p>This URL is the URL sent to the CCU by <a class="reference internal" href="#pmatic.events.EventListener.init" title="pmatic.events.EventListener.init"><code class="xref py py-meth docutils literal notranslate"><span class="pre">init()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.events.EventListener.init">
+<code class="sig-name descname">init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/events.html#EventListener.init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.events.EventListener.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes this objects RPC server and registers with the CCU.</p>
+<p>This method opens the XML-RPC server on the configured <em>listen_address</em> and
+sends an API call to the CCU to register the just started XML-RPC server.
+The CCU is then sending XLM-RPC messages to this server.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.events.EventListener.initialized">
+<em class="property">property </em><code class="sig-name descname">initialized</code><a class="headerlink" href="#pmatic.events.EventListener.initialized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is set to true when the XML-RPC have been started and registered with the CCU.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.events.EventListener.close">
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/events.html#EventListener.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.events.EventListener.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stops listening for XML-RPC messages and terminates the local XML-RPC server.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.events.EventListener.wait">
+<code class="sig-name descname">wait</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">timeout</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/events.html#EventListener.wait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.events.EventListener.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Waits for the event listener to terminate.</p>
+<p>This is useful to let your code stay idle (for some time) and
+just wait for incoming events from the CCU.</p>
+<p>When a timeout is configured this method returns when the listener
+terminates (for some reason) or the timeout happens.</p>
+<p>This method returns <code class="docutils literal notranslate"><span class="pre">True</span></code> when the timeout happened and the listener
+is still alive or <code class="docutils literal notranslate"><span class="pre">False</span></code> when the listener has been terminated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.events.EventListener.on_value_changed">
+<code class="sig-name descname">on_value_changed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/events.html#EventListener.on_value_changed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.events.EventListener.on_value_changed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a function to be called each time any value of a device is changed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.events.EventListener.on_value_updated">
+<code class="sig-name descname">on_value_updated</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/events.html#EventListener.on_value_updated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.events.EventListener.on_value_updated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a function to be called each time a value of any device is updated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.events.EventListener.callback">
+<code class="sig-name descname">callback</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cb_name</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/events.html#EventListener.callback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.events.EventListener.callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute all registered callbacks for this event.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="parameter">
+<h3>Parameter<a class="headerlink" href="#parameter" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="pmatic.params.Parameter">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.params.</code><code class="sig-name descname">Parameter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#Parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.Parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.utils.CallbackMixin</span></code></p>
+<p>Parameters are the objects which are encapusaling the individual values of the channels
+and devices.</p>
+<p>The Parameter objects are assigned to channels by their names. Which subtype of the
+<a class="reference internal" href="#pmatic.params.Parameter" title="pmatic.params.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a> class is used for a particular value is determined by the type
+specified by the CCU.</p>
+<dl class="py attribute">
+<dt id="pmatic.params.Parameter.datatype">
+<code class="sig-name descname">datatype</code><em class="property"> = 'string'</em><a class="headerlink" href="#pmatic.params.Parameter.datatype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.readable">
+<em class="property">property </em><code class="sig-name descname">readable</code><a class="headerlink" href="#pmatic.params.Parameter.readable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether or not this value can be read.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.writable">
+<em class="property">property </em><code class="sig-name descname">writable</code><a class="headerlink" href="#pmatic.params.Parameter.writable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether or not this value can be set.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.supports_events">
+<em class="property">property </em><code class="sig-name descname">supports_events</code><a class="headerlink" href="#pmatic.params.Parameter.supports_events" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether or not this value supports events.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.name">
+<em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#pmatic.params.Parameter.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides the formated name of this parameter. This name is generated from the <code class="docutils literal notranslate"><span class="pre">name</span></code>
+attribute provided by the CCU, but slightly adapted to look better for humans in texts.
+All underscores are replaced with spaces and the name is formated as title.</p>
+<p>If you want to get the CCU internal name, use the attribute <code class="xref py py-attr docutils literal notranslate"><span class="pre">internal_name</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.value">
+<em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#pmatic.params.Parameter.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>The current value of this paramter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Getter</dt>
+<dd class="field-odd"><p>Provides the current value of this parameter as reported by the CCU.
+It raises a <code class="xref py py-class docutils literal notranslate"><span class="pre">PMException</span></code> when the parameter can not be read.</p>
+</dd>
+<dt class="field-even">Setter</dt>
+<dd class="field-even"><p>Specify the new value. Returns a <code class="xref py py-class docutils literal notranslate"><span class="pre">PMException</span></code> when the parameter
+can not be written or a validation error occurs. It sets the value on
+the CCU. In case this fails a <code class="xref py py-class docutils literal notranslate"><span class="pre">PMActionFailed</span></code> exception is raised.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.set">
+<code class="sig-name descname">set</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#Parameter.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.Parameter.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set a new value for this parameter. This is equal to setting the property <a class="reference internal" href="#pmatic.params.Parameter.value" title="pmatic.params.Parameter.value"><code class="xref py py-attr docutils literal notranslate"><span class="pre">value</span></code></a>
+with the difference that this method returns <code class="docutils literal notranslate"><span class="pre">True</span></code> on success and <code class="docutils literal notranslate"><span class="pre">False</span></code> when a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">PMActionFailed</span></code> exception would be raised.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.set_to_default">
+<code class="sig-name descname">set_to_default</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#Parameter.set_to_default"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.Parameter.set_to_default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the value to the default value (reported by the CCU).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.last_updated">
+<em class="property">property </em><code class="sig-name descname">last_updated</code><a class="headerlink" href="#pmatic.params.Parameter.last_updated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides the unix time when the value has been updated the last time.</p>
+<p>This is measured since the creation of the object (startup of pmatic).</p>
+<p>It raises a <code class="xref py py-class docutils literal notranslate"><span class="pre">PMException</span></code> when the parameter can not be read.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.last_changed">
+<em class="property">property </em><code class="sig-name descname">last_changed</code><a class="headerlink" href="#pmatic.params.Parameter.last_changed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides the unix time when the value has been changed the last time.</p>
+<p>This is measured since the creation of the object (startup of pmatic).</p>
+<p>It raises a <code class="xref py py-class docutils literal notranslate"><span class="pre">PMException</span></code> when the parameter can not be read.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.is_visible_to_user">
+<em class="property">property </em><code class="sig-name descname">is_visible_to_user</code><a class="headerlink" href="#pmatic.params.Parameter.is_visible_to_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether or not this parameter should be visible to the end-user.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.is_internal">
+<em class="property">property </em><code class="sig-name descname">is_internal</code><a class="headerlink" href="#pmatic.params.Parameter.is_internal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether or not this parameter is an internal flag.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.is_transformer">
+<em class="property">property </em><code class="sig-name descname">is_transformer</code><a class="headerlink" href="#pmatic.params.Parameter.is_transformer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether or not modifying this parameter changes behaviour of this channel.</p>
+<p>Can only be changed when no links are configured for this channel.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.is_service">
+<em class="property">property </em><code class="sig-name descname">is_service</code><a class="headerlink" href="#pmatic.params.Parameter.is_service" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether or not a maintenance message is available.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.is_service_sticky">
+<em class="property">property </em><code class="sig-name descname">is_service_sticky</code><a class="headerlink" href="#pmatic.params.Parameter.is_service_sticky" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether or not there is a sticky maintenance message.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.formated">
+<code class="sig-name descname">formated</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#Parameter.formated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.Parameter.formated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Formats the current value in a <em>human readable</em> way. Whatever that means.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.__str__">
+<code class="sig-name descname">__str__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#Parameter.__str__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.Parameter.__str__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the formated value. Data type differs depending on Python version.</p>
+<p>In Python 2 it returns an UTF-8 encoded string.
+In Python 3+ it returns a unicode string of type str.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.__bytes__">
+<code class="sig-name descname">__bytes__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#Parameter.__bytes__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.Parameter.__bytes__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the formated value UTF-8 encoded. Only relevant for Python 3.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.Parameter.__unicode__">
+<code class="sig-name descname">__unicode__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#Parameter.__unicode__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.Parameter.__unicode__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the formated value as unicode string. Only relevant for Python 2.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="parameterstring">
+<h3>ParameterSTRING<a class="headerlink" href="#parameterstring" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="pmatic.params.ParameterSTRING">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.params.</code><code class="sig-name descname">ParameterSTRING</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterSTRING"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterSTRING" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pmatic.params.Parameter" title="pmatic.params.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.params.Parameter</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="parameternumeric">
+<h3>ParameterNUMERIC<a class="headerlink" href="#parameternumeric" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="pmatic.params.ParameterNUMERIC">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.params.</code><code class="sig-name descname">ParameterNUMERIC</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterNUMERIC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterNUMERIC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pmatic.params.Parameter" title="pmatic.params.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.params.Parameter</span></code></a></p>
+<dl class="py method">
+<dt id="pmatic.params.ParameterNUMERIC.__eq__">
+<code class="sig-name descname">__eq__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterNUMERIC.__eq__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterNUMERIC.__eq__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.ParameterNUMERIC.__ne__">
+<code class="sig-name descname">__ne__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterNUMERIC.__ne__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterNUMERIC.__ne__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.ParameterNUMERIC.__gt__">
+<code class="sig-name descname">__gt__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterNUMERIC.__gt__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterNUMERIC.__gt__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.ParameterNUMERIC.__lt__">
+<code class="sig-name descname">__lt__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterNUMERIC.__lt__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterNUMERIC.__lt__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.ParameterNUMERIC.__ge__">
+<code class="sig-name descname">__ge__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterNUMERIC.__ge__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterNUMERIC.__ge__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.ParameterNUMERIC.__le__">
+<code class="sig-name descname">__le__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterNUMERIC.__le__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterNUMERIC.__le__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="parameterinteger">
+<h3>ParameterINTEGER<a class="headerlink" href="#parameterinteger" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="pmatic.params.ParameterINTEGER">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.params.</code><code class="sig-name descname">ParameterINTEGER</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterINTEGER"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterINTEGER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pmatic.params.ParameterNUMERIC" title="pmatic.params.ParameterNUMERIC"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.params.ParameterNUMERIC</span></code></a></p>
+<dl class="py attribute">
+<dt id="pmatic.params.ParameterINTEGER.datatype">
+<code class="sig-name descname">datatype</code><em class="property"> = 'integer'</em><a class="headerlink" href="#pmatic.params.ParameterINTEGER.datatype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.ParameterINTEGER.formated">
+<code class="sig-name descname">formated</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterINTEGER.formated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterINTEGER.formated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Formats the current value with a <code class="docutils literal notranslate"><span class="pre">%d</span></code> format and adds a unit if
+there is a unit reported by the CCU.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="parameterfloat">
+<h3>ParameterFLOAT<a class="headerlink" href="#parameterfloat" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="pmatic.params.ParameterFLOAT">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.params.</code><code class="sig-name descname">ParameterFLOAT</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterFLOAT"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterFLOAT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pmatic.params.ParameterNUMERIC" title="pmatic.params.ParameterNUMERIC"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.params.ParameterNUMERIC</span></code></a></p>
+<dl class="py attribute">
+<dt id="pmatic.params.ParameterFLOAT.datatype">
+<code class="sig-name descname">datatype</code><em class="property"> = 'string'</em><a class="headerlink" href="#pmatic.params.ParameterFLOAT.datatype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.ParameterFLOAT.formated">
+<code class="sig-name descname">formated</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterFLOAT.formated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterFLOAT.formated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Formats the current value with a <code class="docutils literal notranslate"><span class="pre">%0.2f</span></code> format and adds a unit if
+there is a unit reported by the CCU.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="parameterenum">
+<h3>ParameterENUM<a class="headerlink" href="#parameterenum" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="pmatic.params.ParameterENUM">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.params.</code><code class="sig-name descname">ParameterENUM</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterENUM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterENUM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pmatic.params.ParameterINTEGER" title="pmatic.params.ParameterINTEGER"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.params.ParameterINTEGER</span></code></a></p>
+<dl class="py method">
+<dt id="pmatic.params.ParameterENUM.possible_values">
+<em class="property">property </em><code class="sig-name descname">possible_values</code><a class="headerlink" href="#pmatic.params.ParameterENUM.possible_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a python list of possible values.</p>
+<p>The indexes in this list represent the digit to be used as value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pmatic.params.ParameterENUM.formated">
+<code class="sig-name descname">formated</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterENUM.formated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterENUM.formated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the textual representation of the current value as also found in the
+list provided by the <a class="reference internal" href="#pmatic.params.ParameterENUM.possible_values" title="pmatic.params.ParameterENUM.possible_values"><code class="xref py py-attr docutils literal notranslate"><span class="pre">possible_values</span></code></a> property.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="parameterbool">
+<h3>ParameterBOOL<a class="headerlink" href="#parameterbool" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="pmatic.params.ParameterBOOL">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.params.</code><code class="sig-name descname">ParameterBOOL</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterBOOL"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterBOOL" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pmatic.params.Parameter" title="pmatic.params.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.params.Parameter</span></code></a></p>
+<dl class="py attribute">
+<dt id="pmatic.params.ParameterBOOL.datatype">
+<code class="sig-name descname">datatype</code><em class="property"> = 'boolean'</em><a class="headerlink" href="#pmatic.params.ParameterBOOL.datatype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="parameteraction">
+<h3>ParameterACTION<a class="headerlink" href="#parameteraction" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="pmatic.params.ParameterACTION">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.params.</code><code class="sig-name descname">ParameterACTION</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterACTION"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterACTION" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pmatic.params.ParameterBOOL" title="pmatic.params.ParameterBOOL"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.params.ParameterBOOL</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="parametercontrolmode">
+<h3>ParameterControlMode<a class="headerlink" href="#parametercontrolmode" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="pmatic.params.ParameterControlMode">
+<em class="property">class </em><code class="sig-prename descclassname">pmatic.params.</code><code class="sig-name descname">ParameterControlMode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">channel</span></em>, <em class="sig-param"><span class="n">spec</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterControlMode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterControlMode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pmatic.params.ParameterENUM" title="pmatic.params.ParameterENUM"><code class="xref py py-class docutils literal notranslate"><span class="pre">pmatic.params.ParameterENUM</span></code></a></p>
+<dl class="py method">
+<dt id="pmatic.params.ParameterControlMode.formated">
+<code class="sig-name descname">formated</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pmatic/params.html#ParameterControlMode.formated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pmatic.params.ParameterControlMode.formated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current control mode while it is converting the CCU internal
+naming scheme to the pmatic ones. It replaces the <code class="docutils literal notranslate"><span class="pre">-MODE</span></code> suffix and changes
+<code class="docutils literal notranslate"><span class="pre">MANU</span></code> to <code class="docutils literal notranslate"><span class="pre">MANUAL</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">The pmatic Module</a><ul>
+<li><a class="reference internal" href="#module-pmatic">CCU - The Central Object</a></li>
+<li><a class="reference internal" href="#ccudevices-top-level-collection-of-devices">CCUDevices - Top Level Collection of Devices</a></li>
+<li><a class="reference internal" href="#devices-collections-of-devices">Devices - Collections of Devices</a></li>
+<li><a class="reference internal" href="#device-device-connected-with-the-ccu">Device - Device connected with the CCU</a></li>
+<li><a class="reference internal" href="#channel-manages-values">Channel - Manages values</a></li>
+<li><a class="reference internal" href="#ccurooms-top-level-collection-of-rooms">CCURooms - Top Level Collection of Rooms</a></li>
+<li><a class="reference internal" href="#rooms-collections-of-rooms">Rooms - Collections of Rooms</a></li>
+<li><a class="reference internal" href="#room-a-configured-room">Room - A Configured Room</a></li>
+<li><a class="reference internal" href="#eventlistener-listen-for-ccu-events">EventListener - Listen for CCU Events</a></li>
+<li><a class="reference internal" href="#parameters">Parameters</a><ul>
+<li><a class="reference internal" href="#parameter">Parameter</a></li>
+<li><a class="reference internal" href="#parameterstring">ParameterSTRING</a></li>
+<li><a class="reference internal" href="#parameternumeric">ParameterNUMERIC</a></li>
+<li><a class="reference internal" href="#parameterinteger">ParameterINTEGER</a></li>
+<li><a class="reference internal" href="#parameterfloat">ParameterFLOAT</a></li>
+<li><a class="reference internal" href="#parameterenum">ParameterENUM</a></li>
+<li><a class="reference internal" href="#parameterbool">ParameterBOOL</a></li>
+<li><a class="reference internal" href="#parameteraction">ParameterACTION</a></li>
+<li><a class="reference internal" href="#parametercontrolmode">ParameterControlMode</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="basic_usage.html"
+                        title="previous chapter">Basic Usage</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pmatic_devices.html"
+                        title="next chapter">Specific Devices</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pmatic_module.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pmatic_devices.html" title="Specific Devices"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="basic_usage.html" title="Basic Usage"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pmatic 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Lars Michelsen.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.2.
+    </div>
+  </body>
+</html>
