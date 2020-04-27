@@ -1,4 +1,4 @@
-VERSION            = 0.6.1
+VERSION            = 199fd74
 REPO_PATH         ?= $(shell pwd)
 CHROOT_PATH       ?= $(shell pwd)/buildroot
 CHROOT_DEB_MIRROR ?= http://ftp.de.debian.org/debian
@@ -299,19 +299,36 @@ clean-dist:
 	sudo rm -rf $(CCU_PREDIST_PATH)/python 2>/dev/null || true
 	sudo rm -rf $(CCU_PREDIST_PATH)_py3/python 2>/dev/null || true
 
-
 travis-build:
 	GIT_COMMIT=$(shell git rev-parse --short HEAD) ; \
 	NEW_VERSION=$$GIT_COMMIT $(MAKE) setversion ; \
-	$(MAKE) dist-os dist-ccu-step2a ; \
-	$(MAKE) dist-os dist-ccu-step2b ; \
+	$(MAKE) dist-os dist-ccu-step2 ; \
 	PKG_PATH=$(shell pwd)/dist ; \
 	cd $$HOME ; \
 	git config --global user.email "travis@travis-ci.org" ; \
 	git config --global user.name "Travis" ; \
-	git clone --quiet --branch=gh-pages https://$$GH_TOKEN@github.com/mweiss/pmatic.git gh-pages > /dev/null ; \
+	git clone --quiet --branch=gh-pages https://$$GH_TOKEN@github.com/LarsMichelsen/pmatic.git gh-pages > /dev/null ; \
 	cd gh-pages ; \
 	cp -f $$PKG_PATH/pmatic-$${GIT_COMMIT}_ccu.tar.gz pmatic-snapshot_ccu.tar.gz ; \
+	cp -f $$PKG_PATH/pmatic-$${GIT_COMMIT}.tar.gz pmatic-snapshot.tar.gz ; \
+	git add -f . ; \
+	git commit -m "Travis build $$TRAVIS_BUILD_NUMBER pushed to gh-pages" ; \
+	git push -fq origin gh-pages > /dev/null ; \
+	echo "Finished adding current build"
+
+travis-build-fork:
+	GIT_COMMIT=$(shell git rev-parse --short HEAD) ; \
+	NEW_VERSION=$$GIT_COMMIT $(MAKE) setversion ; \
+	$(MAKE) dist-os dist-ccu-step2  > /dev/null ; \
+	PKG_PATH=$(shell pwd)/dist ; \
+	cd .. ; \
+	git config --global user.email "travis@travis-ci.org" ; \
+	git config --global user.name "Travis" ; \
+	git clone --quiet --branch=gh-pages https://$$GH_TOKEN@github.com/weissm/pmatic.git gh-pages > /dev/null ; \
+	cd gh-pages ; \
+    git remote set-url origin git@github.com:weissm/pmatic.git ; \
+    cp -f $$PKG_PATH/pmatic-$${GIT_COMMIT}_ccu_2.7.tar.gz pmatic-snapshot_ccu.tar_2.7.gz ; \
+    cp -f $$PKG_PATH/pmatic-$${GIT_COMMIT}_ccu_3.8.tar.gz pmatic-snapshot_ccu_3.8.tar.gz ; \
 	cp -f $$PKG_PATH/pmatic-$${GIT_COMMIT}.tar.gz pmatic-snapshot.tar.gz ; \
 	git add -f . ; \
 	git commit -m "Travis build $$TRAVIS_BUILD_NUMBER pushed to gh-pages" ; \

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VERSION=0.6.1
+VERSION=199fd74
 CONFIG_DIR=/etc/config
 ADDON_NAME=pmatic
 BIN_DIR=/usr/local/bin
