@@ -36,10 +36,15 @@ fi
 
 # remove files of old versions (same as in pmatic.init)
 echo "remove files of old versions" >>$LOG_FILE
-rm $BIN_DIR/$PYTHON_VER $BIN_DIR/python 
+rm $BIN_DIR/$PYTHON_VER $BIN_DIR/python3 
 rm $BIN_DIR/$PYTHON_VER $BIN_DIR/$PYTHON_VER 
-rm /usr/local/bin/pmatic-manager
-rm -rf $ADDON_DIR
+rm $BIN_DIR/pmatic-manager
+# FIXME: consider a clean deinstall w/o deleting customized changes 
+#  rm -rf $ADDON_DIR
+rm -rf $ADDON_DIR/python
+rm -rf $ADDON_DIR/pmatic
+rm -rf $ADDON_DIR/examples
+rm -rf $ADDON_DIR/manager_static
 rm -rf $WWW_DIR
 
 echo "create directories" >>$LOG_FILE
@@ -76,7 +81,7 @@ fi
 # Make python executable shipped with pmatic available via PATH
 echo "Make python executable" >>$LOG_FILE
 ln -s ../etc/config/addons/pmatic/python/bin/$PYTHON_VER $BIN_DIR/$PYTHON_VER
-cp python-wrapper $BIN_DIR/python
+cp python-wrapper $BIN_DIR/python3
 chmod +x $BIN_DIR/python
 
 cp pmatic-manager $BIN_DIR/
