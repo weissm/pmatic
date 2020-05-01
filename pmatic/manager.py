@@ -2440,11 +2440,12 @@ class PageState(HtmlPageHandler, utils.LogMixin):
         self.write("<td>%s</td></tr>" % self._manager.event_history.num_events_total)
 
         self.write("<tr><th>Time of Last Event</th>")
-        if (self._manager.event_history.last_event_time == None):
-            self.write("<td>%s</td></tr>" % self._manager.event_history.last_event_time)
-        else:
+        try:
             self.write("<td>%s</td></tr>" % self._manager.event_history.last_event_time.strftime("%Y-%m-%d %H:%M:%S",
               utils.localtime(self._manager.event_history.last_event_time, Config.timezone)))
+        except:
+            if (self._manager.event_history.last_event_time == None):
+                self.write("<td>%s</td></tr>" % self._manager.event_history.last_event_time)
 
         self.write("</table>")
 
@@ -2586,6 +2587,7 @@ class ScriptRunner(threading.Thread, utils.LogMixin):
 
     def _run_inline(self, script_path):
         exit_code = 0
+        
         try:
             # Make the ccu object available globally so that the __new__ method
             # of the CCU class can use and return this instead of creating a new
@@ -2598,8 +2600,9 @@ class ScriptRunner(threading.Thread, utils.LogMixin):
             with catch_stdout_and_stderr(self.output):
                 script_globals = {}
                 # would use execfile() but it's not available in Python 3.x
-                exec(compile(open(script_path, "rb").read(),
-                             script_path, 'exec'), script_globals)
+                if os.path.exists(script_path):
+-                   exec(compile(open(script_path, "rb").read(),
+-                                 script_path, 'exec'), script_globals)
         except SystemExit as e:
             exit_code = e.code
         except Exception as e:
