@@ -692,34 +692,14 @@ class LocalAPI(AbstractAPI):
 
         self.logger.debug("  TCL: %r", tcl)
 
-        if utils.is_py2():
-            self._tclsh.stdin.write(tcl.encode("utf-8"))
-        else:
-            self._tclsh.stdin.write(tcl.encode("utf-8"))
+        self._tclsh.stdin.write(tcl.encode("utf-8"))
 
         response_txt = ""
-#        while True:
-#        self._tclsh.stdin.write(("puts 'Hello, world!'").encode("utf-8"))
-#        for line in iter(self._tclsh.stdout.readline, b''):
-#        import io
-#        for line in io.TextIOWrapper(self._tclsh.stdout, encoding="utf-8"):  # or another encoding
-#        for line in iter(self._tclsh.stdout.readline,''):
-#        list_of_byte_strings = self._tclsh.stdout.readlines()
-#        self.logger.debug("  Line: %r", list_of_byte_strings)
-#        stdout = self._tclsh.communicate()[0]
-#        self.logger.debug('STDOUT:{}'.format(stdout))
-#        self.logger.debug("  read again")
-
-#        self._tclsh.stdin.write(tcl.encode("utf-8"))
+        # fix for py3
         self._tclsh.stdin.flush()
 
         while True:
-            if utils.is_py2():
-                line = self._tclsh.stdout.readline().decode("utf-8")
-            else:
-#                break
-                line = self._tclsh.stdout.readline().decode("utf-8")
-#            self.logger.debug("  Line: %r", line)
+            line = self._tclsh.stdout.readline().decode("utf-8")
             if (len(line) > 1):
                 self.logger.debug("  EOF: %r %s", line[-2], line[-2] == "\0")
             if not line or (len(line) > 1 and line[-2] == "\0"):
@@ -728,12 +708,7 @@ class LocalAPI(AbstractAPI):
             else:
                 response_txt += line
 
-#        response_txt = stdout.decode("utf-8")
-#        if (response_txt[-2] == "\0"):
-#            response_txt = response_txt[:-2] + "\n"
-        
-#        self.logger.debug("  RESPONSE: %r", stdout[-2])
-        self.logger.debug("  RESPONSE: %r", response_txt)
+        self.logger.debug("  RESPONSE in tcl properly found: %r", line)
         # index 0 would be the header, but we don't need it
         body = response_txt.split("\n\n", 1)[1]
 
