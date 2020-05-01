@@ -81,7 +81,7 @@ fi
 # Make python executable shipped with pmatic available via PATH
 echo "Make python executable" >>$LOG_FILE
 ln -s ../etc/config/addons/pmatic/python/bin/$PYTHON_VER $BIN_DIR/$PYTHON_VER
-cp python-wrapper $BIN_DIR/python3
+cp python-wrapper $BIN_DIR/python
 chmod +x $BIN_DIR/python
 
 cp pmatic-manager $BIN_DIR/
