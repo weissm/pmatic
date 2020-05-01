@@ -24,9 +24,9 @@ import pmatic
 # can not be established within 5 seconds it raises an exception.
 ccu = pmatic.CCU(
     # TODO: Replace this with the URL to your CCU2.
-    address="http://192.168.1.26",
+    address="http://ccu3-webui",
     # TODO: Insert your credentials here.
-    credentials=("Admin", "EPIC-SECRET-PW"),
+    credentials=("PmaticAdmin", "EPIC-SECRET-PW"),
     connect_timeout=5
 )
 
