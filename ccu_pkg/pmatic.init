@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VERSION=199fd74
+VERSION=v0.6.1
 CONFIG_DIR=/etc/config
 ADDON_NAME=pmatic
 BIN_DIR=/usr/local/bin
@@ -40,7 +40,7 @@ start() {
 stop() {
   echo -n "Stopping pmatic manager..."
   if [ -n "$PM_PID" ]; then
-      kill $PM_PID
+      kill -9 $PM_PID
       PM_PID=
       echo "OK"
       logger -t homematic -p user.info "stopped pmatic manager"
