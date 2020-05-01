@@ -123,6 +123,7 @@ class AbstractAPI(utils.LogMixin):
         self.logger.debug("MY_SESSION:TRACE: open ID in abstract API: %s", self._ID)
 
         # For simplicity we only allow one thread to perform API calls at the time
+        self.logger.debug("Wait for lock")
         self._api_lock = threading.RLock()
         
     # is called in locked context
@@ -603,7 +604,8 @@ class LocalAPI(AbstractAPI):
         try:
             self._tclsh = subprocess.Popen(["/bin/tclsh"],
                 stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE, #stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE,
                 cwd="/www/api",
                 shell=False)
         except OSError as e:
@@ -624,20 +626,19 @@ class LocalAPI(AbstractAPI):
             "source /www/api/eq3/event.tcl\n"
             "array set INTERFACE_LIST [ipc_getInterfaces]\n"
             "array set METHOD_LIST  [file_load %s]\n" % self._methods_file
-        ).encode("utf"))
-
-
+        ).encode("utf-8"))
+        self.logger.debug("TCL read from file %s", self._methods_file)
     # is called in locked context
     def _get_methods_config(self):
         if utils.is_py2():
             splitdata=open(self._methods_file).read().decode("latin-1").split("\r\n")
         else:
             fileinfo = self._methods_file
-            with open(fileinfo, encoding="utf-8", errors='ignore' ) as f:
+            with open(fileinfo, errors='ignore' ) as f:
                 data = f.read()
             decodedata = data
             splitdata = decodedata.split("\n")
-        self.logger.debug("Read from file %s split data %s", self._methods_file, splitdata)
+        self.logger.debug("Read from file %s split data %s", self._methods_file, json.dumps(splitdata))
         return splitdata
 
 
@@ -691,17 +692,47 @@ class LocalAPI(AbstractAPI):
 
         self.logger.debug("  TCL: %r", tcl)
 
-        self._tclsh.stdin.write(tcl.encode("utf-8"))
+        if utils.is_py2():
+            self._tclsh.stdin.write(tcl.encode("utf-8"))
+        else:
+            self._tclsh.stdin.write(tcl.encode("utf-8"))
 
         response_txt = ""
+#        while True:
+#        self._tclsh.stdin.write(("puts 'Hello, world!'").encode("utf-8"))
+#        for line in iter(self._tclsh.stdout.readline, b''):
+#        import io
+#        for line in io.TextIOWrapper(self._tclsh.stdout, encoding="utf-8"):  # or another encoding
+#        for line in iter(self._tclsh.stdout.readline,''):
+#        list_of_byte_strings = self._tclsh.stdout.readlines()
+#        self.logger.debug("  Line: %r", list_of_byte_strings)
+#        stdout = self._tclsh.communicate()[0]
+#        self.logger.debug('STDOUT:{}'.format(stdout))
+#        self.logger.debug("  read again")
+
+#        self._tclsh.stdin.write(tcl.encode("utf-8"))
+        self._tclsh.stdin.flush()
+
         while True:
-            line = self._tclsh.stdout.readline().decode("utf-8")
+            if utils.is_py2():
+                line = self._tclsh.stdout.readline().decode("utf-8")
+            else:
+#                break
+                line = self._tclsh.stdout.readline().decode("utf-8")
+#            self.logger.debug("  Line: %r", line)
+            if (len(line) > 1):
+                self.logger.debug("  EOF: %r %s", line[-2], line[-2] == "\0")
             if not line or (len(line) > 1 and line[-2] == "\0"):
                 response_txt += line[:-2] + "\n"
                 break # found our terminator (see above)
             else:
                 response_txt += line
 
+#        response_txt = stdout.decode("utf-8")
+#        if (response_txt[-2] == "\0"):
+#            response_txt = response_txt[:-2] + "\n"
+        
+#        self.logger.debug("  RESPONSE: %r", stdout[-2])
         self.logger.debug("  RESPONSE: %r", response_txt)
         # index 0 would be the header, but we don't need it
         body = response_txt.split("\n\n", 1)[1]
