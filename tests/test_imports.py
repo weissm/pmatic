@@ -175,11 +175,11 @@ def test_ccu_imports(tmpdir):
         else:
             test_code.append("import %s" % m)
 
-#    print("\n".join(test_code))
+    print("\n".join(test_code))
 
     stdout, stderr = p.communicate("\n".join(test_code))
 
-#    print("stdout", stdout, "stderr", stderr)
+    print("stdout", stdout, "stderr", stderr)
 
     assert stdout == b""
     assert stderr == b""

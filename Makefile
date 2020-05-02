@@ -1,4 +1,4 @@
-VERSION            = 199fd74
+VERSION            = 0.6.1
 REPO_PATH         ?= $(shell pwd)
 CHROOT_PATH       ?= $(shell pwd)/buildroot
 CHROOT_DEB_MIRROR ?= http://ftp.de.debian.org/debian
@@ -226,6 +226,9 @@ install-ccu-python:
 	    --exclude=__pycache__ \
 	    $(CCU_PREDIST_PATH)_py3/python/* \
 	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic/python/
+	rsync -av --no-g \
+	    $(CCU_PREDIST_PATH)/python-wrapper \
+	    root@$(CCU_HOST):/usr/local/etc/profile.d/python-addons.sh
 
 install-ccu-pmatic:
 	ssh root@$(CCU_HOST) "[ -d /usr/local/etc/config/addons/pmatic/etc ] || mkdir /usr/local/etc/config/addons/pmatic/etc"
@@ -266,7 +269,7 @@ install-ccu-pmatic:
 
 install-ccu-scripts:
 	rsync -av --no-g \
-	    ccu_pkg_py3/pmatic.init \
+	    $(CCU_PREDIST_PATH)_py3/pmatic.init \
 	    root@$(CCU_HOST):/usr/local/etc/config/rc.d/pmatic
 
 version:

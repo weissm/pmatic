@@ -4,16 +4,14 @@
 #
 # This is a small wrapper which enforces the encoding of stdout,
 # stderr and stdin to be UTF-8.
-export CONFIG_DIR=/etc/config
-export ADDON_DIR=$CONFIG_DIR/addons
-export USER_DIR=$ADDON_DIR/user
-#export PYTHON_VER=python3.8
-export PYTHON_VER=python2.7
-export PYTHON_DIR=$ADDON_DIR/pmatic/python
+CONFIG_DIR=/etc/config
+ADDON_DIR=$CONFIG_DIR/addons
+PYTHON_DIR=$ADDON_DIR/pmatic/python
 
+export USER_DIR=/usr/local/addons/user
+export PATH=$PATH:$PYTHON_DIR/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PYTHON_DIR/lib
-export PYTHONPATH=$PYTHONPATH:$PYTHON_DIR/lib/$PYTHON_VER/dist-packages
+export PYTHONPATH=$PYTHONPATH:$PYTHON_DIR/lib/python2.7/dist-packages:$PYTHON_DIR/lib/python3.8/dist-packages
 export PYTHONENCODING=utf-8
 export PYTHONIOENCODING=utf-8
 export PYTHONHOME=$PYTHON_DIR
-$PYTHON_VER "$@"

@@ -3,6 +3,7 @@
 ADDON_NAME=pmatic
 BIN_DIR=/usr/local/bin
 CONFIG_DIR=/usr/local/etc/config
+PROFILE_DIR=/usr/local/etc/profile.d/
 ADDON_DIR=${CONFIG_DIR}/addons/${ADDON_NAME}
 WWW_DIR=${CONFIG_DIR}/addons/www/${ADDON_NAME}
 RCD_DIR=${CONFIG_DIR}/rc.d
@@ -80,9 +81,9 @@ fi
 
 # Make python executable shipped with pmatic available via PATH
 echo "Make python executable" >>$LOG_FILE
-ln -s ../etc/config/addons/pmatic/python/bin/$PYTHON_VER $BIN_DIR/$PYTHON_VER
-cp python-wrapper $BIN_DIR/python
-chmod +x $BIN_DIR/python
+ln -s  $ADDON_DIR/python/bin/$PYTHON_VER $BIN_DIR/$PYTHON_VER
+ln -s  $ADDON_DIR/python/bin/$PYTHON_VER $BIN_DIR/python3
+chmod +x $BIN_DIR/python3
 
 cp pmatic-manager $BIN_DIR/
 chmod +x $BIN_DIR/pmatic-manager
@@ -95,6 +96,8 @@ cp -R pmatic $ADDON_DIR/python/lib/$PYTHON_VER
 ln -s python/lib/$PYTHON_VER/pmatic $ADDON_DIR/pmatic
 cp pmatic.init $RCD_DIR/pmatic
 chmod +x $RCD_DIR/pmatic
+cp python-wrapper python-addons.sh
+chmod +x $PROFILE_DIR/python-addons.sh
 
 # copy www stuff
 echo "copy www stuff" >>$LOG_FILE
