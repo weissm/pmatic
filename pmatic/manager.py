@@ -2601,8 +2601,8 @@ class ScriptRunner(threading.Thread, utils.LogMixin):
                 script_globals = {}
                 # would use execfile() but it's not available in Python 3.x
                 if os.path.exists(script_path):
--                   exec(compile(open(script_path, "rb").read(),
--                                 script_path, 'exec'), script_globals)
+                   exec(compile(open(script_path, "rb").read(),
+                                 script_path, 'exec'), script_globals)
         except SystemExit as e:
             exit_code = e.code
         except Exception as e:
