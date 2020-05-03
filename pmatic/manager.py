@@ -129,7 +129,7 @@ class Config(utils.LogMixin):
     email_username = ""
     email_password = ""
 
-    cfg_password = "default"
+    _cfg_password = "default"
 
     @classmethod
     def load(cls):
@@ -137,7 +137,7 @@ class Config(utils.LogMixin):
             try:
                 config = json.load(open(cls._config_path()))
                 # load encrypted data
-                key_base = hashlib.sha256(cls.cfg_password.encode("utf-8"))
+                key_base = hashlib.sha256(cls._cfg_password.encode("utf-8"))
                 key = base64.urlsafe_b64encode(key_base.digest())
                 cipher_suite = Fernet(key)
                 if utils.is_py2():
@@ -146,9 +146,9 @@ class Config(utils.LogMixin):
                     mylist = list(config.items())
                 for key, val in mylist:
                     if key[0] != "_" and key not in [ "config_path",
-                                                        "static_path", "log_file", "cfg_password" ] \
+                                                        "static_path", "log_file" ] \
                     and not inspect.isroutine(val):
-                        if utils.is_byte_string(val):
+                        if utils.is_byte_string(val) or (val != "" and "password" in key.lower()):
                             val_dec = cipher_suite.decrypt((val).encode("utf-8"))			
                             config[key] = val_dec.decode()
                         else:
@@ -183,7 +183,7 @@ class Config(utils.LogMixin):
     @classmethod
     def save(cls):
         config = {}
-        key_base = hashlib.sha256(cls.cfg_password.encode("utf-8"))
+        key_base = hashlib.sha256(cls._cfg_password.encode("utf-8"))
         key = base64.urlsafe_b64encode(key_base.digest())
         cipher_suite = Fernet(key)
 
@@ -196,7 +196,7 @@ class Config(utils.LogMixin):
                                               "static_path", "log_file" ] \
                and not inspect.isroutine(val):
                 # store encrypted data
-                if utils.is_byte_string(val):
+                if utils.is_byte_string(val) or (val != "" and "password" in key.lower()):
                     val_enc = cipher_suite.encrypt((val).encode("utf-8"))
                     config[key] = val_enc
                 else:    
@@ -1534,11 +1534,17 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
             Config.log_level = log_level_name
         pmatic.logging(Config.log_level)
 
-        cfg_password = self._vars.getvalue("cfg_password")
+        _cfg_password = self._vars.getvalue("_cfg_password")
+        if _cfg_password != "":
+            Config._cfg_password = _cfg_password
+        
+        if not Config._cfg_password or Config._cfg_password == "":
+            raise PMUserError("You need to provide a password and it must not be empty.")
+
+        if len(Config._cfg_password ) < 6:
+            raise PMUserError("The password must have a minimal length of 6 characters.")
 #        cfg_password = self._vars.getvalue("password")
-        self.logger.info("cfgpasswed", cfg_password)
-        if cfg_password != "":
-            Config.cfg_password = cfg_password
+        self.logger.info("cfgpasswed", _cfg_password)
 
         self._save_ccu_config()
         self._save_fritzbox_config()
@@ -1718,6 +1724,7 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
 
     def process(self):
         self.password_form()
+        self.ensure_password_is_set()
         self.config_form()
 
 
@@ -1900,34 +1907,20 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         self.write("</tr>")
         self.write("</table>")
 
-        if (Config.cfg_password == "default"):
-            self.h3("Config Password")
-            self.p("Retype password for the config file information. "
-				   "If you want proper decoding at start, use -x <passwd> option."
-				   "Keep information in mind, no recovery possible.")
-            self.write("<table>")
-            self.write("</tr>")
-            self.write("<tr><th>User/Password</th>")
-            self.write("<td>")
-            self.password("cfg_password")
-            self.write("</td>")
-            self.write("</tr>")
-            self.write("</table>")
-        else:
-            self.h3("Config Password")
-            self.p("Retype password for the config file information. "
-				   "If you want proper decoding at start, use -x <passwd> option."
-				   "Keep information in mind, no recovery possible.")
-            self.write("<table>")
-            self.write("</tr>")
-            self.write("<tr><th>User/Password</th>")
-            self.write("<td>")
-            self.input("cfg_passwort", Config.cfg_password)
-            self.password("cfg_password")
-            self.write("</td>")
-            self.write("</tr>")
-            self.write("</table>")
-			
+        self.h3("Config Password")
+        self.p("Retype password for the config file information. "
+			   "If you want proper decoding at start, use -x <passwd> option. "
+               "In case no password is defined 'default' is used. "
+			   "Keep information in mind, no recovery possible. ")
+        self.write("<table>")
+        self.write("</tr>")
+        self.write("<tr><th>User/Password</th>")
+        self.write("<td>")
+        self.password("_cfg_password")
+        self.write("</td>")
+        self.write("</tr>")
+        self.write("</table>")
+		
         self.submit("Save configuration", "save_config")
         self.end_form()
         self.write("</div>\n")
