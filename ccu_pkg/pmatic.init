@@ -5,7 +5,6 @@ CONFIG_DIR=/usr/local/etc/config
 # CONFIG_DIR=/etc/config # equal
 ADDON_NAME=pmatic
 BIN_DIR=/usr/local/bin
-export USER_DIR=$CONFIG_DIR/addons/user
 ADDON_DIR=$CONFIG_DIR/addons/${ADDON_NAME}
 WWW_DIR=${CONFIG_DIR}/addons/www/${ADDON_NAME}
 INIT_TARGET=/etc/init.d/S55pmatic
@@ -23,18 +22,11 @@ start() {
   if [ ! -h $INIT_TARGET ]; then
       mount -o remount,rw /
       ln -sf $CONFIG_DIR/rc.d/pmatic $INIT_TARGET
-      ln -sf $CONFIG_DIR/rc.d/pmatic $ADDO
-  fi
-  if [ ! -h $BIN_DIR ]; then
-      mount -o remount,rw /
-      ln -sf $PYTHON_DIR/bin/python2.7 $BIN_DIR/python
-      ln -sf $PYTHON_DIR/bin/python3.8 $BIN_DIR/python3
-#      mount -o remount,ro /
   fi
 
   if [ -z "$PM_PID" ]; then
       echo -n "Starting pmatic manager..."
-      python $BIN_DIR/pmatic-manager  2>&1 | logger -t homematic -p user.info
+      env LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PYTHON_DIR/lib PYTHONPATH=$PYTHONPATH:$PYTHON_DIR/lib/$PYTHON_VER/dist-packages $PYTHON_DIR/bin/$PYTHON_VER $BIN_DIR/pmatic-manager  2>&1 | logger -t homematic -p user.info
       logger -t homematic -p user.info "started pmatic manager"
       echo "OK"
   fi
@@ -98,12 +90,6 @@ uninstall)
   
   # remove pmatic program + python related files but keep directories
   # containing user files like $ADDON_DIR/scripts.
-  if [ -h $BIN_DIR/python3 ]; then
-      rm $BIN_DIR/python3 
-  fi
-  if [ -h $BIN_DIR/$PYTHON_VER ]; then
-      rm $BIN_DIR/$PYTHON_VER 
-  fi
   rm $BIN_DIR/pmatic-manager
   # FIXME: consider a clean deinstall w/o deleting customized changes 
   #  rm -rf $ADDON_DIR
@@ -120,12 +106,13 @@ uninstall)
   if [ -h $INIT_TARGET ]; then
       mount -o remount,rw /
       rm -f $INIT_TARGET
+      rm $PROFILE_DIR/python-addons.sh
 #      mount -o remount,ro /
   fi
   logger -t ${ADDON_NAME} -p user.info "Uninstalled"
   ;;
 *)
-  echo "Usage: $0 {start|stop|restart|status|uninstall}" >&2
+  echo "Usage: $0 {start|stop|restart|status|info|uninstall}" >&2
   exit 1
   ;;
 esac

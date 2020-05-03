@@ -1,5 +1,4 @@
 # These files are not really optional, but have different paths on different platforms
-# These files are not really optional, but have different paths on different platforms
 # ignore missing files during rsync.
 #
 # Differences between paths

@@ -146,7 +146,7 @@ class Config(utils.LogMixin):
                     mylist = list(config.items())
                 for key, val in mylist:
                     if key[0] != "_" and key not in [ "config_path",
-                                                        "static_path", "log_file" ] \
+                                                        "static_path", "log_file", "cfg_password" ] \
                     and not inspect.isroutine(val):
                         if utils.is_byte_string(val):
                             val_dec = cipher_suite.decrypt((val).encode("utf-8"))			
@@ -154,10 +154,10 @@ class Config(utils.LogMixin):
                         else:
                             config[key] = val
                  # treat ccu password special           
-                if 'ccu_credentials' in config:
+                if 'ccu_credentials' in config and config['ccu_credentials'] != None:
                     try:
-                        config['ccu_credentials'] = config['ccu_credentials'][0], cipher_suite.decrypt((config['ccu_credentials'][1]).encode()).decode()
                         print("valdec", config['ccu_credentials'])
+                        config['ccu_credentials'] = config['ccu_credentials'][0], cipher_suite.decrypt((config['ccu_credentials'][1]).encode()).decode()
                     except InvalidToken:
                         config['ccu_credentials'] = config['ccu_credentials'][0], "default"
                         cls.cls_logger().warning("No valid credential, please use -x <passwd> option or define in setup section.", exc_info=False)
@@ -1534,8 +1534,9 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
             Config.log_level = log_level_name
         pmatic.logging(Config.log_level)
 
-#        cfg_password = self._vars.getvalue("cfg_password")
-        cfg_password = self._vars.getvalue("password")
+        cfg_password = self._vars.getvalue("cfg_password")
+#        cfg_password = self._vars.getvalue("password")
+        self.logger.info("cfgpasswed", cfg_password)
         if cfg_password != "":
             Config.cfg_password = cfg_password
 
@@ -1899,20 +1900,35 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         self.write("</tr>")
         self.write("</table>")
 
-        # self.h3("Config Password")
-        # self.p("Retype password for the config file information. "
-			   # "If you want proper decoding at start, use -x <passwd> option."
-			   # "Keep information in mind, no recovery possible.")
-        # self.write("<table>")
-        # self.write("</tr>")
-        # self.write("<tr><th>User/Password</th>")
-        # self.write("<td>")
-        # self.password("cfg_password")
-        # self.write("</td>")
-        # self.write("</tr>")
-        # self.write("</table>")
-		
-        # self.submit("Save configuration", "save_config")
+        if (Config.cfg_password == "default"):
+            self.h3("Config Password")
+            self.p("Retype password for the config file information. "
+				   "If you want proper decoding at start, use -x <passwd> option."
+				   "Keep information in mind, no recovery possible.")
+            self.write("<table>")
+            self.write("</tr>")
+            self.write("<tr><th>User/Password</th>")
+            self.write("<td>")
+            self.password("cfg_password")
+            self.write("</td>")
+            self.write("</tr>")
+            self.write("</table>")
+        else:
+            self.h3("Config Password")
+            self.p("Retype password for the config file information. "
+				   "If you want proper decoding at start, use -x <passwd> option."
+				   "Keep information in mind, no recovery possible.")
+            self.write("<table>")
+            self.write("</tr>")
+            self.write("<tr><th>User/Password</th>")
+            self.write("<td>")
+            self.input("cfg_passwort", Config.cfg_password)
+            self.password("cfg_password")
+            self.write("</td>")
+            self.write("</tr>")
+            self.write("</table>")
+			
+        self.submit("Save configuration", "save_config")
         self.end_form()
         self.write("</div>\n")
 

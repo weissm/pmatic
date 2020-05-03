@@ -9,9 +9,9 @@ ADDON_DIR=$CONFIG_DIR/addons
 PYTHON_DIR=$ADDON_DIR/pmatic/python
 
 export USER_DIR=/usr/local/addons/user
-export PATH=$PATH:$PYTHON_DIR/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PYTHON_DIR/lib
-export PYTHONPATH=$PYTHONPATH:$PYTHON_DIR/lib/python2.7/dist-packages:$PYTHON_DIR/lib/python3.8/dist-packages
 export PYTHONENCODING=utf-8
 export PYTHONIOENCODING=utf-8
 export PYTHONHOME=$PYTHON_DIR
+
+alias python='env LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PYTHON_DIR/lib PYTHONPATH=$PYTHONPATH:$PYTHON_DIR/lib/python2.7/dist-packages $PYTHON_DIR/bin/python2.7'
+alias python3='env LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PYTHON_DIR/lib PYTHONPATH=$PYTHONPATH:$PYTHON_DIR/lib/python3.8/dist-packages $PYTHON_DIR/bin/python3.8'
