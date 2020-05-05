@@ -32,6 +32,10 @@ import pytest
 import signal
 from bs4 import BeautifulSoup
 
+from cryptography.fernet import Fernet
+import hashlib
+import base64
+
 pytestmark = pytest.mark.skipif(sys.platform == "win32",
                                 reason="manager currently does not run on windows")
 
@@ -246,8 +250,7 @@ class TestConfig(object):
             "fritzbox_address",
             "fritzbox_port",
             "fritzbox_username",
-            "fritzbox_password",
-	    "cfg_password"
+            "_cfg_password"
         ]
 
         for key in Config.__dict__.keys():
@@ -280,14 +283,29 @@ class TestConfig(object):
         assert out == ""
 
         # Load empty json construct
-        # p.write("{}", mode="w")
-        # TestConfig.load()
+        p.write("{}", mode="w")
+        TestConfig.load()
 
         # Load empty json construct
-        # p.write("{\"log_level\": 10}", mode="w")
-        # TestConfig.load()
-        # assert TestConfig.log_level == 10
+        p.write("{\"log_level\": 10}", mode="w")
+        TestConfig.load()
+        assert TestConfig.log_level == 10
 
+        # Load empty json construct
+        _cfg_password = "testpw"
+        p.write("{\"_cfg_password\": \"%s\"}" % _cfg_password, mode="w")
+        TestConfig.load()
+        assert TestConfig._cfg_password == _cfg_password
+
+        # Load empty json construct
+        key_base = hashlib.sha256(_cfg_password.encode("utf-8"))
+        key = base64.urlsafe_b64encode(key_base.digest())
+        cipher_suite = Fernet(key)
+        val = "testdata"
+        val_enc = cipher_suite.encrypt(val.encode()).decode()
+        p.write("{\"fritzbox_password\": \"(%s).encode()\"}" % val_enc, mode="w")
+        TestConfig.load()
+        assert TestConfig.fritzbox_password == val
 
     def test_load_io_errors(self, capfd):
         pmatic.logging()
@@ -787,7 +805,7 @@ class TestPageHandler(object):
 
     def test_get(self, monkeypatch, tmpdir):
         monkeypatch.setattr(PageHandler, "is_password_set", staticmethod(lambda: False))
-        assert PageHandler.get({"PATH_INFO": "/"}).__name__ == "PageMain"
+        assert PageHandler.get({"PATH_INFO": "/"}).__name__ == "PageLogin"
         monkeypatch.undo()
 
         monkeypatch.setattr(PageHandler, "is_password_set", staticmethod(lambda: True))

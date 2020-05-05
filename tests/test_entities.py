@@ -132,11 +132,11 @@ class TestChannel(lib.TestCCUClassWide):
 #        import traceback
 #        print(b"".join(traceback.format_stack()[:-1]))
 
-#        for device in ccu.devices.query():
-#          print("%-20s %s %s %s" % (device.name, device.type, device.address, device.version))
+        # for device in ccu.devices.query():
+          # print("%-20s %s %s %s" % (device.name, device.type, device.address, device.version))
 
-#        for device in ccu.devices.query(device_type="HM-LC-Sw1-Pl"):
-#          print("%-20s %s %s %s" % (device.name, device.type, device.address, device.version))
+        # for device in ccu.devices.query(device_type="HM-LC-Sw1-Pl"):
+          # print("%-20s %s %s %s" % (device.name, device.type, device.address, device.version))
 
         device = list(ccu.devices.query(device_type="HM-LC-Sw1-Pl"))[0]
         return device
@@ -1248,7 +1248,7 @@ class TestDevice(lib.TestCCUClassWide):
         assert d.is_online == True
 
         d.maintenance.values["UNREACH"]._value = True
-        assert d.is_online == True
+        assert d.is_online == False
 
         orig_ty = d.type
         d.type = "HM-RCV-50"
