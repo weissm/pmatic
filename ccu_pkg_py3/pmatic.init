@@ -26,7 +26,7 @@ start() {
 
   if [ -z "$PM_PID" ]; then
       echo -n "Starting pmatic manager..."
-      env LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PYTHON_DIR/lib PYTHONPATH=$PYTHONPATH:$PYTHON_DIR/lib/$PYTHON_VER/dist-packages $PYTHON_DIR/bin/$PYTHON_VER $BIN_DIR/pmatic-manager  2>&1 | logger -t homematic -p user.info
+      env LD_LIBRARY_PATH=$PYTHON_DIR/lib PYTHONPATH=$PYTHON_DIR/lib/$PYTHON_VER/dist-packages $PYTHON_DIR/bin/$PYTHON_VER $BIN_DIR/pmatic-manager  2>&1 | logger -t homematic -p user.info
       logger -t homematic -p user.info "started pmatic manager"
       echo "OK"
   fi

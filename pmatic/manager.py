@@ -150,8 +150,10 @@ class Config(utils.LogMixin):
                     and not inspect.isroutine(val):
                         if utils.is_byte_string(val) or (val != "" and "password" in key.lower()):
                             try :
-                                val_dec = cipher_suite.decrypt((val).encode("utf-8"))			
-                                config[key] = val_dec.decode()
+                                val = val.encode("utf-8")
+                                val_dec = cipher_suite.decrypt(val)			
+                                config[key] = val_dec.decode("utf-8")
+                                print("decoded password for %s = %s, %s", key, config[key], cls._cfg_password)
                             except:
                                 config[key] = val
                                 cls.cls_logger().warning("No valid credential %s in key %s, stop decrypting", val, key, exc_info=False)                                
@@ -161,7 +163,7 @@ class Config(utils.LogMixin):
                 if 'ccu_credentials' in config and config['ccu_credentials'] != None:
                     try:
                         print("valdec", config['ccu_credentials'])
-                        config['ccu_credentials'] = config['ccu_credentials'][0], cipher_suite.decrypt((config['ccu_credentials'][1]).encode()).decode()
+                        config['ccu_credentials'] = config['ccu_credentials'][0], cipher_suite.decrypt((config['ccu_credentials'][1]).encode("utf-8")).decode("utf-8")
                     except InvalidToken:
                         config['ccu_credentials'] = config['ccu_credentials'][0], "default"
                         cls.cls_logger().warning("No valid credential, please use -x <passwd> option or define in setup section.", exc_info=False)
@@ -201,8 +203,10 @@ class Config(utils.LogMixin):
                and not inspect.isroutine(val):
                 # store encrypted data
                 if utils.is_byte_string(val) or (val != "" and "password" in key.lower()):
-                    val_enc = cipher_suite.encrypt((val).encode("utf-8"))
-                    config[key] = val_enc
+                    val_enc = cipher_suite.encrypt(val.encode("utf-8"))
+                    config[key] = val_enc.decode("utf-8")                    
+                    val_dec = cipher_suite.decrypt(val_enc)			
+                    print("decoded password for %s = %s, %s", key, config[key], cls._cfg_password)
                 else:    
                     config[key] = val
 
@@ -638,6 +642,8 @@ class PageHandler(utils.LogMixin):
             cookie[name] = value
             self._set_http_header("Set-Cookie", cookie[name].OutputString())
 
+#    def _del_cookie(self, name)
+#        response.delete_cookie(name, domain="cookie_domain")
 
     @property
     def vars(self):
@@ -1510,8 +1516,7 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
             try:
                 self._handle_save_config()
             except Exception as e:
-                stack = traceback.format_exc()
-                print(stack)
+                stack = traceback.format_exc(limit=1)
                 self.logger.debug("Unhandled exception (action) (trace %s)", stack, exc_info=True)
                 raise PMUserError("issue in handling password", e, stack)
                 
