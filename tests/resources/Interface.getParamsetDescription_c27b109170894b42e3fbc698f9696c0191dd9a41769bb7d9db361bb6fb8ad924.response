@@ -1,1 +1,1 @@
-{"error": null, "result": [{"DEFAULT": "0", "FLAGS": "3", "ID": "INSTALL_TEST", "MAX": "1", "MIN": "0", "NAME": "INSTALL_TEST", "OPERATIONS": "2", "TAB_ORDER": "0", "TYPE": "ACTION", "UNIT": ""}], "version": "1.1"}
+{"error": null, "result": [{"DEFAULT": "0", "FLAGS": "3", "ID": "INSTALL_TEST", "MAX": "1", "MIN": "0", "NAME": "INSTALL_TEST", "OPERATIONS": "3", "TAB_ORDER": "0", "TYPE": "ACTION", "UNIT": ""}], "version": "1.1"}
