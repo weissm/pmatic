@@ -150,10 +150,7 @@ class Config(utils.LogMixin):
                     and not inspect.isroutine(val):
                         if utils.is_byte_string(val) or (val != "" and "password" in key.lower()):
                             try :
-                                val = val.encode("utf-8")
-                                val_dec = cipher_suite.decrypt(val)			
-                                config[key] = val_dec.decode("utf-8")
-                                print("decoded password for %s = %s, %s", key, config[key], cls._cfg_password)
+                                config[key] = cipher_suite.decrypt(val.encode("utf-8")).decode("utf-8")
                             except:
                                 config[key] = val
                                 cls.cls_logger().warning("No valid credential %s in key %s, stop decrypting", val, key, exc_info=False)                                
@@ -202,11 +199,12 @@ class Config(utils.LogMixin):
                                               "static_path", "log_file" ] \
                and not inspect.isroutine(val):
                 # store encrypted data
-                if utils.is_byte_string(val) or (val != "" and "password" in key.lower()):
+                if utils.is_byte_string(val):
+                    val_enc = cipher_suite.encrypt(val)
+                    config[key] = val_enc.decode("utf-8")                    
+                elif (val != "" and "password" in key.lower()):
                     val_enc = cipher_suite.encrypt(val.encode("utf-8"))
                     config[key] = val_enc.decode("utf-8")                    
-                    val_dec = cipher_suite.decrypt(val_enc)			
-                    print("decoded password for %s = %s, %s", key, config[key], cls._cfg_password)
                 else:    
                     config[key] = val
 
@@ -463,6 +461,7 @@ class FieldStorage(cgi.FieldStorage):
 
 class PageHandler(utils.LogMixin):
     _transids = {}
+    _initdone = False
 
     @classmethod
     def pages(cls):
@@ -514,11 +513,14 @@ class PageHandler(utils.LogMixin):
 
     @classmethod
     def get(cls, environ):
-        pages = cls.pages()
+        pages = cls.pages()        
         try:
             page = pages[cls.base_url(environ)]
 
-            if cls.is_password_set() and not cls._is_authenticated(environ):
+            if not cls._initdone:
+                cls._initdone = True
+                return pages["login"]
+            elif cls.is_password_set() and not cls._is_authenticated(environ):
                 return pages["login"]
             else:
                 return page
@@ -1166,6 +1168,8 @@ class PageLogin(HtmlPageHandler, utils.LogMixin):
 
     def action(self):
         password = self._vars.getvalue("password")
+        Config._cfg_password = password
+        print ( Config._cfg_password)
 
         if not password:
             raise PMUserError("Invalid password.")
@@ -1516,7 +1520,7 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
             try:
                 self._handle_save_config()
             except Exception as e:
-                stack = traceback.format_exc(limit=1)
+                stack = traceback.format_exc()
                 self.logger.debug("Unhandled exception (action) (trace %s)", stack, exc_info=True)
                 raise PMUserError("issue in handling password", e, stack)
                 
@@ -1548,7 +1552,8 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         pmatic.logging(Config.log_level)
 
         _cfg_password = self._vars.getvalue("_cfg_password")
-        if _cfg_password != "":
+        if _cfg_password != "" and _cfg_password != None:
+            print (_cfg_password)
             Config._cfg_password = _cfg_password
         
         if not Config._cfg_password or Config._cfg_password == "":
@@ -1918,20 +1923,22 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         self.write("</tr>")
         self.write("</table>")
 
-        self.h3("Config Password")
-        self.p("Retype password for the config file information. "
-			   "If you want proper decoding at start, use -x <passwd> option. "
-               "In case no password is defined 'default' is used. "
-			   "Keep information in mind, no recovery possible. ")
-        self.write("<table>")
-        self.write("</tr>")
-        self.write("<tr><th>User/Password</th>")
-        self.write("<td>")
-        self.password("_cfg_password")
-        self.write("</td>")
-        self.write("</tr>")
-        self.write("</table>")
-		
+        if Config._cfg_password == "":
+            print("hier", Config._cfg_password)
+            self.h3("Config Password")
+            self.p("Retype password for the config file information. "
+				   "If you want proper decoding at start, use -x <passwd> option. "
+                   "In case no password is defined 'default' is used. "
+				   "Keep information in mind, no recovery possible. ")
+            self.write("<table>")
+            self.write("</tr>")
+            self.write("<tr><th>User/Password</th>")
+            self.write("<td>")
+            self.password("_cfg_password")
+            self.write("</td>")
+            self.write("</tr>")
+            self.write("</table>")
+			
         self.submit("Save configuration", "save_config")
         self.end_form()
         self.write("</div>\n")
