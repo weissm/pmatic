@@ -149,8 +149,12 @@ class Config(utils.LogMixin):
                                                         "static_path", "log_file" ] \
                     and not inspect.isroutine(val):
                         if utils.is_byte_string(val) or (val != "" and "password" in key.lower()):
-                            val_dec = cipher_suite.decrypt((val).encode("utf-8"))			
-                            config[key] = val_dec.decode()
+                            try :
+                                val_dec = cipher_suite.decrypt((val).encode("utf-8"))			
+                                config[key] = val_dec.decode()
+                            except:
+                                config[key] = val
+                                cls.cls_logger().warning("No valid credential %s in key %s, stop decrypting", val, key, exc_info=False)                                
                         else:
                             config[key] = val
                  # treat ccu password special           
@@ -202,10 +206,6 @@ class Config(utils.LogMixin):
                 else:    
                     config[key] = val
 
-        # treat ccu password special  
-        if 'ccu_credentials' in config:
-            if utils.is_py2():
-                config['ccu_credentials'] = config['ccu_credentials'][0].encode("utf-8"), cipher_suite.encrypt((config['ccu_credentials'][1]).encode("utf-8"))
         if not os.path.exists(os.path.dirname(cls._config_path())):
             os.makedirs(os.path.dirname(cls._config_path()))
 
@@ -678,7 +678,7 @@ class PageHandler(utils.LogMixin):
             except PMUserError as e:
                 self.error(e)
             except Exception as e:
-                self.error("Unhandled exception (action): %s" % e)
+                self.error("Unhandled exception (action @ manager)" % e)
                 self.logger.debug("Unhandled exception (action)", exc_info=True)
 
         # The action code can disable regular rendering of the page,
@@ -775,7 +775,7 @@ class StaticFile(PageHandler):
     @classmethod
     def system_path_from_pathinfo(self, path_info):
         if path_info.startswith("/scripts/"):
-            return os.path.join(Config.script_path, path_info[9:])
+            return os.path.join(os.path.expandvars(Config.script_path), path_info[9:])
         else:
             return os.path.join(Config.static_path, path_info.lstrip("/"))
 
@@ -948,10 +948,10 @@ class PageMain(HtmlPageHandler, utils.LogMixin):
 
 
     def save_script(self, filename, script):
-        if not os.path.exists(Config.script_path):
-            os.makedirs(Config.script_path)
+        if not os.path.exists(os.path.expandvars(Config.script_path)):
+            os.makedirs(os.path.expandvars(Config.script_path))
 
-        filepath = os.path.join(Config.script_path, filename)
+        filepath = os.path.join(os.path.expandvars(Config.script_path), filename)
         open(filepath, "w").write(script)
         os.chmod(filepath, 0o755)
 
@@ -996,7 +996,7 @@ class PageMain(HtmlPageHandler, utils.LogMixin):
         if filename not in self._manager.get_scripts():
             raise PMUserError("This script does not exist.")
 
-        filepath = os.path.join(Config.script_path, filename)
+        filepath = os.path.join(os.path.expandvars(Config.script_path), filename)
         os.unlink(filepath)
         self.success("The script has been deleted.")
 
@@ -1011,7 +1011,7 @@ class PageMain(HtmlPageHandler, utils.LogMixin):
         self.h2("Upload Script")
         self.p("You can either upload your scripts using this form or "
                "copy the files on your own, e.g. using SFTP or SCP, directly "
-               "to <tt>%s</tt>." % self.escape(Config.script_path))
+               "to <tt>%s</tt>." % self.escape(os.path.expandvars(Config.script_path)))
         self.p("Please note that existing scripts with equal names will be overwritten "
                "without warning.")
         self.write("<div class=\"upload_form\">\n")
@@ -1030,7 +1030,7 @@ class PageMain(HtmlPageHandler, utils.LogMixin):
                    "<th class=\"largest\">Filename</th>"
                    "<th>Last modified</th></tr>\n")
         for filename in self._manager.get_scripts():
-            path = os.path.join(Config.script_path, filename)
+            path = os.path.join(os.path.expandvars(Config.script_path), filename)
             last_mod_ts = os.stat(path).st_mtime
 
             self.write("<tr>")
@@ -1502,11 +1502,19 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
 
 
     def action(self):
-        action = self._vars.getvalue("action")
+        self.logger.debug("Start action processing ")
+        action = self._vars.getvalue("action")     
         if action == "set_password":
             self._handle_set_password()
         elif action == "save_config":
-            self._handle_save_config()
+            try:
+                self._handle_save_config()
+            except Exception as e:
+                stack = traceback.format_exc()
+                print(stack)
+                self.logger.debug("Unhandled exception (action) (trace %s)", stack, exc_info=True)
+                raise PMUserError("issue in handling password", e, stack)
+                
 
 
     def _handle_set_password(self):
@@ -1543,8 +1551,6 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
 
         if len(Config._cfg_password ) < 6:
             raise PMUserError("The password must have a minimal length of 6 characters.")
-#        cfg_password = self._vars.getvalue("password")
-        self.logger.info("cfgpasswed", _cfg_password)
 
         self._save_ccu_config()
         self._save_fritzbox_config()
@@ -1566,7 +1572,7 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         Config.timezone = timezone
 
         script_path = self._vars.getvalue("script_path")
-        Config.script_path = script_path
+        Config.script_path = os.path.expandvars(script_path)
 
         presence_update_interval = self._vars.getvalue("presence_update_interval")
         try:
@@ -1795,7 +1801,7 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         self.write("<p>You can configure where to store your script information. Note: no ending slash</p>"
                    "</th>")
         self.write("<td>")
-        self.input("script_path", str(Config.script_path))
+        self.input("script_path", str(os.path.expandvars(Config.script_path)))
         self.write("</td>")
         self.write("</tr>")
 
@@ -2540,7 +2546,7 @@ class ScriptRunner(threading.Thread, utils.LogMixin):
             try:
                 self.logger.info("Starting script (%s): %s",
                         "inline" if self.run_inline else "external", self.script)
-                script_path = os.path.join(Config.script_path, self.script)
+                script_path = os.path.join(os.path.expandvars(Config.script_path), self.script)
 
                 self._is_running = True
 
@@ -2840,15 +2846,16 @@ class Manager(wsgiref.simple_server.WSGIServer, utils.LogMixin):
 
 
     def get_scripts(self):
-        if not os.path.exists(Config.script_path):
+        _script_path = os.path.expandvars(os.path.expandvars(Config.script_path))
+        if not os.path.exists(os.path.expandvars(Config.script_path)):
             raise PMUserError("The script directory %s does not exist." %
-                                                    Config.script_path)
+                                                    os.path.expandvars(Config.script_path))
 
-        for dirpath, _unused_dirnames, filenames in os.walk(Config.script_path):
-            if dirpath == Config.script_path:
+        for dirpath, _unused_dirnames, filenames in os.walk(os.path.expandvars(Config.script_path)):
+            if dirpath == os.path.expandvars(Config.script_path):
                 relpath = ""
             else:
-                relpath = dirpath[len(Config.script_path)+1:]
+                relpath = dirpath[len(os.path.expandvars(Config.script_path))+1:]
 
             for filename in filenames:
                 filepath = os.path.join(dirpath, filename)
