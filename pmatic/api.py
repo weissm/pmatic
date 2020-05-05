@@ -347,6 +347,12 @@ class AbstractAPI(utils.LogMixin):
         except KeyError:
             raise PMException("Method \"%s\" is not a valid method." % method_name_int)
 
+    # for backward compability w/ ccu2
+    def _get_target(self):
+        if self._target:
+            return self._target
+        else: # default
+            return "ccu3"
 
 
 class RemoteAPI(AbstractAPI):
@@ -574,13 +580,6 @@ class RemoteAPI(AbstractAPI):
             args["_session_id_"] = self._session_id
         return args
 
-    # for backward compability w/ ccu2
-    def _get_target(self):
-        if self._target:
-            return self._target
-        else: # default
-            return "ccu3"
-
 
 class LocalAPI(AbstractAPI):
     """Realizes the pmatic API when executed on locally on the CCU."""
@@ -715,9 +714,9 @@ class LocalAPI(AbstractAPI):
         try:
             return self._parse_api_response(method_name_int, kwargs, body)
         except PMException:
-            self.logger.warning("Exception in API call.")
-            self.logger.warning("  TCL: %r", tcl)
-            self.logger.warning("  BODY: %r", body)
+            self.logger.debug("Exception in API call.")
+            self.logger.debug("  TCL: %r", tcl)
+            self.logger.debug("  BODY: %r", body)
             raise
 
 
