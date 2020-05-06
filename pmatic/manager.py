@@ -159,7 +159,6 @@ class Config(utils.LogMixin):
                  # treat ccu password special           
                 if 'ccu_credentials' in config and config['ccu_credentials'] != None:
                     try:
-                        print("valdec", config['ccu_credentials'])
                         config['ccu_credentials'] = config['ccu_credentials'][0], cipher_suite.decrypt((config['ccu_credentials'][1]).encode("utf-8")).decode("utf-8")
                     except InvalidToken:
                         config['ccu_credentials'] = config['ccu_credentials'][0], "default"
@@ -1169,7 +1168,6 @@ class PageLogin(HtmlPageHandler, utils.LogMixin):
     def action(self):
         password = self._vars.getvalue("password")
         Config._cfg_password = password
-        print ( Config._cfg_password)
 
         if not password:
             raise PMUserError("Invalid password.")
@@ -1924,7 +1922,6 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
         self.write("</table>")
 
         if Config._cfg_password == "":
-            print("hier", Config._cfg_password)
             self.h3("Config Password")
             self.p("Retype password for the config file information. "
 				   "If you want proper decoding at start, use -x <passwd> option. "
