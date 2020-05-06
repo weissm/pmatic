@@ -129,7 +129,7 @@ class Config(utils.LogMixin):
     email_username = ""
     email_password = ""
 
-    _cfg_password = "default"
+    _cfg_password = ""
 
     @classmethod
     def load(cls):
@@ -153,7 +153,7 @@ class Config(utils.LogMixin):
                                 config[key] = cipher_suite.decrypt(val.encode("utf-8")).decode("utf-8")
                             except:
                                 config[key] = val
-                                cls.cls_logger().warning("No valid credential %s in key %s, stop decrypting", val, key, exc_info=False)                                
+                                cls.cls_logger().debug("No valid credential %s in key %s, stop decrypting", val, key, exc_info=False)                                
                         else:
                             config[key] = val
                  # treat ccu password special           
@@ -516,10 +516,11 @@ class PageHandler(utils.LogMixin):
         try:
             page = pages[cls.base_url(environ)]
 
-            if not cls._initdone:
+            if cls.is_password_set() and not cls._is_authenticated(environ):
                 cls._initdone = True
                 return pages["login"]
-            elif cls.is_password_set() and not cls._is_authenticated(environ):
+            elif not cls._initdone and Config._cfg_password == "":
+                cls._initdone = True
                 return pages["login"]
             else:
                 return page
@@ -959,7 +960,10 @@ class PageMain(HtmlPageHandler, utils.LogMixin):
             os.makedirs(os.path.expandvars(Config.script_path))
 
         filepath = os.path.join(os.path.expandvars(Config.script_path), filename)
-        open(filepath, "w").write(script)
+        if utils.is_py2():
+            open(filepath, "w").write(script)
+        else:
+            open(filepath, "w").write(script.decode("utf-8"))
         os.chmod(filepath, 0o755)
 
 
@@ -1166,8 +1170,10 @@ class PageLogin(HtmlPageHandler, utils.LogMixin):
 
 
     def action(self):
-        password = self._vars.getvalue("password")
-        Config._cfg_password = password
+        if Config._cfg_password == "":
+            password = self._vars.getvalue("password")
+        else:
+            password = Config._cfg_password
 
         if not password:
             raise PMUserError("Invalid password.")
