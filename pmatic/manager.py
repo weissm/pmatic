@@ -1183,6 +1183,7 @@ class PageLogin(HtmlPageHandler, utils.LogMixin):
         try:
             if Config._cfg_password == "":
                 password = self._vars.getvalue("password")
+                Config._cfg_password = password
             else:
                 password = Config._cfg_password
 
@@ -1574,7 +1575,6 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
 
         _cfg_password = self._vars.getvalue("_cfg_password")
         if _cfg_password != "" and _cfg_password != None:
-            print (_cfg_password)
             Config._cfg_password = _cfg_password
         
         if not Config._cfg_password or Config._cfg_password == "":
