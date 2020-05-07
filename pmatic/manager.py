@@ -960,10 +960,11 @@ class PageMain(HtmlPageHandler, utils.LogMixin):
             os.makedirs(os.path.expandvars(Config.script_path))
 
         filepath = os.path.join(os.path.expandvars(Config.script_path), filename)
-        if utils.is_py2():
-            open(filepath, "w").write(script)
-        else:
-            open(filepath, "w").write(script.decode("utf-8"))
+        try:
+            open(filepath, "w").write(newscript.decode("utf-8"))
+        except:
+            raise "issue"
+        
         os.chmod(filepath, 0o755)
 
 
@@ -2696,7 +2697,33 @@ class PMServerHandler(wsgiref.simple_server.ServerHandler, utils.LogMixin):
 
 
     def log_exception(self, exc_info):
-        self.logger.error("Unhandled exception (log)", exc_info=True)
+#        self.logger.error("Unhandled exception (log)", exc_info=True)
+        try:
+            from traceback import print_exception
+            stderr = self.get_stderr()
+            print(
+                exc_info[0], exc_info[1], exc_info[2],
+                self.traceback_limit, stderr
+            )
+            stderr.flush()
+        finally:
+            exc_info = None
+
+        
+    def error_output(self, environ, start_response):
+        """WSGI mini-app to create error output
+        By default, this just uses the 'error_status', 'error_headers',
+        and 'error_body' attributes to generate an output page.  It can
+        be overridden in a subclass to dynamically generate diagnostics,
+        choose an appropriate message for the user's preferred language, etc.
+        Note, however, that it's not recommended from a security perspective to
+        spit out diagnostics to any old user; ideally, you should have to do
+        something special to enable diagnostic output, which is why we don't
+        include any here!
+        """
+        print ("HHHEEER")
+        start_response(self.error_status,self.error_headers[:],sys.exc_info())
+        return [self.error_body]
 
 
 

@@ -247,6 +247,7 @@ def is_byte_string(obj):
 def is_py2():
     """Returns True when executed with Python 2."""
     return sys.version_info[0] < 3
+#    return sys.version_info[0] < 2
 
 
 def decamel(name):
