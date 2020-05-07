@@ -1,16 +1,13 @@
 #!/bin/sh
 
 VERSION=0.6.1
-CONFIG_DIR=/usr/local/etc/config
-# CONFIG_DIR=/etc/config # equal
-ADDON_NAME=pmatic
+PROFILE_DIR=/usr/local/etc/profile.d/ 
+. $PROFILE_DIR/python-addons.sh
+
 BIN_DIR=/usr/local/bin
-ADDON_DIR=$CONFIG_DIR/addons/${ADDON_NAME}
 WWW_DIR=${CONFIG_DIR}/addons/www/${ADDON_NAME}
 INIT_TARGET=/etc/init.d/S55pmatic
-PYTHON_DIR=$ADDON_DIR/python
-#PYTHON_VER=python3.8
-PYTHON_VER=python2.7
+
 
 PM_PID=$(ps -o pid,args | awk '{if($3=="/usr/local/bin/pmatic-manager"){print $1}}')
 
@@ -107,6 +104,7 @@ uninstall)
       mount -o remount,rw /
       rm -f $INIT_TARGET
       rm $PROFILE_DIR/python-addons.sh
+# FIXME: Causes error @ deinstall
 #      mount -o remount,ro /
   fi
   logger -t ${ADDON_NAME} -p user.info "Uninstalled"

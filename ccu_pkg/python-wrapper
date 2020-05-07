@@ -4,9 +4,13 @@
 #
 # This is a small wrapper which enforces the encoding of stdout,
 # stderr and stdin to be UTF-8.
+ADDON_NAME=pmatic
 CONFIG_DIR=/etc/config
-ADDON_DIR=$CONFIG_DIR/addons
-PYTHON_DIR=$ADDON_DIR/pmatic/python
+ADDON_DIR=$CONFIG_DIR/addons/$ADDON_NAME
+PYTHON_DIR=$ADDON_DIR/python
+#PYTHON_VER=python3.8
+PYTHON_VER=python2.7
+
 
 export USER_DIR=/usr/local/addons/user
 export PYTHONENCODING=utf-8

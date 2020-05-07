@@ -1,26 +1,25 @@
 #!/bin/sh
 
-ADDON_NAME=pmatic
+# source standard vars
+. ./python-wrapper
+
 BIN_DIR=/usr/local/bin
 CONFIG_DIR=/usr/local/etc/config
-PROFILE_DIR=/usr/local/etc/profile.d/
-ADDON_DIR=${CONFIG_DIR}/addons/${ADDON_NAME}
+PROFILE_DIR=/usr/local/etc/profile.d
 WWW_DIR=${CONFIG_DIR}/addons/www/${ADDON_NAME}
 RCD_DIR=${CONFIG_DIR}/rc.d
-#PYTHON_VER=python3.8
-PYTHON_VER=python2.7
 
-LOG_FILE=/tmp/${ADDON_NAME}-install3.log
-
+# log file infos
+LOG_FILE=$ADDON_DIR/etc/${ADDON_NAME}-install.log
 exec 1<&-
 exec 2<&-
 exec 1<>$LOG_FILE
 exec 2>&1
 
-echo "starting installation of addon ${ADDON_NAME} w/ PY3 at $(date)" >>$LOG_FILE
-echo $@ >>$LOG_FILE
+echo "starting installation of addon ${ADDON_NAME} w/ ${PYTHON_VER} at $(date)"
+echo $@ 
 
-echo "mount /usr/local if not already mounted" >>$LOG_FILE
+echo -e "\n mount /usr/local if not already mounted"
 if [ "$1" = "" ]; then
   echo "CCU1"
   lcdtool "installing pmatic   "
@@ -31,12 +30,11 @@ elif [ "$1" = "CCU2" ]; then
       mount -t ubifs ubi1:user /usr/local
   fi
 elif [ "$1" == "HM-RASPBERRYMATIC" -o "$1" == "CCU3" ]; then
-  echo "Installing on CCU3/RaspberryMatic" 
-  mount /usr/local
+  echo "Installing on CCU3/RaspberryMatic ($1)" 
 fi
 
 # remove files of old versions (same as in pmatic.init)
-echo "remove files of old versions" >>$LOG_FILE
+echo -e "\n remove files of old versions"
 rm $BIN_DIR/pmatic-manager
 rm $PROFILE_DIR/python-addons.sh
 # FIXME: consider a clean deinstall w/o deleting customized changes 
@@ -47,7 +45,7 @@ rm -rf $ADDON_DIR/examples
 rm -rf $ADDON_DIR/manager_static
 rm -rf $WWW_DIR
 
-echo "create directories" >>$LOG_FILE
+echo -e "\n create directories"
 if [ ! -d $BIN_DIR ]; then
     mkdir -p $BIN_DIR
     chmod 755 $BIN_DIR
@@ -82,7 +80,7 @@ cp pmatic-manager $BIN_DIR/
 chmod +x $BIN_DIR/pmatic-manager
 
 # copy all stuff and setup rc.d
-echo "copy all stuff and setup rc.d" >>$LOG_FILE
+echo -e "copy all stuff and setup rc.d"
 cp -R python manager_static $ADDON_DIR/
 cp -R examples $ADDON_DIR/scripts/
 cp -R pmatic $ADDON_DIR/python/lib/$PYTHON_VER
@@ -91,13 +89,15 @@ cp pmatic.init $RCD_DIR/pmatic
 chmod +x $RCD_DIR/pmatic
 cp python-wrapper $PROFILE_DIR/python-addons.sh
 chmod +x $PROFILE_DIR/python-addons.sh
+# cp /tmp/${ADDON_NAME}-install3.log $ADDON_DIR/
 
 # copy www stuff
-echo "copy www stuff" >>$LOG_FILE
+echo -e "\n copy www stuff"
 cp -af www/* ${WWW_DIR}/
-chmod 755 $WWWDIR
+chmod -R 755 $WWW_DIR
 sync
 
+echo -e "\n finish"
 if [ "$1" = "" ]; then
   echo "CCU1"
   lcdtool "Reboot...             "
@@ -112,6 +112,6 @@ elif [ "$1" = "CCU3" ]; then
   echo "CCU3"
   # CCU3 always reboots after Addon/Firmware Update
 elif [ "$1" = "HM-RASPBERRYMATIC" ]; then
-  echo "HM-RASPBERRYMATIC"
+  echo "finish HM-RASPBERRYMATIC"
   # RASPBERRYMATIC always reboots after Addon/Firmware Update
 fi

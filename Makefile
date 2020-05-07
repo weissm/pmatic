@@ -162,10 +162,11 @@ dist-ccu-step2b:
 	cd $(CCU_PKG_PATH)/python/lib/python3.8 ; python3 -m compileall .
 	tar -cv -C $(CCU_PKG_PATH) -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.8.tar .
 	[ -d $(CCU_PKG_PATH) ] && rm -rf $(CCU_PKG_PATH) || true
-	tar -rv -C ccu_pkg_py3 -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.8.tar \
+	tar -rv -C ccu_pkg -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.8.tar \
 	    update_script \
-	    python-wrapper \
 	    pmatic.init
+	tar -rv -C ccu_pkg_py3 -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.8.tar \
+	    python-wrapper
 	tar -rv -f $(DIST_PATH)/pmatic-$(VERSION)_ccu_3.8.tar \
 	    LICENSE \
 	    README.rst
@@ -269,7 +270,7 @@ install-ccu-pmatic:
 
 install-ccu-scripts:
 	rsync -av --no-g \
-	    $(CCU_PREDIST_PATH)_py3/pmatic.init \
+	    $(CCU_PREDIST_PATH)/pmatic.init \
 	    root@$(CCU_HOST):/usr/local/etc/config/rc.d/pmatic
 
 version:
