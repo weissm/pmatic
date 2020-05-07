@@ -960,21 +960,24 @@ class PageMain(HtmlPageHandler, utils.LogMixin):
             os.makedirs(os.path.expandvars(Config.script_path))
 
         filepath = os.path.join(os.path.expandvars(Config.script_path), filename)
-        try:
-            open(filepath, "w").write(newscript.decode("utf-8"))
-        except:
-            raise "issue"
+        open(filepath, "w").write(script.decode("utf-8"))
         
         os.chmod(filepath, 0o755)
 
 
     def action(self):
-        self.ensure_password_is_set()
-        action = self._vars.getvalue("action")
-        if action == "upload":
-            self._handle_upload()
-        elif action == "delete":
-            return self._handle_delete()
+        try:
+            self.ensure_password_is_set()
+            action = self._vars.getvalue("action")
+            if action == "upload":
+                self._handle_upload()
+            elif action == "delete":
+                return self._handle_delete()
+        except PMUserError as e:
+            self.error(e)
+        except Exception as e:
+            self.logger.error("Error %s (%s)", e, [traceback.format_exc().splitlines()[-3:-1]])
+            raise PMUserError("Error %s (for details see logfile)", e)
 
 
     def _handle_upload(self):
@@ -1077,15 +1080,21 @@ class PageRun(HtmlPageHandler, AbstractScriptProgressPage, utils.LogMixin):
 
 
     def action(self):
-        self.ensure_password_is_set()
-        action = self._vars.getvalue("action")
-        if action == "run":
-            self._handle_run(self.is_checked("run_inline"))
-        if action == "run_inline":
-            self._handle_run(run_inline=True)
-        elif action == "abort":
-            self._set_runner(g_runner)
-            self._handle_abort()
+        try:
+            self.ensure_password_is_set()
+            action = self._vars.getvalue("action")
+            if action == "run":
+                self._handle_run(self.is_checked("run_inline"))
+            if action == "run_inline":
+                self._handle_run(run_inline=True)
+            elif action == "abort":
+                self._set_runner(g_runner)
+                self._handle_abort()
+        except PMUserError as e:
+            self.error(e)
+        except Exception as e:
+            self.logger.error("Error %s (%s)", e, [traceback.format_exc().splitlines()[-3:-1]])
+            raise PMUserError("Error %s (for details see logfile)", e)
 
 
     def _handle_run(self, run_inline=False):
@@ -1171,23 +1180,29 @@ class PageLogin(HtmlPageHandler, utils.LogMixin):
 
 
     def action(self):
-        if Config._cfg_password == "":
-            password = self._vars.getvalue("password")
-        else:
-            password = Config._cfg_password
+        try:
+            if Config._cfg_password == "":
+                password = self._vars.getvalue("password")
+            else:
+                password = Config._cfg_password
 
-        if not password:
-            raise PMUserError("Invalid password.")
+            if not password:
+                raise PMUserError("Invalid password.")
 
-        filepath = os.path.join(Config.config_path, "manager.secret")
-        secret = open(filepath).read().strip()
+            filepath = os.path.join(Config.config_path, "manager.secret")
+            secret = open(filepath).read().strip()
 
-        if secret != sha256(password.encode("utf-8")).hexdigest():
-            raise PMUserError("Invalid password.")
+            if secret != sha256(password.encode("utf-8")).hexdigest():
+                raise PMUserError("Invalid password.")
 
-        self._login(secret)
-        self.success("You have been authenticated. You can now <a href=\"/\">proceed</a>.")
-        self.redirect(2, "/")
+            self._login(secret)
+            self.success("You have been authenticated. You can now <a href=\"/\">proceed</a>.")
+            self.redirect(2, "/")
+        except PMUserError as e:
+            self.error(e)
+        except Exception as e:
+            self.logger.error("Error %s (%s)", e, [traceback.format_exc().splitlines()[-3:-1]])
+            raise PMUserError("Error %s (for details see logfile)", e)
 
 
     def _login(self, secret):
@@ -1517,17 +1532,18 @@ class PageConfiguration(HtmlPageHandler, utils.LogMixin):
 
 
     def action(self):
-        self.logger.debug("Start action processing ")
-        action = self._vars.getvalue("action")     
-        if action == "set_password":
-            self._handle_set_password()
-        elif action == "save_config":
-            try:
+        try:
+            self.logger.debug("Start action processing ")
+            action = self._vars.getvalue("action")     
+            if action == "set_password":
+                self._handle_set_password()
+            elif action == "save_config":
                 self._handle_save_config()
-            except Exception as e:
-                stack = traceback.format_exc()
-                self.logger.debug("Unhandled exception (action) (trace %s)", stack, exc_info=True)
-                raise PMUserError("issue in handling password", e, stack)
+        except PMUserError as e:
+            self.error(e)
+        except Exception as e:
+            self.logger.error("Error %s (%s)", e, [traceback.format_exc().splitlines()[-3:-1]])
+            raise PMUserError("Error %s (for details see logfile)", e)
                 
 
 
@@ -2017,12 +2033,18 @@ class PageSchedule(HtmlPageHandler, utils.LogMixin):
 
 
     def action(self):
-        self.ensure_password_is_set()
-        action = self._vars.getvalue("action")
-        if action == "delete":
-            return self._handle_delete()
-        elif action == "start":
-            return self._handle_start()
+        try:
+            self.ensure_password_is_set()
+            action = self._vars.getvalue("action")
+            if action == "delete":
+                return self._handle_delete()
+            elif action == "start":
+                return self._handle_start()
+        except PMUserError as e:
+            self.error(e)
+        except Exception as e:
+            self.logger.error("Error %s (%s)", e, [traceback.format_exc().splitlines()[-3:-1]])
+            raise PMUserError("Error %s (for details see logfile)", e)
 
 
     def _handle_delete(self):
@@ -2221,23 +2243,29 @@ class PageEditSchedule(HtmlPageHandler, utils.LogMixin):
 
 
     def action(self):
-        self.ensure_password_is_set()
+        try:
+            self.ensure_password_is_set()
 
-        # copy the object for editing so that eventual validation issues don't affect
-        # already existing schedules in the meantime. Only copy back when no validation
-        # issues occur.
-        orig_schedule = self._get_schedule()
-        self._schedule = self._get_schedule_copy()
+            # copy the object for editing so that eventual validation issues don't affect
+            # already existing schedules in the meantime. Only copy back when no validation
+            # issues occur.
+            orig_schedule = self._get_schedule()
+            self._schedule = self._get_schedule_copy()
 
-        self._set_submitted_vars(self._schedule, submit=True)
+            self._set_submitted_vars(self._schedule, submit=True)
 
-        orig_schedule.from_config(self._schedule.to_config())
-        orig_schedule.from_state(self._schedule.to_state())
-        orig_schedule.save()
-        self._schedule = orig_schedule
+            orig_schedule.from_config(self._schedule.to_config())
+            orig_schedule.from_state(self._schedule.to_state())
+            orig_schedule.save()
+            self._schedule = orig_schedule
 
-        self.success("The schedule has been saved. Opening the schedule list now.")
-        self.redirect(2, "/schedule")
+            self.success("The schedule has been saved. Opening the schedule list now.")
+            self.redirect(2, "/schedule")
+        except PMUserError as e:
+            self.error(e)
+        except Exception as e:
+            self.logger.error("Error %s (%s)", e, [traceback.format_exc().splitlines()[-3:-1]])
+            raise PMUserError("Error %s (for details see logfile)", e)
 
 
     def title(self):
@@ -2378,13 +2406,20 @@ class PageScheduleResult(PageHandler, AbstractScriptProgressPage, utils.LogMixin
 
 
     def action(self):
-        self.ensure_password_is_set()
-        action = self._vars.getvalue("action")
-        if action == "abort":
-            schedule = self._get_schedule()
-            self._set_runner(schedule.runner)
+        try:
+            self.ensure_password_is_set()
+            action = self._vars.getvalue("action")
+            if action == "abort":
+                schedule = self._get_schedule()
+                self._set_runner(schedule.runner)
 
-            self._handle_abort()
+                self._handle_abort()
+                
+        except PMUserError as e:
+            self.error(e)
+        except Exception as e:
+            self.logger.error("Error %s (%s)", e, [traceback.format_exc().splitlines()[-3:-1]])
+            raise PMUserError("Error %s (for details see logfile)", e)
 
 
     def process(self):
@@ -2697,35 +2732,8 @@ class PMServerHandler(wsgiref.simple_server.ServerHandler, utils.LogMixin):
 
 
     def log_exception(self, exc_info):
-#        self.logger.error("Unhandled exception (log)", exc_info=True)
-        try:
-            from traceback import print_exception
-            stderr = self.get_stderr()
-            print(
-                exc_info[0], exc_info[1], exc_info[2],
-                self.traceback_limit, stderr
-            )
-            stderr.flush()
-        finally:
-            exc_info = None
-
+        self.logger.error("Unhandled exception (log)", exc_info=True)
         
-    def error_output(self, environ, start_response):
-        """WSGI mini-app to create error output
-        By default, this just uses the 'error_status', 'error_headers',
-        and 'error_body' attributes to generate an output page.  It can
-        be overridden in a subclass to dynamically generate diagnostics,
-        choose an appropriate message for the user's preferred language, etc.
-        Note, however, that it's not recommended from a security perspective to
-        spit out diagnostics to any old user; ideally, you should have to do
-        something special to enable diagnostic output, which is why we don't
-        include any here!
-        """
-        print ("HHHEEER")
-        start_response(self.error_status,self.error_headers[:],sys.exc_info())
-        return [self.error_body]
-
-
 
 # Found no elegant way to patch it. Sorry.
 wsgiref.simple_server._ServerHandler = wsgiref.simple_server.ServerHandler
