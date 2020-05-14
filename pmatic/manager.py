@@ -140,12 +140,8 @@ class Config(utils.LogMixin):
                 key_base = hashlib.sha256(cls._cfg_password.encode("utf-8"))
                 key = base64.urlsafe_b64encode(key_base.digest())
                 cipher_suite = Fernet(key)
-                if utils.is_py2():
-                    mylist = config.items()
-                else: 
-                    mylist = list(config.items())
-                for key, val in mylist:
-                    if key[0] != "_" and key not in [ "config_path",
+                for key, val in config.items():
+                   if key[0] != "_" and key not in [ "config_path",
                                                         "static_path", "log_file" ] \
                     and not inspect.isroutine(val):
                         if utils.is_byte_string(val) or (val != "" and "password" in key.lower()):
@@ -174,11 +170,7 @@ class Config(utils.LogMixin):
             cls.cls_logger().error("Failed to load the config. Terminating.", exc_info=True)
             sys.exit(1)
 
-        if utils.is_py2():
-            mylist = config.items()
-        else: 
-            mylist = list(config.items())
-        for key, val in mylist:
+        for key, val in config.items():
             setattr(cls, key, val)
 
 
@@ -189,11 +181,7 @@ class Config(utils.LogMixin):
         key = base64.urlsafe_b64encode(key_base.digest())
         cipher_suite = Fernet(key)
 
-        if utils.is_py2():
-            mylist = cls.__dict__.items()
-        else: 
-            mylist = list(cls.__dict__.items())
-        for key, val in mylist:
+        for key, val in cls.__dict__.items():
             if key[0] != "_" and key not in [ "config_path",
                                               "static_path", "log_file" ] \
                and not inspect.isroutine(val):
@@ -277,11 +265,7 @@ class Html(object):
     def add_missing_vars(self):
         """Adds the vars which have been used to call this page but are yet missing in the
         current form as hidden vars to the form."""
-        if utils.is_py2():
-            mylist = self._vars.keys()
-        else: 
-            mylist = list(self._vars.keys())
-        for key in mylist:
+        for key in self._vars.keys():
             if key not in self._form_vars:
                 self.hidden(key, self._vars.getvalue(key))
 
@@ -484,11 +468,7 @@ class PageHandler(utils.LogMixin):
 
     @classmethod
     def _get_auth_cookie_value(self, environ):
-        if utils.is_py2():
-            mylist = SimpleCookie(environ.get("HTTP_COOKIE")).items()
-        else: 
-            mylist = list(SimpleCookie(environ.get("HTTP_COOKIE")).items())
-        for name, cookie in mylist:
+        for name, cookie in SimpleCookie(environ.get("HTTP_COOKIE")).items():
             if name == "pmatic_auth":
                 return cookie.value
 
@@ -505,7 +485,10 @@ class PageHandler(utils.LogMixin):
         secret = open(filepath).read().strip()
 
         to_hash = secret + salt
-        correct_hash = sha256(to_hash.encode("utf-8")).hexdigest()
+        if not utils.is_py2():
+            to_hash = to_hash.encode("utf-8")
+        correct_hash = sha256(to_hash).hexdigest()
+#        correct_hash = sha256(to_hash.encode("utf-8")).hexdigest()
 
         return salted_hash == correct_hash
 
@@ -515,7 +498,7 @@ class PageHandler(utils.LogMixin):
         pages = cls.pages()        
         try:
             page = pages[cls.base_url(environ)]
-
+            
             if cls.is_password_set() and not cls._is_authenticated(environ):
                 cls._initdone = True
                 return pages["login"]
@@ -587,11 +570,7 @@ class PageHandler(utils.LogMixin):
 
     def _cleanup_transids(self):
         """Removes old, unused transaction ids that are older than 2 hours."""
-        if utils.is_py2():
-            mylist = self._transids.items()
-        else: 
-            mylist = list(self._transids.items())
-        for transid, (issue_time, url) in mylist:
+        for transid, (issue_time, url) in self._transids.items():
             if issue_time > 7200:
                 self._invalidate_transid(transid)
 
@@ -643,9 +622,6 @@ class PageHandler(utils.LogMixin):
         else:
             cookie[name] = value
             self._set_http_header("Set-Cookie", cookie[name].OutputString())
-
-#    def _del_cookie(self, name)
-#        response.delete_cookie(name, domain="cookie_domain")
 
     @property
     def vars(self):
@@ -718,7 +694,8 @@ class PageHandler(utils.LogMixin):
 
 
     def action(self):
-        self.write_text("Not implemented yet.")
+        pass
+#        self.write_text("Not implemented yet.")
 
 
     def process(self):
@@ -1972,6 +1949,36 @@ class PageEventLog(HtmlPageHandler, utils.LogMixin):
         return "Events received from the CCU"
 
 
+    def show_table(self):
+        for event in reversed(self._manager.event_history.events):
+            #"time"           : updated_param.last_updated,
+            #"time_changed"   : updated_param.last_changed,
+            #"param"          : updated_param,
+            #"value"          : updated_param.value,
+            #"formated_value" : "%s" % updated_param,
+            param = event["param"]
+
+            if event["time"] == event["time_changed"]:
+                ty = "changed"
+            else:
+                ty = "updated"
+
+            show_updated   = self.is_checked("show_updated")
+            if (show_updated or ty == "changed"):
+                self.write("<tr>")
+                self.write("<td>%s</td>" % time.strftime("%Y-%m-%d %H:%M:%S",
+                                                         utils.localtime(event["time"], Config.timezone)))
+                self.write("<td>%s (%s)</td>" % (self.escape(param.channel.device.name),
+                                                 self.escape(param.channel.device.address)))
+                self.write("<td>%s</td>" % self.escape(param.channel.name))
+                self.write("<td>%s</td>" % self.escape(param.name))
+                self.write("<td>%s</td>" % self.escape(ty))
+                self.write("<td>%s (Raw value: %s)</td>" %
+                     (self.escape(event["formated_value"]), self.escape(event["value"])))
+                self.write("</tr>")
+        self.write("</table>")
+
+
     def process(self):
         self.h2("Events received from the CCU")
         self.p("This page shows the last %d events received from the CCU. These are events "
@@ -1993,36 +2000,17 @@ class PageEventLog(HtmlPageHandler, utils.LogMixin):
         self.p("Received <i>%d</i> events in total since the pmatic manager has been started." %
                                                     self._manager.event_history.num_events_total)
 
+        self.begin_form()
+        self.write_text("Show also updated events or only changed ones: ")
+        self.checkbox("show_updated", self.is_checked("show_updated"))
+        self.submit("Show Table", "show_table")
+
         self.write("<table>")
         self.write("<tr><th>Time</th><th>Device</th><th>Channel</th><th>Parameter</th>"
                    "<th>Event-Type</th><th>Value</th>")
         self.write("</tr>")
-        for event in reversed(self._manager.event_history.events):
-            #"time"           : updated_param.last_updated,
-            #"time_changed"   : updated_param.last_changed,
-            #"param"          : updated_param,
-            #"value"          : updated_param.value,
-            #"formated_value" : "%s" % updated_param,
-            param = event["param"]
-
-            if event["time"] == event["time_changed"]:
-                ty = "changed"
-            else:
-                ty = "updated"
-
-            self.write("<tr>")
-            self.write("<td>%s</td>" % time.strftime("%Y-%m-%d %H:%M:%S",
-                                                     utils.localtime(event["time"], Config.timezone)))
-            self.write("<td>%s (%s)</td>" % (self.escape(param.channel.device.name),
-                                             self.escape(param.channel.device.address)))
-            self.write("<td>%s</td>" % self.escape(param.channel.name))
-            self.write("<td>%s</td>" % self.escape(param.name))
-            self.write("<td>%s</td>" % self.escape(ty))
-            self.write("<td>%s (Raw value: %s)</td>" %
-                 (self.escape(event["formated_value"]), self.escape(event["value"])))
-            self.write("</tr>")
-        self.write("</table>")
-
+        self.show_table()
+        self.end_form()
 
 
 class PageSchedule(HtmlPageHandler, utils.LogMixin):
@@ -2336,11 +2324,7 @@ class PageEditSchedule(HtmlPageHandler, utils.LogMixin):
         self.write("</tr>")
 
         self.hidden("num_conditions", str(len(schedule.conditions)+1))
-        if utils.is_py2():
-            mylist = schedule.conditions.values()
-        else: 
-            mylist = list(schedule.conditions.values())
-        choices = sorted(mylist, key=lambda c: c.id) \
+        choices = sorted(schedule.conditions.values(), key=lambda c: c.id) \
                   + [Condition(self._manager)]
         for num, condition in enumerate(choices):
             varprefix = "cond_%d_" % num
@@ -3144,11 +3128,7 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
 
         # FIXME: Optimize schedule/condition handling
         for schedule in self.enabled_schedules:
-            if utils.is_py2():
-                mylist = schedule.conditions.values()
-            else: 
-                mylist = list(schedule.conditions.values())
-            for condition in mylist:
+            for condition in schedule.conditions.values():
                 if isinstance(condition, ConditionOnTime):
                     if condition.next_time <= time.time():
                         this_time = condition.next_time
@@ -3177,11 +3157,7 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
 
             for schedule in schedules:
                 matched = False
-                if utils.is_py2():
-                    mylist = schedule.conditions.values()
-                else: 
-                    mylist = list(schedule.conditions.values())
-                for condition in mylist:
+                for condition in schedule.conditions.values():
                     if isinstance(condition, ConditionOnDeviceEvent) \
                        or isinstance(condition, ConditionOnDevicesOfTypeEvent):
                         if condition.matches_device_event(device_event):
@@ -3219,11 +3195,7 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
     def _schedules_with_condition_type(self, cls):
         for schedule in self.enabled_schedules:
             matched = False
-            if utils.is_py2():
-                mylist = schedule.conditions.values()
-            else: 
-                mylist = list(schedule.conditions.values())
-            for condition in mylist:
+            for condition in schedule.conditions.values():
                 if isinstance(condition, cls):
                     matched = True
                     break
@@ -3238,11 +3210,7 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
         this just occured event. If so the schedule is executed.
         """
         for schedule in self.enabled_schedules:
-            if utils.is_py2():
-                mylist = schedule.conditions.values()
-            else: 
-                mylist = list(schedule.conditions.values())
-            for condition in mylist:
+            for condition in schedule.conditions.values():
                 if isinstance(condition, ConditionOnResidentPresence):
                     if condition.resident == resident:
                         event_type = condition.event_type
@@ -3311,21 +3279,14 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
     @property
     def enabled_schedules(self):
         """Return all non disabled schedules."""
-        if utils.is_py2():
-            mylist = self._schedules.values()
-        else: 
-            mylist = list(self._schedules.values())
-        for schedule in mylist:
+        for schedule in self._schedules.values():
             if not schedule.disabled:
                 yield schedule
 
 
     @property
     def schedules(self):
-        if utils.is_py2():
-            return self._schedules.values()
-        else: 
-            return list(self._schedules.values())
+        return self._schedules.values()
 
 
     def exists(self, schedule_id):
@@ -3373,11 +3334,7 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
 
     def to_config(self):
         schedule_config = []
-        if utils.is_py2():
-            mylist = self._schedules.values()
-        else: 
-            mylist = list(self._schedules.values())
-        for schedule in mylist:
+        for schedule in self._schedules.values():
             schedule_config.append(schedule.to_config())
         return schedule_config
         
@@ -3386,31 +3343,19 @@ class Scheduler(threading.Thread, utils.LogMixin, utils.PersistentConfigMixin,
         if state is None:
             return # on default, do nothing
         self._next_presence_update = state["next_presence_update"]
-        if utils.is_py2():
-            mylist = self._schedules.values()
-        else: 
-            mylist = list(self._schedules.values())
-        for schedule, schedule_state in zip(mylist, state["schedules"]):
+        for schedule, schedule_state in zip(self._schedules.values(), state["schedules"]):
             schedule.from_state(schedule_state)
 
 
     def to_state(self):
-        if utils.is_py2():
-            mylist = self._schedules.values()
-        else: 
-            mylist = list(self._schedules.values())
         return {
             "next_presence_update" : self._next_presence_update,
-            "schedules"            : [ s.to_state() for s in mylist ],
+            "schedules"            : [ s.to_state() for s in self._schedules.values() ],
         }
 
 
     def update_conditions(self):
-        if utils.is_py2():
-            mylist = self._schedules.values()
-        else: 
-            mylist = list(self._schedules.values())
-        for schedule in mylist:
+        for schedule in self._schedules.values():
             schedule.update_conditions()
 
 
@@ -3487,21 +3432,13 @@ class Schedule(object):
 
 
     def update_conditions(self):
-        if utils.is_py2():
-            mylist = self.conditions.values()
-        else: 
-            mylist = list(self.conditions.values())
-        for condition in mylist:
+        for condition in self.conditions.values():
             condition.from_config(condition.to_config())
 
 
     def from_config(self, cfg):
         self.clear_conditions()
-        if utils.is_py2():
-            mylist = cfg.items()
-        else: 
-            mylist = list(cfg.items())
-        for key, val in mylist:
+        for key, val in cfg.items():
             if key != "conditions":
                 setattr(self, key, val)
             else:
@@ -3516,10 +3453,6 @@ class Schedule(object):
 
 
     def to_config(self):
-        if utils.is_py2():
-            mylist = self.conditions.values()
-        else: 
-            mylist = list(self.conditions.values())
         return {
             "id"           : self.id,
             "name"         : self.name,
@@ -3527,16 +3460,12 @@ class Schedule(object):
             "keep_running" : self.keep_running,
             "run_inline"   : self.run_inline,
             "script"       : self.script,
-            "conditions"   : [ c.to_config() for c in mylist ],
+            "conditions"   : [ c.to_config() for c in self.conditions.values() ],
         }
 
 
     def from_state(self, state):
-        if utils.is_py2():
-            mylist = state.items()
-        else: 
-            mylist = list(state.items())
-        for key, val in mylist:
+        for key, val in state.items():
             if key not in [ "conditions", "id" ]:
                 setattr(self, key, val)
 
@@ -3555,14 +3484,10 @@ class Schedule(object):
 
 
     def to_state(self):
-        if utils.is_py2():
-            mylist = self.conditions.values()
-        else: 
-            mylist = list(self.conditions.values())
         return {
             "id"             : self.id,
             "last_triggered" : self.last_triggered,
-            "conditions"     : [ c.to_state() for c in mylist ],
+            "conditions"     : [ c.to_state() for c in self.conditions.values() ],
         }
 
 
@@ -3600,11 +3525,7 @@ class Condition(object):
 
 
     def from_config(self, cfg):
-        if utils.is_py2():
-            mylist = cfg.items()
-        else: 
-            mylist = list(cfg.items())
-        for key, val in mylist:
+        for key, val in cfg.items():
             setattr(self, key, val)
 
 
@@ -3616,11 +3537,7 @@ class Condition(object):
 
 
     def from_state(self, cfg):
-        if utils.is_py2():
-            mylist = cfg.items()
-        else: 
-            mylist = list(cfg.items())
-        for key, val in mylist:
+        for key, val in cfg.items():
             if key != "id":
                 setattr(self, key, val)
 
@@ -3792,11 +3709,7 @@ class ConditionOnDeviceEvent(Condition, utils.LogMixin):
         if not self.channel:
             return
 
-        if utils.is_py2():
-            mylist = self.channel.values.items()
-        else: 
-            mylist = list(self.channel.values.items())
-        for param_id, param in mylist:
+        for param_id, param in self.channel.values.items():
             yield param_id, "%s (%s)" % (param.name, param_id)
 
 
@@ -3894,11 +3807,7 @@ class ConditionOnDevicesOfTypeEvent(Condition, utils.LogMixin):
         self.event_type = cfg["event_type"]
         ccu_initialized = self._manager.ccu_initialized
 
-        if utils.is_py2():
-            mylist = self._devices_by_type()
-        else: 
-            mylist = list(self._devices_by_type())
-        if not ccu_initialized or cfg["device_type"] in mylist.keys():
+        if not ccu_initialized or cfg["device_type"] in self._devices_by_type().keys():
             self.device_type = cfg["device_type"]
         if self.device_type is None:
             return
@@ -3950,11 +3859,7 @@ class ConditionOnDevicesOfTypeEvent(Condition, utils.LogMixin):
             yield self.device_type, self.device_type
             return
 
-        if utils.is_py2():
-            mylist = self._devices_by_type().items()
-        else: 
-            mylist = list(self._devices_by_type().items())
-        for type_name, devices in sorted(mylist, key=lambda x: x[1]):
+        for type_name, devices in sorted(self._devices_by_type().items(), key=lambda x: x[1]):
             device_names = [ "%s" % d.name for d in devices ]
             yield type_name, "%s (%s)" % (type_name, ", ".join(device_names))
 
@@ -3966,11 +3871,7 @@ class ConditionOnDevicesOfTypeEvent(Condition, utils.LogMixin):
         if not self.device_type:
             return
 
-        if utils.is_py2():
-            mylist = self._channels_of_type().items()
-        else: 
-            mylist = list(self._channels_of_type().items())
-        for channel_index, channels in sorted(mylist,
+        for channel_index, channels in sorted(self._channels_of_type().items(),
                                               key=lambda x: x[1]):
             channel_names = [ "%s" % c.name for c in channels ]
             yield channel_index, "%d (%s)" % (channel_index, ", ".join(channel_names))
@@ -4001,11 +3902,7 @@ class ConditionOnDevicesOfTypeEvent(Condition, utils.LogMixin):
     def _params_of_channel(self):
         device  = self._devices_by_type()[self.device_type][0]
         channel = device.channels[self.channel_id]
-        if utils.is_py2():
-            mylist = channel.values.items()
-        else: 
-            mylist = list(channel.values.items())
-        for param_id, param in mylist:
+        for param_id, param in channel.values.items():
             yield param_id, param.name
 
 
@@ -4135,11 +4032,7 @@ class ConditionOnTime(Condition):
             return
 
         # Initialize vars to be used as indices for timeparts
-        if utils.is_py2():
-            mylist = range(7)
-        else: 
-            mylist = list(range(7))
-        year, month, mday, hour, minute, second, wday = mylist
+        year, month, mday, hour, minute, second, wday = range(7)
 
         now = time.time()
 

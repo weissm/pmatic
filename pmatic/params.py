@@ -69,11 +69,7 @@ class Parameter(utils.CallbackMixin):
 
 
     def _init_attributes(self, spec):
-        if utils.is_py2():
-            mylist =  spec.items()
-        else: 
-            mylist = list(spec.items())
-        for key, val in mylist:
+        for key, val in spec.items():
             # Optionally convert values using the given transform functions
             # for the specific object type
             trans_func = self._transform_attributes.get(key)
@@ -189,8 +185,7 @@ class Parameter(utils.CallbackMixin):
         value has been fetched from the API or received as event. Setting only
         the internal value in this object.
 
-        This method returns *True* when the value has changed compared to the
-        current value and *False* if not."""
+        This method returns *old_value* """
         return self._set_value(self._from_api_value(value))
 
 
@@ -213,9 +208,9 @@ class Parameter(utils.CallbackMixin):
         self._callback("value_updated")
         if value != old_value:
             self._callback("value_changed")
-            return True
+            return old_value
         else:
-            return False
+            return value
 
 
     def set_to_default(self):

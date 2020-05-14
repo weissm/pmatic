@@ -68,7 +68,6 @@ class CCU(object):
     10 seconds. If you like to change the timeout, you need to set the argument
     *connect_timeout* to a number of seconds of your choice.
     """
-    _constructed = False
     def __init__(self, **kwargs):
         """__init__([address[, credentials[, connect_timeout=10]]])
         """
@@ -82,8 +81,7 @@ class CCU(object):
         self._events = None
         self._rooms = None
         self._residents = None
-        self._constructed = True
-
+ 
 
     def __new__(cls, **kwargs):
         """This special method is used to prevent creation of a new CCU object by scripts which are
@@ -107,10 +105,8 @@ class CCU(object):
         pmatic scripts equal in all pmatic script use cases.
         """
         if hasattr(builtins, "manager_ccu"): 
-#            print("CCU: reuse ")
             return builtins.manager_ccu
         else:
-#            print("CCU: create new CCU ")
             return super(CCU, cls).__new__(cls)
 
 
@@ -181,11 +177,7 @@ class CCU(object):
         for interface in self.api.interface_list_bidcos_interfaces(
                                                     interface="BidCos-RF"):
             new = {}
-            if utils.is_py2():
-                mylist = interface.items()
-            else: 
-                mylist = list(interface.items())
-            for key, val in mylist:
+            for key, val in interface.items():
                 if key == "dutyCycle":
                     val = int(val)
                 new[utils.decamel(key)] = val
@@ -205,9 +197,9 @@ class CCU(object):
     def close(self):
         """Is used to close the connections with the CCU and the eventual open event listener"""
         self.api.close()
-#        print("CCU close")
         if self._events:
             self.events.close()
+
 
 
 class CCUDevices(Devices):
@@ -304,11 +296,7 @@ class CCUDevices(Devices):
         if "device_type" in filters and utils.is_string(filters["device_type"]):
             filters["device_type"] = [filters["device_type"]]
 
-        if utils.is_py2():
-            mylist = self._device_specs.items()
-        else: 
-            mylist = list(self._device_specs.items())
-        for address, spec in mylist:
+        for address, spec in self._device_specs.items():
             # First try to get an already created room object from the central
             # CCU room collection. Otherwise create the room object and add it
             # to the central collection and this collection.
@@ -333,8 +321,8 @@ class CCUDevices(Devices):
 
             # Add devices which have one of the channel ids listed in has_channel_ids
             if "has_channel_ids" in filters \
-               and not [ c for c in device.channels if c.id in filters["has_channel_ids"] ]:
-                continue
+                and not [ c for c in device.channels if hasattr(c, 'id') and c.id in filters["has_channel_ids"] ]:
+                    continue
 
             # exact device address match
             if "device_address" in filters and device.address != filters["device_address"]:
@@ -388,6 +376,7 @@ class CCUDevices(Devices):
 
         Only for internal use."""
         return self._device_dict
+
 
 
 class CCURooms(Rooms):

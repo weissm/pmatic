@@ -21,7 +21,7 @@
 """Realizes an event listener to receive events from the CCU XML-RPC API"""
 
 # Relevant docs:
-# - http://www.eq-3.de/Downloads/PDFs/Dokumentation_und_Tutorials/HM_XmlRpc_V1_502__2_.pdf
+# - https://www.eq-3.de/downloads/download/homematic/hm_web_ui_doku/HM_XmlRpc_API.pdf
 # - https://www.homematic-inside.de/software/xml-api
 # - http://ccu3-webui/tools/devconfig.cgi
 #
@@ -202,9 +202,10 @@ class EventListener(utils.LogMixin, utils.CallbackMixin):
         try:
             self._start_rpc_server()
             interface_names = [interface['name'] for interface in self._ccu.api.interface_list_interfaces()]
+#            interface_names = ['HmIP-RF']
             # now start and walk through all interface names
             for interface_name in interface_names:
-                InterfaceId = self._init_interface_id(interface_id=interface_name)
+                self._init_interface_id(interface_id=interface_name)
                 try:
                     self._register_with_ccu(interface = interface_name, interfaceId = self._interface_id)
                     self.logger.debug("Logged into %s @ %s", interface_name, self._interface_id)                  
@@ -360,6 +361,7 @@ class EventHandler(utils.LogMixin, object):
         except Exception:
             self.logger.error("Exception in XML-RPC call %s%r:",
                                 method, tuple(params), exc_info=True)
+            sys.exit(1)
             return False
 
 
@@ -382,10 +384,14 @@ class EventHandler(utils.LogMixin, object):
         try:
             obj = self._ccu.devices.get_device_or_channel_by_address(address)
             obj.interface = interface_id
+#            self.logger.info("[EVENT] Found Device %s (%s)", address, obj.interface)
         except KeyError:
-            self.logger.debug("[EVENT] %s Ignoring event for unknown device" % address)
+            if address == "CENTRAL" and value_key == "PONG":
+                # correct behavior every 15s, ignoring
+                pass
+            else:
+                self.logger.debug("[EVENT] %s Ignoring event for unknown device" % address)
             return True
-
 
         try: 
             param = obj.values[value_key]
@@ -395,8 +401,8 @@ class EventHandler(utils.LogMixin, object):
             return True
         
         self.listener.callback("value_updated", param)
-        if value_changed:
-            self.logger.info("[EVENT] has changed: %s %s %s (%s) = %r", address, interface_id, value_key, param, value)
+        if value != value_changed:
+            self.logger.info("[EVENT] Device %s (%s) changed Value %s from %s to %s (%r)", address, interface_id, value_key, value_changed, param, value)
             self.listener.callback("value_changed", param)
 
         return True
@@ -415,16 +421,10 @@ class EventHandler(utils.LogMixin, object):
 
         # Don't fetch new new devices here. Use the already known ones. The CCU will inform
         # us about the ones we don't know yet.
-        if utils.is_py2():
-            for device in self._ccu.devices.already_initialized_devices.values():
-                devices.append({"ADDRESS": device.address, "VERSION": device.version})
-                for channel in device.channels:
-                    devices.append({"ADDRESS": channel.address, "VERSION": channel.version})
-        else:
-            for device in list(self._ccu.devices.already_initialized_devices.values()):
-                devices.append({"ADDRESS": device.address, "VERSION": device.version})
-                for channel in device.channels:
-                    devices.append({"ADDRESS": channel.address, "VERSION": channel.version})
+        for device in self._ccu.devices.already_initialized_devices.values():
+            devices.append({"ADDRESS": device.address, "VERSION": device.version})
+            for channel in device.channels:
+                devices.append({"ADDRESS": channel.address, "VERSION": channel.version})
 
         return devices
 
@@ -458,12 +458,21 @@ class EventHandler(utils.LogMixin, object):
                 val = d.pop(key)
                 if isinstance(val, list):
                     for index, item in enumerate(val):
-                        val[index] = item
+                        if utils.is_py2():
+                            val[index] = item.decode("utf-8")
+                        else:
+                            val[index] = item
 
                 elif utils.is_byte_string(val):
-                    val = val.decode("utf-8")
+                    if utils.is_py2():
+                        val = val.decode("utf-8")
+                    else:
+                        val = val
 
-                new_key = key.lower()
+                if utils.is_py2():
+                    new_key = key.lower().decode("utf-8")
+                else:
+                    new_key = key.lower()
 
                 if new_key in [ "aes_active", "roaming" ]:
                     val = val == 1
@@ -490,16 +499,14 @@ class EventHandler(utils.LogMixin, object):
                 except KeyError:
                     pass
                 devices[spec["address"]] = spec
+                self.logger.debug("[NEW DEVICES] Found Device @ address %s", spec["address"])
+
             else:
                 channels = devices[spec["parent"]].setdefault("channels", [])
                 channels.append(spec)
 
-        if utils.is_py2():
-            for device_dict in devices.values():
-                self._ccu.devices.add_from_low_level_dict(device_dict)
-        else:
-            for device_dict in list(devices.values()):
-                self._ccu.devices.add_from_low_level_dict(device_dict)
+        for device_dict in devices.values():
+            self._ccu.devices.add_from_low_level_dict(device_dict)
 
         # As we just received all devices from the CCU mark the devices as initialized
         # in the CCU object. This saves one Interface.listDevices call when accessing

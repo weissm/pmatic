@@ -32,6 +32,9 @@ API object. It detects whether or not the code is run on the CCU or
 a remote connection from another system is made to the CCU.
 """
 
+# see https://www.homematic-inside.de/faq/geheimmenue
+# https://ccu3-webui/tools/devconfig.cgi?sid=<SID>
+
 # Add Python 3.x behaviour to 2.7
 from __future__ import absolute_import
 from __future__ import division
@@ -147,7 +150,7 @@ class AbstractAPI(utils.LogMixin):
 
         try:
             msg = json.loads(body)
-            self.logger.debug("MSG from %s : %s", method_name_int, body)
+            self.logger.debug("MSG from %s : %s", method_name_int, json.dumps(msg, indent=4, sort_keys=True))
         except Exception as e:
             raise PMException("Failed to parse response to %s (%s):\n%s\n" %
                                                     (method_name_int, e, body))
@@ -499,10 +502,10 @@ class RemoteAPI(AbstractAPI):
         args   = self._get_arguments(method, kwargs)
 
         self.logger.debug("CALL: %s ARGS: %r", method["NAME"], args)
-        # import traceback
-        # stack = ("".join(traceback.format_stack()[:-1])).encode("utf-8")
-        # print(b"".join(traceback.format_stack()[:-1]))
-        # self.logger.debug("  Callstack: %s\n" % stack)
+#        import traceback
+#        stack = ("".join(traceback.format_stack()[:-1])).encode("utf-8")
+#        print(b"".join(traceback.format_stack()[:-1]))
+#        self.logger.debug("  Callstack: %s\n" % stack)
 
         json_data = json.dumps({
             "method": method["NAME"],
@@ -510,19 +513,20 @@ class RemoteAPI(AbstractAPI):
         })
         url = "%s/api/homematic.cgi" % self._address
 
-        import inspect
-        import traceback
-        frame = inspect.currentframe()
-        stack_trace = traceback.format_stack(frame)
-        self.logger.debug("  URL: %s DATA: %s Trace %s", url, json_data, stack_trace)
+#        import inspect
+#        import traceback
+#        frame = inspect.currentframe()
+#        stack_trace = traceback.format_stack(frame)
+#        self.logger.debug("  URL: %s DATA: %s Trace %s", url, json.dumps(json.loads(json_data), indent=4, sort_keys=True))
+        self.logger.debug("CALL: %s, ARGS: %s", url, json.dumps(json.loads(json_data), indent=4, sort_keys=True))
         request = Request(url, data=json_data.encode("utf-8"))
-        self.logger.debug("  Request: %s", request)
+ #       self.logger.debug("  Request: %s", request)
 
         if self._http_auth:
             base64string = base64.encodestring('%s:%s' % self._http_auth).replace('\n', '')
             request.add_header("Authorization", "Basic %s" % base64string)
         handle = urlopen(request, timeout=self._connect_timeout)
-        self.logger.debug("  Handle: %s", handle)
+  #      self.logger.debug("  Handle: %s", handle)
 
         response_txt = ""
         for line in handle.readlines():
@@ -535,7 +539,6 @@ class RemoteAPI(AbstractAPI):
             raise PMException("Error %d opening \"%s\" occured: %s" %
                                     (http_status, url, response_txt))
 
-        self.logger.debug("  RESPONSE: %s", response_txt)
         return self._parse_api_response(method_name_int, kwargs, response_txt)
 
 
@@ -888,8 +891,8 @@ class DeviceSpecs(CachedAPICall):
                 if interface_name == "BidCos-RF":
                     pass
                 elif interface_name == "CUxD":
-                    spec.update(roaming="")
-                    spec.update(updatable="")
+                    spec.update(roaming=False)
+                    spec.update(updatable="0")
                 elif interface_name == "VirtualDevices":
                     addr = spec["address"]
                     if ":" not in addr:
@@ -900,10 +903,9 @@ class DeviceSpecs(CachedAPICall):
                         channels = device.setdefault("channels", [])
                         channels.append(spec)
                 elif interface_name == "HmIP-RF":
-                    spec.update(direction="")
-                    spec.update(link_source_roles="")
-                    spec.update(link_target_roles="")
-#                    spec.update(interface="HmIP-RF")
+                    spec.update(direction=0)
+                    spec.update(link_source_roles=[])
+                    spec.update(link_target_roles=[])
                     if spec["children"]:
                         devices[spec["address"]] = spec
                         parentaddress = spec["address"]

@@ -90,12 +90,8 @@ class CallbackMixin(object):
         try:
             return self._callbacks[cb_name]
         except KeyError:
-            if is_py2():
-                raise PMException("Invalid callback %s specified (Available: %s)" %
-                                        (cb_name, ", ".join(self._callbacks.keys())))
-            else:
-                raise PMException("Invalid callback %s specified (Available: %s)" %
-                                        (cb_name, ", ".join(list(self._callbacks.keys()))))
+            raise PMException("Invalid callback %s specified (Available: %s)" %
+                                    (cb_name, ", ".join(self._callbacks.keys())))
 
 
     def register_callback(self, cb_name, func):
@@ -247,7 +243,6 @@ def is_byte_string(obj):
 def is_py2():
     """Returns True when executed with Python 2."""
     return sys.version_info[0] < 3
-#    return sys.version_info[0] < 2
 
 
 def decamel(name):
