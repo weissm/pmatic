@@ -174,13 +174,15 @@ pmatic.manager.Config.state_path  = args.state_path
 logger.addHandler(file_logger)
 
 # Set CCU address / credentials when provided by user to override the configuration
+pmatic.manager.Config._cfg_password = args._cfg_password
+
 pmatic.manager.Config.ccu_enabled = args.ccu_enabled
 pmatic.manager.Config.ccu_address = args.ccu_address
 if args.ccu_username and args.ccu_password:
     pmatic.manager.Config.ccu_credentials = args.ccu_username, args.ccu_password
 
 logger.info("------------------------------------------")
-logger.info("Starting up (Version %s)" % pmatic.__version__)
+logger.info("Starting up (Version %s for py%s.%s)", pmatic.__version__,sys.version_info[0],sys.version_info[1])
 logger.info("------------------------------------------")
 
 
