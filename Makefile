@@ -228,7 +228,7 @@ install-ccu-python:
 	    $(CCU_PREDIST_PATH)_py3/python/* \
 	    root@$(CCU_HOST):/usr/local/etc/config/addons/pmatic/python/
 	rsync -av --no-g \
-	    $(CCU_PREDIST_PATH)/python-wrapper \
+	    $(CCU_PREDIST_PATH)_py3/python-wrapper \
 	    root@$(CCU_HOST):/usr/local/etc/profile.d/python-addons.sh
 
 install-ccu-pmatic:
