@@ -51,7 +51,11 @@ status() {
 }
 
 case "$1" in
-""|start)
+"")
+    sleep 10
+    start
+  ;;
+start)
     start
   ;;
 stop)
