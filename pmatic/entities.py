@@ -239,11 +239,16 @@ class Channel(utils.LogMixin, Entity):
         This method is called on the first access to the values.
         """
         self._values.clear()
+        if self.interface == "":
+            self.logger.warning("%s: Skipping empty interface # %s. "
+                                "Class %s not implemented." %
+                        (self.address))
+            return
         if self._ccu.api._get_target() != "ccu2" and target != "ccu2":
             value_specs =  self._ccu.api.interface_get_paramset_description(interface=self.interface,
                                                     address=self.address, paramsetKey="VALUES")
         else:
-            # org defintion
+            # org definition
             value_specs = self._ccu.api.interface_get_paramset_description(interface="BidCos-RF",
                                                     address=self.address, paramsetType="VALUES")
 
